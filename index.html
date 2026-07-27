@@ -463,65 +463,81 @@
             return maskedName + "@" + domain;
         }
 
+
         function renderDashboard() {
-            document.getElementById('login-screen').classList.add('hidden');
-            document.getElementById('change-password-screen').classList.add('hidden');
-            document.getElementById('reset-password-screen').classList.add('hidden');
-            document.getElementById('dashboard-screen').classList.remove('hidden');
-            document.getElementById('app-header').classList.remove('hidden');
+    document.getElementById('login-screen').classList.add('hidden');
+    document.getElementById('change-password-screen').classList.add('hidden');
+    document.getElementById('reset-password-screen').classList.add('hidden');
+    document.getElementById('dashboard-screen').classList.remove('hidden');
+    document.getElementById('app-header').classList.remove('hidden');
 
-            let pName = currentActiveUser.ps_name || "Participant";
-            let pId = currentActiveUser.ps_id || "N/A";
-            let pMob = maskMobile(currentActiveUser.ps_mob);
-            let pEmail = maskEmail(currentActiveUser.ps_email);
-            
-            document.getElementById('header-user-info').innerText = `${pName} (${pId}, ${pMob}, ${pEmail})`;
+    let pName = currentActiveUser.ps_name || "Participant";
+    let pId = currentActiveUser.ps_id || "N/A";
+    let pMob = currentActiveUser.ps_mob || "N/A";
+    let pEmail = currentActiveUser.ps_email || "N/A";
 
-            let wId = currentActiveUser.workshop_id;
-            let workshop = allWorkshops[wId] || {};
+    // View 1: Top Header Bar / User Details display
+    const headerInfo = document.getElementById('header-user-info');
+    headerInfo.innerHTML = `
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 text-xs sm:text-sm">
+            <div><strong>Name:</strong> ${pName}</div>
+            <div><strong>Unique ID Number:</strong> ${pId}</div>
+            <div><strong>Mobile Number:</strong> ${pMob}</div>
+            <div><strong>Email Address:</strong> ${pEmail}</div>
+        </div>
+    `;
 
-            document.getElementById('workshop-title-display').innerText = workshop.workshop_name || "Active Workshop";
+    // View 2: Middle Box (Active Workshop Name lookup via workshop_id)
+    let wId = currentActiveUser.workshop_id;
+    let workshop = allWorkshops[wId] || {};
+    document.getElementById('workshop-title-display').innerText = workshop.workshop_name || "Active Workshop";
 
-            const resourcesContainer = document.getElementById('resources-container');
-            resourcesContainer.innerHTML = '';
+    // View 3: Bottom Box (Participant Resources Links with correct Firebase path mapping)
+    const resourcesContainer = document.getElementById('resources-container');
+    resourcesContainer.innerHTML = '';
 
-            const resourceLinks = [
-                { title: "Personalized zoom link to join the workshop", link: currentActiveUser.personal_zoom_link },
-                { title: "Participant WhatsApp Group Joining Link", link: workshop.participant_wg_link },
-                { title: "Workshop Schedule Link", link: workshop.workshop_shedule_link },
-                { title: "Material/Handbook Link", link: workshop.material_link },
-                { title: "Participant Feedback Link", link: workshop.participant_feedback_link }
-            ];
+    const resourceLinks = [
+        { title: "Personalized zoom link to join the workshop", link: currentActiveUser.personal_zoom_link },[cite: 2]
+        { title: "Participant WhatsApp Group Joining Link", link: workshop.participant_wg_link },[cite: 2]
+        { title: "Workshop Schedule Link", link: workshop.workshop_shedule_link },[cite: 2]
+        { title: "Material/Handbook Link", link: workshop.material_link },[cite: 2]
+        { title: "Participant Feedback Link", link: workshop.participant_feedback_link }[cite: 2]
+    ];
 
-            resourceLinks.forEach(res => {
-                let row = document.createElement('div');
-                row.className = "px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center hover:bg-gray-50 transition";
-                
-                let linkVal = res.link ? res.link.toString().trim() : "";
-                let isLinkValid = linkVal.startsWith('http://') || linkVal.startsWith('https://');
+    resourceLinks.forEach(res => {
+        let row = document.createElement('div');
+        row.className = "px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center hover:bg-gray-50 transition";
+        
+        let linkVal = res.link ? res.link.toString().trim() : "";
+        let isLinkValid = linkVal.startsWith('http://') || linkVal.startsWith('https://');
 
-                let titleSpan = document.createElement('span');
-                titleSpan.className = "text-gray-800 font-medium text-sm mb-2 sm:mb-0";
-                titleSpan.innerText = res.title;
-                row.appendChild(titleSpan);
+        let titleSpan = document.createElement('span');
+        titleSpan.className = "text-gray-800 font-medium text-sm mb-2 sm:mb-0";
+        titleSpan.innerText = res.title;
+        row.appendChild(titleSpan);
 
-                if (isLinkValid) {
-                    let a = document.createElement('a');
-                    a.href = linkVal;
-                    a.target = "_blank";
-                    a.className = "bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2 px-4 rounded transition shadow";
-                    a.innerText = "Access Link";
-                    row.appendChild(a);
-                } else {
-                    let span = document.createElement('span');
-                    span.className = "text-gray-400 text-xs italic";
-                    span.innerText = "Not Available";
-                    row.appendChild(span);
-                }
-
-                resourcesContainer.appendChild(row);
-            });
+        if (isLinkValid) {
+            let a = document.createElement('a');
+            a.href = linkVal;
+            a.target = "_blank";
+            a.className = "bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2 px-4 rounded transition shadow";
+            a.innerText = "Access Link";
+            row.appendChild(a);
+        } else {
+            let span = document.createElement('span');
+            span.className = "text-gray-400 text-xs italic";
+            span.innerText = "Not Available";
+            row.appendChild(span);
         }
+
+        resourcesContainer.appendChild(row);
+    });
+}
+
+
+        
+
+        
 
         function showLoginScreen() {
             document.getElementById('login-screen').classList.remove('hidden');
