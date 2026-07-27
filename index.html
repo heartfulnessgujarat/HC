@@ -13,29 +13,20 @@
 <body class="bg-gray-50 min-h-screen flex flex-col justify-between">
 
 
+<!-- Top Header Bar (Hidden by default on login screen) -->
+    <header id="app-header" class="max-w-xl mx-auto px-4 pt-6 hidden">
+        <div class="bg-blue-50 border border-blue-200 text-blue-900 shadow-sm rounded-xl p-4 flex justify-between items-center">
+            <div id="header-user-info" class="w-full">
+                <!-- Populated dynamically via renderDashboard -->
+            </div>
+            <div class="flex-shrink-0 ml-4">
+                <button onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white text-xs font-bold py-2 px-4 rounded transition shadow">
+                    Logout
+                </button>
+            </div>
+        </div>
+    </header>
 
-<!-- Top User Info Card (Single Column, 4 Rows) -->
-<div class="bg-blue-50 border border-blue-200 text-blue-900 shadow-sm rounded-xl p-4 mb-3 max-w-xl mx-auto flex justify-between items-center">
-    <div id="header-user-info" class="w-full">
-        <!-- Populated dynamically via renderDashboard -->
-    </div>
-    <button onclick="logout()" class="ml-4 bg-red-500 hover:bg-red-600 text-white text-xs font-bold py-2 px-4 rounded transition shadow">Logout</button>
-</div>
-
-<!-- Middle Workshop Banner Box (Different Light Color: Soft Amber/Yellow or Emerald) -->
-<div class="bg-amber-50 border border-amber-200 text-amber-900 shadow-sm rounded-xl py-3 px-6 text-center mb-3 max-w-xl mx-auto">
-    <h2 id="workshop-title-display" class="text-base font-bold"></h2>
-</div>
-
-<!-- Bottom Resources Box Container (Different Light Color: Soft Slate/Gray or Neutral) -->
-<div class="bg-white border border-gray-200 shadow-sm rounded-xl max-w-xl mx-auto overflow-hidden mb-3">
-    <div class="bg-gray-100 px-6 py-3 border-b border-gray-200 text-center font-bold text-gray-700 text-sm">
-        Participant Resources
-    </div>
-    <div id="resources-container">
-        <!-- Resource rows injected dynamically -->
-    </div>
-</div>
 
     
 
