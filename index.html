@@ -32,6 +32,14 @@
     <!-- Main Container - Constrained compact mobile-friendly width matching Screenshot 1603 style -->
     <main class="max-w-xl mx-auto px-4 py-8 flex-grow w-full">
 
+
+
+        <!-- Persistent Global Header Logo -->
+        <div id="global-header" class="w-full bg-white shadow-sm py-3 px-4 flex items-center justify-center border-b mb-4 rounded-xl">
+            <img id="app-logo" src="" alt="App Logo" class="h-12 max-h-16 object-contain hidden" />
+        </div>
+        
+
         <!-- SCREEN 1: LOGIN VIEW -->
         <div id="login-screen" class="bg-white rounded-xl shadow-md p-6 sm:p-8 mt-6">
             <!-- Dynamic workshop name above title -->
@@ -238,9 +246,6 @@
         let rpSelectedKey = null;
 
 
-
-
-
 function loadFirebaseData() {
             db.ref('control_tower').once('value').then(snapshot => {
                 const data = snapshot.val();
@@ -257,9 +262,29 @@ function loadFirebaseData() {
                     console.warn("Firebase returned empty data for control_tower.");
                 }
             }).catch(err => console.error("Error fetching data from Firebase:", err));
+
+            // Fetch and display persistent global header logo from Firebase
+            db.ref('control_tower/config/header_logo').on('value', (snapshot) => {
+                const logoBase64 = snapshot.val();
+                const logoElement = document.getElementById('app-logo');
+                
+                if (logoBase64) {
+                    logoElement.src = logoBase64;
+                    logoElement.classList.remove('hidden');
+                } else {
+                    logoElement.classList.add('hidden');
+                }
+            });
         }
 
         window.onload = loadFirebaseData;
+
+
+
+
+
+
+
 
         function updateLoginWorkshopBadge() {
             let workshopKeys = Object.keys(allWorkshops);
@@ -273,11 +298,6 @@ function loadFirebaseData() {
                 }
             }
         }
-
-
-
-
-
 
 
 
