@@ -10,6 +10,13 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 </head>
+
+
+
+
+    
+
+    
 <body class="bg-gray-50 min-h-screen flex flex-col justify-between">
 
 
@@ -33,10 +40,34 @@
     <main class="max-w-xl mx-auto px-4 py-8 flex-grow w-full">
 
 
-        <!-- Persistent Global Header Logo stretching full width -->
-        <div id="global-header" class="bg-white rounded-xl shadow-md p-0 mb-6 hidden overflow-hidden">
+
+<body class="bg-gray-50 min-h-screen flex flex-col justify-between">
+
+    <!-- Persistent Global Header Logo (Placed at the very top) -->
+    <div id="global-header" class="max-w-xl mx-auto w-full px-4 pt-6 hidden">
+        <div class="bg-white rounded-xl shadow-md p-0 overflow-hidden">
             <img id="app-logo" src="" alt="App Logo" class="w-full h-auto object-cover" />
         </div>
+    </div>
+
+    <!-- Top Header Bar (Hidden by default on login screen) -->
+    <header id="app-header" class="max-w-xl mx-auto px-4 pt-6 hidden">
+        <div class="bg-blue-50 border border-blue-200 text-blue-900 shadow-sm rounded-xl p-4 flex justify-between items-center">
+            <div id="header-user-info" class="w-full">
+                <!-- Populated dynamically via renderDashboard -->
+            </div>
+            <div class="flex-shrink-0 ml-4">
+                <button onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white text-xs font-bold py-2 px-4 rounded transition shadow">
+                    Logout
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container - Constrained compact mobile-friendly width matching Screenshot 1603 style -->
+    <main class="max-w-xl mx-auto px-4 py-8 flex-grow w-full">
+
+
 
 
         
