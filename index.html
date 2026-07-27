@@ -13,26 +13,32 @@
 <body class="bg-gray-50 min-h-screen flex flex-col justify-between">
 
 
+
+<!-- Top User Info Card (Single Column, 4 Rows) -->
+<div class="bg-blue-50 border border-blue-200 text-blue-900 shadow-sm rounded-xl p-4 mb-3 max-w-xl mx-auto flex justify-between items-center">
+    <div id="header-user-info" class="w-full">
+        <!-- Populated dynamically via renderDashboard -->
+    </div>
+    <button onclick="logout()" class="ml-4 bg-red-500 hover:bg-red-600 text-white text-xs font-bold py-2 px-4 rounded transition shadow">Logout</button>
+</div>
+
+<!-- Middle Workshop Banner Box (Different Light Color: Soft Amber/Yellow or Emerald) -->
+<div class="bg-amber-50 border border-amber-200 text-amber-900 shadow-sm rounded-xl py-3 px-6 text-center mb-3 max-w-xl mx-auto">
+    <h2 id="workshop-title-display" class="text-base font-bold"></h2>
+</div>
+
+<!-- Bottom Resources Box Container (Different Light Color: Soft Slate/Gray or Neutral) -->
+<div class="bg-white border border-gray-200 shadow-sm rounded-xl max-w-xl mx-auto overflow-hidden mb-3">
+    <div class="bg-gray-100 px-6 py-3 border-b border-gray-200 text-center font-bold text-gray-700 text-sm">
+        Participant Resources
+    </div>
+    <div id="resources-container">
+        <!-- Resource rows injected dynamically -->
+    </div>
+</div>
+
     
- <!-- Top Header Bar matching max-w-xl width and rounded styling of the cards -->
-    <header id="app-header" class="max-w-xl mx-auto px-4 pt-6 hidden">
-        <div class="bg-indigo-600 text-white shadow-md rounded-xl p-4 flex justify-between items-center">
-            <!-- Left aligned combined horizontal info with masking, preventing button overlap -->
-            <div class="pr-3 overflow-hidden">
-                <div id="header-user-info" class="text-xs sm:text-sm"></div>
-            </div>
-            <div class="flex-shrink-0">
-                <button onclick="logout()" class="bg-indigo-700 hover:bg-indigo-800 text-white px-3.5 py-1.5 rounded text-sm font-medium transition shadow">
-                    Logout
-                </button>
-            </div>
-        </div>
-    </header>
 
-
-
-
-    
 
     <!-- Main Container - Constrained compact mobile-friendly width matching Screenshot 1603 style -->
     <main class="max-w-xl mx-auto px-4 py-8 flex-grow w-full">
@@ -81,6 +87,8 @@
             </div>
         </div>
 
+
+        
         <!-- SCREEN 2: DASHBOARD VIEW -->
         <div id="dashboard-screen" class="hidden space-y-6">
             <!-- Center Workshop Title Banner -->
@@ -260,14 +268,21 @@ function loadFirebaseData() {
             }
         }
 
+
+
+
+
+
+
+
+
+
         function renderDashboard() {
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('change-password-screen').classList.add('hidden');
             document.getElementById('reset-password-screen').classList.add('hidden');
             document.getElementById('dashboard-screen').classList.remove('hidden');
             document.getElementById('app-header').classList.remove('hidden');
-
-            console.log("Current Active User object:", currentActiveUser);
 
             let pName = currentActiveUser.ps_name || "Participant";
             let pId = currentActiveUser.ps_id || "N/A";
@@ -276,7 +291,7 @@ function loadFirebaseData() {
 
             const headerInfo = document.getElementById('header-user-info');
             headerInfo.innerHTML = `
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 text-xs sm:text-sm">
+                <div class="grid grid-cols-1 gap-y-1 text-xs sm:text-sm">
                     <div><strong>Name:</strong> ${pName}</div>
                     <div><strong>Unique ID Number:</strong> ${pId}</div>
                     <div><strong>Mobile Number:</strong> ${pMob}</div>
@@ -285,14 +300,8 @@ function loadFirebaseData() {
             `;
 
             let wId = currentActiveUser.workshop_id;
-            console.log("Extracted workshop_id from user:", wId);
-
             let workshop = allWorkshops[wId] || {};
-            console.log("Resolved workshop object:", workshop);
-
             let workshopName = workshop.workshop_name || "Workshop Name Not Available";
-            console.log("Final resolved workshop_name:", workshopName);
-
             document.getElementById('workshop-title-display').innerText = workshopName;
 
             const resourcesContainer = document.getElementById('resources-container');
@@ -308,13 +317,13 @@ function loadFirebaseData() {
 
             resourceLinks.forEach(res => {
                 let row = document.createElement('div');
-                row.className = "px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center hover:bg-gray-50 transition";
+                row.className = "px-6 py-3 flex flex-col sm:flex-row justify-between items-start sm:items-center hover:bg-gray-50 transition border-b border-gray-100 last:border-b-0";
                 
                 let linkVal = res.link ? res.link.toString().trim() : "";
                 let isLinkValid = linkVal.startsWith('http://') || linkVal.startsWith('https://');
 
                 let titleSpan = document.createElement('span');
-                titleSpan.className = "text-gray-800 font-medium text-sm mb-2 sm:mb-0";
+                titleSpan.className = "text-gray-800 font-medium text-xs sm:text-sm mb-2 sm:mb-0";
                 titleSpan.innerText = res.title;
                 row.appendChild(titleSpan);
 
@@ -322,7 +331,7 @@ function loadFirebaseData() {
                     let a = document.createElement('a');
                     a.href = linkVal;
                     a.target = "_blank";
-                    a.className = "bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2 px-4 rounded transition shadow";
+                    a.className = "bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-1.5 px-3 rounded transition shadow";
                     a.innerText = "Access Link";
                     row.appendChild(a);
                 } else {
@@ -335,13 +344,6 @@ function loadFirebaseData() {
                 resourcesContainer.appendChild(row);
             });
         }
-
-
-
-
-
-
-        
 
 
 
