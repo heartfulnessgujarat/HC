@@ -217,14 +217,24 @@
         let cpSelectedKey = null;
         let rpSelectedKey = null;
 
-        function loadFirebaseData() {
+
+
+
+
+function loadFirebaseData() {
             db.ref('control_tower').once('value').then(snapshot => {
                 const data = snapshot.val();
+                console.log("Firebase Raw Data Loaded for control_tower:", data);
                 if (data) {
                     allParticipants = data.participants || {};
                     allWorkshops = data.workshops || {};
                     
+                    console.log("Parsed allParticipants:", allParticipants);
+                    console.log("Parsed allWorkshops:", allWorkshops);
+                    
                     updateLoginWorkshopBadge();
+                } else {
+                    console.warn("Firebase returned empty data for control_tower.");
                 }
             }).catch(err => console.error("Error fetching data from Firebase:", err));
         }
@@ -233,14 +243,113 @@
 
         function updateLoginWorkshopBadge() {
             let workshopKeys = Object.keys(allWorkshops);
+            console.log("Workshop Keys available:", workshopKeys);
             if (workshopKeys.length > 0) {
                 let firstWorkshop = allWorkshops[workshopKeys[0]];
+                console.log("First Workshop Object:", firstWorkshop);
                 if (firstWorkshop && firstWorkshop.workshop_name) {
                     document.getElementById('login-workshop-name').innerText = firstWorkshop.workshop_name;
                     document.getElementById('login-workshop-badge').classList.remove('hidden');
                 }
             }
         }
+
+        function renderDashboard() {
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('change-password-screen').classList.add('hidden');
+            document.getElementById('reset-password-screen').classList.add('hidden');
+            document.getElementById('dashboard-screen').classList.remove('hidden');
+            document.getElementById('app-header').classList.remove('hidden');
+
+            console.log("Current Active User object:", currentActiveUser);
+
+            let pName = currentActiveUser.ps_name || "Participant";
+            let pId = currentActiveUser.ps_id || "N/A";
+            let pMob = maskMobile(currentActiveUser.ps_mob);
+            let pEmail = maskEmail(currentActiveUser.ps_email);
+
+            const headerInfo = document.getElementById('header-user-info');
+            headerInfo.innerHTML = `
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 text-xs sm:text-sm">
+                    <div><strong>Name:</strong> ${pName}</div>
+                    <div><strong>Unique ID Number:</strong> ${pId}</div>
+                    <div><strong>Mobile Number:</strong> ${pMob}</div>
+                    <div><strong>Email Address:</strong> ${pEmail}</div>
+                </div>
+            `;
+
+            let wId = currentActiveUser.workshop_id;
+            console.log("Extracted workshop_id from user:", wId);
+
+            let workshop = allWorkshops[wId] || {};
+            console.log("Resolved workshop object:", workshop);
+
+            let workshopName = workshop.workshop_name || "Workshop Name Not Available";
+            console.log("Final resolved workshop_name:", workshopName);
+
+            document.getElementById('workshop-title-display').innerText = workshopName;
+
+            const resourcesContainer = document.getElementById('resources-container');
+            resourcesContainer.innerHTML = '';
+
+            const resourceLinks = [
+                { title: "Personalized zoom link to join the workshop", link: currentActiveUser.personal_zoom_link },
+                { title: "Participant WhatsApp Group Joining Link", link: workshop.participant_wg_link },
+                { title: "Workshop Schedule Link", link: workshop.workshop_shedule_link },
+                { title: "Material/Handbook Link", link: workshop.material_link },
+                { title: "Participant Feedback Link", link: workshop.participant_feedback_link }
+            ];
+
+            resourceLinks.forEach(res => {
+                let row = document.createElement('div');
+                row.className = "px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center hover:bg-gray-50 transition";
+                
+                let linkVal = res.link ? res.link.toString().trim() : "";
+                let isLinkValid = linkVal.startsWith('http://') || linkVal.startsWith('https://');
+
+                let titleSpan = document.createElement('span');
+                titleSpan.className = "text-gray-800 font-medium text-sm mb-2 sm:mb-0";
+                titleSpan.innerText = res.title;
+                row.appendChild(titleSpan);
+
+                if (isLinkValid) {
+                    let a = document.createElement('a');
+                    a.href = linkVal;
+                    a.target = "_blank";
+                    a.className = "bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2 px-4 rounded transition shadow";
+                    a.innerText = "Access Link";
+                    row.appendChild(a);
+                } else {
+                    let span = document.createElement('span');
+                    span.className = "text-gray-400 text-xs italic";
+                    span.innerText = "Not Available";
+                    row.appendChild(span);
+                }
+
+                resourcesContainer.appendChild(row);
+            });
+        }
+
+
+
+
+
+
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
 
         function togglePasswordVisibility(inputId, iconId) {
             const input = document.getElementById(inputId);
@@ -474,74 +583,11 @@
 
 
 
-        function renderDashboard() {
-            document.getElementById('login-screen').classList.add('hidden');
-            document.getElementById('change-password-screen').classList.add('hidden');
-            document.getElementById('reset-password-screen').classList.add('hidden');
-            document.getElementById('dashboard-screen').classList.remove('hidden');
-            document.getElementById('app-header').classList.remove('hidden');
-
-            let pName = currentActiveUser.ps_name || "Participant";
-            let pId = currentActiveUser.ps_id || "N/A";
-            let pMob = maskMobile(currentActiveUser.ps_mob);
-            let pEmail = maskEmail(currentActiveUser.ps_email);
-
-            const headerInfo = document.getElementById('header-user-info');
-            headerInfo.innerHTML = `
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 text-xs sm:text-sm">
-                    <div><strong>Name:</strong> ${pName}</div>
-                    <div><strong>Unique ID Number:</strong> ${pId}</div>
-                    <div><strong>Mobile Number:</strong> ${pMob}</div>
-                    <div><strong>Email Address:</strong> ${pEmail}</div>
-                </div>
-            `;
-
-            let wId = currentActiveUser.workshop_id;
-            let workshop = allWorkshops[wId] || {};
-            document.getElementById('workshop-title-display').innerText = workshop.workshop_name || "Workshop Name Not Available";
-
-            const resourcesContainer = document.getElementById('resources-container');
-            resourcesContainer.innerHTML = '';
-
-            const resourceLinks = [
-                { title: "Personalized zoom link to join the workshop", link: currentActiveUser.personal_zoom_link },
-                { title: "Participant WhatsApp Group Joining Link", link: workshop.participant_wg_link },
-                { title: "Workshop Schedule Link", link: workshop.workshop_shedule_link },
-                { title: "Material/Handbook Link", link: workshop.material_link },
-                { title: "Participant Feedback Link", link: workshop.participant_feedback_link }
-            ];
-
-            resourceLinks.forEach(res => {
-                let row = document.createElement('div');
-                row.className = "px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center hover:bg-gray-50 transition";
-                
-                let linkVal = res.link ? res.link.toString().trim() : "";
-                let isLinkValid = linkVal.startsWith('http://') || linkVal.startsWith('https://');
-
-                let titleSpan = document.createElement('span');
-                titleSpan.className = "text-gray-800 font-medium text-sm mb-2 sm:mb-0";
-                titleSpan.innerText = res.title;
-                row.appendChild(titleSpan);
-
-                if (isLinkValid) {
-                    let a = document.createElement('a');
-                    a.href = linkVal;
-                    a.target = "_blank";
-                    a.className = "bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2 px-4 rounded transition shadow";
-                    a.innerText = "Access Link";
-                    row.appendChild(a);
-                } else {
-                    let span = document.createElement('span');
-                    span.className = "text-gray-400 text-xs italic";
-                    span.innerText = "Not Available";
-                    row.appendChild(span);
-                }
-
-                resourcesContainer.appendChild(row);
-            });
-        }
 
 
+
+
+        
 
 
         function showLoginScreen() {
