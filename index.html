@@ -27,9 +27,7 @@
         </div>
     </header>
 
-
-    
-
+   
 
     <!-- Main Container - Constrained compact mobile-friendly width matching Screenshot 1603 style -->
     <main class="max-w-xl mx-auto px-4 py-8 flex-grow w-full">
@@ -198,6 +196,23 @@
     </footer>
 
     <!-- Firebase & Dynamic App Logic -->
+
+<!-- Custom Message Box Modal -->
+<div id="custom-alert-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4">
+    <div class="bg-white rounded-xl shadow-xl max-w-sm w-full p-6 text-center transform transition-all">
+        <div id="custom-alert-message" class="text-gray-800 text-sm mb-6 font-medium"></div>
+        <button onclick="closeCustomAlert()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2 px-6 rounded transition shadow">
+            OK
+        </button>
+    </div>
+</div>
+
+
+
+    
+
+
+    
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyAt_HbqtG_kMn41NC1wPy5KDFNsDp5HTb8",
@@ -406,7 +421,7 @@ function loadFirebaseData() {
         function handleLogin() {
             const passwordInput = document.getElementById('login-password').value;
             if (!selectedParticipantKey || !allParticipants[selectedParticipantKey]) {
-                alert("Please search and select a valid participant.");
+                showCustomAlert("Please search and select a valid participant.");
                 return;
             }
 
@@ -417,7 +432,7 @@ function loadFirebaseData() {
                 currentActiveUser = user;
                 renderDashboard();
             } else {
-                alert("Incorrect password. Please try again.");
+                showCustomAlert("Incorrect password. Please try again.");
             }
         }
 
@@ -461,7 +476,7 @@ function loadFirebaseData() {
 
         function submitChangePassword() {
             if (!cpSelectedKey || !allParticipants[cpSelectedKey]) {
-                alert("Please search and select a valid participant.");
+                showCustomAlert("Please search and select a valid participant.");
                 return;
             }
 
@@ -470,12 +485,12 @@ function loadFirebaseData() {
             const confirmPass = document.getElementById('cp-confirm-password').value.trim();
 
             if (!currentPass || !newPass || !confirmPass) {
-                alert("Please fill in all password fields.");
+                showCustomAlert("Please fill in all password fields.");
                 return;
             }
 
             if (newPass !== confirmPass) {
-                alert("New password and confirm password do not match.");
+                showCustomAlert("New password and confirm password do not match.");
                 return;
             }
 
@@ -483,16 +498,16 @@ function loadFirebaseData() {
             let storedPass = user.password ? user.password.toString() : "123456";
 
             if (currentPass !== storedPass) {
-                alert("Current password is incorrect.");
+                showCustomAlert("Current password is incorrect.");
                 return;
             }
 
             db.ref('control_tower/participants/' + cpSelectedKey).update({ password: newPass }).then(() => {
-                alert("Password successfully updated!");
+                showCustomAlert("Password successfully updated!");
                 allParticipants[cpSelectedKey].password = newPass;
                 showLoginScreen();
             }).catch(err => {
-                alert("Failed to update password.");
+                showCustomAlert("Failed to update password.");
             });
         }
 
@@ -536,28 +551,28 @@ function loadFirebaseData() {
 
         function submitResetPassword() {
             if (!rpSelectedKey || !allParticipants[rpSelectedKey]) {
-                alert("Please search and select a valid participant.");
+                showCustomAlert("Please search and select a valid participant.");
                 return;
             }
 
             if (typeof google !== 'undefined' && google.script && google.script.run) {
                 google.script.run
                     .withSuccessHandler(() => {
-                        alert("Password reset to 123456");
+                        showCustomAlert("Password reset to 123456");
                         allParticipants[rpSelectedKey].password = "123456";
                         showLoginScreen();
                     })
                     .withFailureHandler((err) => {
-                        alert("Failed to sync reset password: " + err.message);
+                        showCustomAlert("Failed to sync reset password: " + err.message);
                     })
                     .updateParticipantPassword(rpSelectedKey, "123456");
             } else {
                 db.ref('control_tower/participants/' + rpSelectedKey).update({ password: "123456" }).then(() => {
-                    alert("Password reset to 123456");
+                    showCustomAlert("Password reset to 123456");
                     allParticipants[rpSelectedKey].password = "123456";
                     showLoginScreen();
                 }).catch(err => {
-                    alert("Failed to reset password.");
+                    showCustomAlert("Failed to reset password.");
                 });
             }
         }
@@ -635,6 +650,23 @@ function loadFirebaseData() {
             document.getElementById('rp-selected-display').value = '';
             rpSelectedKey = null;
         }
+
+
+function showCustomAlert(message) {
+            document.getElementById('custom-alert-message').innerText = message;
+            document.getElementById('custom-alert-modal').classList.remove('hidden');
+        }
+
+        function closeCustomAlert() {
+            document.getElementById('custom-alert-modal').classList.add('hidden');
+        }
+
+
+
+
+
+
+        
     </script>
 </body>
 </html>
