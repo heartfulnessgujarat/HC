@@ -266,18 +266,27 @@ function loadFirebaseData() {
                 }
             }).catch(err => console.error("Error fetching data from Firebase:", err));
 
-            // Fetch and display persistent global header logo from Firebase
-            db.ref('control_tower/config/header_logo').on('value', (snapshot) => {
+
+    
+
+         // CORRECTED: Fetch and display persistent global header logo from Firebase
+            db.ref('config/header_logo').on('value', (snapshot) => {
                 const logoBase64 = snapshot.val();
                 const logoElement = document.getElementById('app-logo');
+                const logoContainer = document.getElementById('global-header');
                 
                 if (logoBase64) {
                     logoElement.src = logoBase64;
-                    logoElement.classList.remove('hidden');
+                    logoContainer.classList.remove('hidden'); // Show the header
                 } else {
-                    logoElement.classList.add('hidden');
+                    logoContainer.classList.add('hidden');    // Hide if no logo
                 }
             });
+
+
+
+
+    
         }
 
         window.onload = loadFirebaseData;
