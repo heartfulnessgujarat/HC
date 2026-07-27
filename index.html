@@ -249,6 +249,10 @@
         let rpSelectedKey = null;
 
 
+
+
+
+        
 function loadFirebaseData() {
             db.ref('control_tower').once('value').then(snapshot => {
                 const data = snapshot.val();
@@ -267,23 +271,30 @@ function loadFirebaseData() {
             }).catch(err => console.error("Error fetching data from Firebase:", err));
 
 
+
+
+
     
 
-         // CORRECTED: Fetch and display persistent global header logo from Firebase
-            db.ref('config/header_logo').on('value', (snapshot) => {
+        // Fetch and display persistent global header logo from Firebase
+            db.ref('control_tower/config/header_logo').on('value', (snapshot) => {
                 const logoBase64 = snapshot.val();
+                console.log("Logo Base64 fetched:", logoBase64 ? "Found data length: " + logoBase64.length : "Null/Empty");
+                
                 const logoElement = document.getElementById('app-logo');
                 const logoContainer = document.getElementById('global-header');
                 
                 if (logoBase64) {
                     logoElement.src = logoBase64;
-                    logoContainer.classList.remove('hidden'); // Show the header
+                    logoContainer.classList.remove('hidden');
                 } else {
-                    logoContainer.classList.add('hidden');    // Hide if no logo
+                    logoContainer.classList.add('hidden');
                 }
             });
 
 
+
+    
 
 
     
