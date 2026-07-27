@@ -470,7 +470,9 @@
             return maskedName + "@" + domain;
         }
 
-        function renderDashboard() {
+
+
+function renderDashboard() {
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('change-password-screen').classList.add('hidden');
             document.getElementById('reset-password-screen').classList.add('hidden');
@@ -479,8 +481,8 @@
 
             let pName = currentActiveUser.ps_name || "Participant";
             let pId = currentActiveUser.ps_id || "N/A";
-            let pMob = currentActiveUser.ps_mob || "N/A";
-            let pEmail = currentActiveUser.ps_email || "N/A";
+            let pMob = maskMobile(currentActiveUser.ps_mob);
+            let pEmail = maskEmail(currentActiveUser.ps_email);
 
             const headerInfo = document.getElementById('header-user-info');
             headerInfo.innerHTML = `
@@ -536,6 +538,10 @@
                 resourcesContainer.appendChild(row);
             });
         }
+
+
+
+
 
         function showLoginScreen() {
             document.getElementById('login-screen').classList.remove('hidden');
