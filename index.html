@@ -12,9 +12,9 @@
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col justify-between">
 
-    <!-- Top Header Bar -->
+    <!-- Top Header Bar with matching max-w-xl width to align with the main container card -->
     <header id="app-header" class="bg-indigo-600 text-white shadow-md hidden">
-        <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
+        <div class="max-w-xl mx-auto px-4 py-3 flex justify-between items-center">
             <!-- Left aligned combined horizontal info with masking, preventing button overlap -->
             <div class="pr-3 overflow-hidden">
                 <h1 id="header-user-info" class="text-sm sm:text-base font-bold truncate">--</h1>
@@ -32,30 +32,45 @@
 
         <!-- SCREEN 1: LOGIN VIEW -->
         <div id="login-screen" class="bg-white rounded-xl shadow-md p-6 sm:p-8 mt-6">
+            <!-- Dynamic workshop name above title -->
+            <div id="login-workshop-badge" class="text-center mb-2 hidden">
+                <span id="login-workshop-name" class="text-xs uppercase tracking-widest bg-indigo-50 text-indigo-600 px-3 py-1 rounded-full font-semibold">--</span>
+            </div>
             <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Participant Login</h2>
             
-            <div class="mb-4">
-                <label class="block text-gray-700 text-sm font-bold mb-2">Search Name (Type at least 3 letters):</label>
+            <div class="mb-4 relative">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Type your name in English, (at least 3 letters):</label>
                 <input type="text" id="search-name" placeholder="e.g. Raj" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" oninput="filterParticipants()">
-                <div id="search-results" class="bg-white border mt-1 rounded-lg shadow-lg max-h-40 overflow-y-auto hidden"></div>
+                <div id="search-results" class="absolute left-0 right-0 bg-white border mt-1 rounded-lg shadow-lg max-h-40 overflow-y-auto hidden z-20"></div>
             </div>
 
-            <div class="mb-4">
-                <label class="block text-gray-700 text-sm font-bold mb-2">Selected Participant:</label>
-                <input type="text" id="selected-participant-display" readonly class="w-full px-3 py-2 bg-gray-100 border rounded-lg text-gray-600" placeholder="Select from search above">
+            <!-- Conditionally shown Participant Name container (hidden until selection) -->
+            <div id="selected-participant-container" class="mb-4 hidden">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Name of the Participant:</label>
+                <input type="text" id="selected-participant-display" readonly class="w-full px-3 py-2 bg-gray-100 border rounded-lg text-gray-600">
             </div>
 
-            <div class="mb-6">
+            <div class="mb-6 relative">
                 <label class="block text-gray-700 text-sm font-bold mb-2">Password:</label>
-                <input type="password" id="login-password" placeholder="Enter password" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <div class="relative">
+                    <input type="password" id="login-password" placeholder="Enter password" class="w-full px-3 py-2 pr-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <button type="button" onclick="togglePasswordVisibility('login-password', 'login-eye-icon')" class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-500 hover:text-gray-700 focus:outline-none">
+                        <svg id="login-eye-icon" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                    </button>
+                </div>
             </div>
 
-            <button onclick="handleLogin()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition">
+            <button onclick="handleLogin()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition mb-4">
                 Login
             </button>
 
-            <div class="mt-4 text-center">
-                <a href="#" onclick="showPasswordResetScreen()" class="text-sm text-indigo-600 hover:underline">Forgot Password / Reset?</a>
+            <!-- Separate Footer Links: Change Password & Reset Password -->
+            <div class="flex justify-between items-center text-sm px-1">
+                <a href="#" onclick="showChangePasswordScreen()" class="text-indigo-600 hover:underline font-medium">Change Password</a>
+                <a href="#" onclick="showResetPasswordScreen()" class="text-indigo-600 hover:underline font-medium">Reset Password</a>
             </div>
         </div>
 
@@ -78,22 +93,85 @@
             </div>
         </div>
 
-        <!-- SCREEN 3: PASSWORD RESET / CHANGE SCREEN -->
-        <div id="password-screen" class="bg-white rounded-xl shadow-md p-6 sm:p-8 mt-6 hidden">
-            <h2 id="password-screen-title" class="text-2xl font-bold text-gray-800 mb-6 text-center">Password Reset</h2>
+        <!-- SCREEN 3: CHANGE PASSWORD SCREEN (4 Boxes matching Screenshot 1615) -->
+        <div id="change-password-screen" class="bg-white rounded-xl shadow-md p-6 sm:p-8 mt-6 hidden">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Change Password</h2>
             
+            <div class="mb-4 relative">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Type your name in English, (at least 3 letters):</label>
+                <input type="text" id="cp-search-name" placeholder="e.g. Raj" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" oninput="filterChangePasswordParticipants()">
+                <div id="cp-search-results" class="absolute left-0 right-0 bg-white border mt-1 rounded-lg shadow-lg max-h-40 overflow-y-auto hidden z-20"></div>
+            </div>
+
             <div class="mb-4">
-                <label class="block text-gray-700 text-sm font-bold mb-2">Registered Email or Mobile:</label>
-                <input type="text" id="reset-identifier" placeholder="Enter email or mobile" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Name of the Participant:</label>
+                <input type="text" id="cp-selected-display" readonly class="w-full px-3 py-2 bg-gray-100 border rounded-lg text-gray-600" placeholder="Selected participant name">
+            </div>
+
+            <div class="mb-4 relative">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Current Password:</label>
+                <div class="relative">
+                    <input type="password" id="cp-current-password" placeholder="Current Password" class="w-full px-3 py-2 pr-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <button type="button" onclick="togglePasswordVisibility('cp-current-password', 'cp-eye-1')" class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-500 hover:text-gray-700 focus:outline-none">
+                        <svg id="cp-eye-1" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="mb-4 relative">
+                <label class="block text-gray-700 text-sm font-bold mb-2">New Password (Max 6 Chars):</label>
+                <div class="relative">
+                    <input type="password" id="cp-new-password" placeholder="New Password" maxlength="6" class="w-full px-3 py-2 pr-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <button type="button" onclick="togglePasswordVisibility('cp-new-password', 'cp-eye-2')" class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-500 hover:text-gray-700 focus:outline-none">
+                        <svg id="cp-eye-2" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="mb-6 relative">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Confirm New Password:</label>
+                <div class="relative">
+                    <input type="password" id="cp-confirm-password" placeholder="Confirm New Password" maxlength="6" class="w-full px-3 py-2 pr-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <button type="button" onclick="togglePasswordVisibility('cp-confirm-password', 'cp-eye-3')" class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-500 hover:text-gray-700 focus:outline-none">
+                        <svg id="cp-eye-3" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <button onclick="submitChangePassword()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition mb-3">
+                Update Password
+            </button>
+            <button onclick="showLoginScreen()" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded-lg transition">
+                Back to Login
+            </button>
+        </div>
+
+        <!-- SCREEN 4: RESET PASSWORD SCREEN (Resets password back to 123456) -->
+        <div id="reset-password-screen" class="bg-white rounded-xl shadow-md p-6 sm:p-8 mt-6 hidden">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Reset Password</h2>
+            
+            <div class="mb-4 relative">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Type your name in English, (at least 3 letters):</label>
+                <input type="text" id="rp-search-name" placeholder="e.g. Raj" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" oninput="filterResetPasswordParticipants()">
+                <div id="rp-search-results" class="absolute left-0 right-0 bg-white border mt-1 rounded-lg shadow-lg max-h-40 overflow-y-auto hidden z-20"></div>
             </div>
 
             <div class="mb-6">
-                <label class="block text-gray-700 text-sm font-bold mb-2">New Password:</label>
-                <input type="password" id="new-password" placeholder="Enter new password" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Name of the Participant:</label>
+                <input type="text" id="rp-selected-display" readonly class="w-full px-3 py-2 bg-gray-100 border rounded-lg text-gray-600" placeholder="Selected participant name">
             </div>
 
-            <button onclick="submitPasswordChange()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition mb-3">
-                Update Password
+            <button onclick="submitResetPassword()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition mb-3">
+                Reset Password to 123456
             </button>
             <button onclick="showLoginScreen()" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded-lg transition">
                 Back to Login
@@ -128,6 +206,9 @@
         let allWorkshops = {};
         let currentActiveUser = null;
         let selectedParticipantKey = null;
+        
+        let cpSelectedKey = null;
+        let rpSelectedKey = null;
 
         function loadFirebaseData() {
             db.ref('control_tower').once('value').then(snapshot => {
@@ -135,12 +216,41 @@
                 if (data) {
                     allParticipants = data.participants || {};
                     allWorkshops = data.workshops || {};
+                    
+                    // Display workshop name dynamically above login screen if available
+                    updateLoginWorkshopBadge();
                 }
             }).catch(err => console.error("Error fetching data from Firebase:", err));
         }
 
         window.onload = loadFirebaseData;
 
+        function updateLoginWorkshopBadge() {
+            // Grab first workshop name or active workshop as sample banner
+            let workshopKeys = Object.keys(allWorkshops);
+            if (workshopKeys.length > 0) {
+                let firstWorkshop = allWorkshops[workshopKeys[0]];
+                if (firstWorkshop && firstWorkshop.workshop_name) {
+                    document.getElementById('login-workshop-name').innerText = firstWorkshop.workshop_name;
+                    document.getElementById('login-workshop-badge').classList.remove('hidden');
+                }
+            }
+        }
+
+        // Toggle password visibility with eye icon
+        function togglePasswordVisibility(inputId, iconId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+            if (input.type === "password") {
+                input.type = "text";
+                icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a10.05 10.05 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />`;
+            } else {
+                input.type = "password";
+                icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />`;
+            }
+        }
+
+        // Login Screen Search & Filter (Name only, conditional display)
         function filterParticipants() {
             const query = document.getElementById('search-name').value.toLowerCase();
             const resultsBox = document.getElementById('search-results');
@@ -164,8 +274,8 @@
                 resultsBox.classList.remove('hidden');
                 matches.forEach(m => {
                     let div = document.createElement('div');
-                    div.className = "px-4 py-2 hover:bg-indigo-50 cursor-pointer text-sm border-b";
-                    div.innerText = `${m.data.ps_name} (ID: ${m.data.ps_id || 'N/A'})`;
+                    div.className = "px-4 py-2 hover:bg-indigo-50 cursor-pointer text-sm border-b bg-white";
+                    div.innerText = m.data.ps_name; // Name only, no ID
                     div.onclick = () => selectParticipant(m.key, m.data);
                     resultsBox.appendChild(div);
                 });
@@ -176,8 +286,9 @@
 
         function selectParticipant(key, data) {
             selectedParticipantKey = key;
-            document.getElementById('selected-participant-display').value = data.ps_name;
             document.getElementById('search-name').value = data.ps_name;
+            document.getElementById('selected-participant-display').value = data.ps_name;
+            document.getElementById('selected-participant-container').classList.remove('hidden');
             document.getElementById('search-results').classList.add('hidden');
         }
 
@@ -199,7 +310,153 @@
             }
         }
 
-        // Masking helper functions for mobile and email privacy
+        // Change Password Screen Search & Filter
+        function filterChangePasswordParticipants() {
+            const query = document.getElementById('cp-search-name').value.toLowerCase();
+            const resultsBox = document.getElementById('cp-search-results');
+            resultsBox.innerHTML = '';
+
+            if (query.length < 3) {
+                resultsBox.classList.add('hidden');
+                return;
+            }
+
+            let matches = [];
+            for (let key in allParticipants) {
+                let p = allParticipants[key];
+                let pName = (p.ps_name || "").toLowerCase();
+                if (pName.includes(query)) {
+                    matches.push({ key: key, data: p });
+                }
+            }
+
+            if (matches.length > 0) {
+                resultsBox.classList.remove('hidden');
+                matches.forEach(m => {
+                    let div = document.createElement('div');
+                    div.className = "px-4 py-2 hover:bg-indigo-50 cursor-pointer text-sm border-b bg-white";
+                    div.innerText = m.data.ps_name;
+                    div.onclick = () => {
+                        cpSelectedKey = m.key;
+                        document.getElementById('cp-search-name').value = m.data.ps_name;
+                        document.getElementById('cp-selected-display').value = m.data.ps_name;
+                        resultsBox.classList.add('hidden');
+                    };
+                    resultsBox.appendChild(div);
+                });
+            } else {
+                resultsBox.classList.add('hidden');
+            }
+        }
+
+        function submitChangePassword() {
+            if (!cpSelectedKey || !allParticipants[cpSelectedKey]) {
+                alert("Please search and select a valid participant.");
+                return;
+            }
+
+            const currentPass = document.getElementById('cp-current-password').value.trim();
+            const newPass = document.getElementById('cp-new-password').value.trim();
+            const confirmPass = document.getElementById('cp-confirm-password').value.trim();
+
+            if (!currentPass || !newPass || !confirmPass) {
+                alert("Please fill in all password fields.");
+                return;
+            }
+
+            if (newPass !== confirmPass) {
+                alert("New password and confirm password do not match.");
+                return;
+            }
+
+            let user = allParticipants[cpSelectedKey];
+            let storedPass = user.password ? user.password.toString() : "123456";
+
+            if (currentPass !== storedPass) {
+                alert("Current password is incorrect.");
+                return;
+            }
+
+            // Update via Google Apps Script backend if hosted as web app, or direct Firebase update
+            db.ref('control_tower/participants/' + cpSelectedKey).update({ password: newPass }).then(() => {
+                alert("Password successfully updated!");
+                allParticipants[cpSelectedKey].password = newPass;
+                showLoginScreen();
+            }).catch(err => {
+                alert("Failed to update password.");
+            });
+        }
+
+        // Reset Password Screen Search & Filter
+        function filterResetPasswordParticipants() {
+            const query = document.getElementById('rp-search-name').value.toLowerCase();
+            const resultsBox = document.getElementById('rp-search-results');
+            resultsBox.innerHTML = '';
+
+            if (query.length < 3) {
+                resultsBox.classList.add('hidden');
+                return;
+            }
+
+            let matches = [];
+            for (let key in allParticipants) {
+                let p = allParticipants[key];
+                let pName = (p.ps_name || "").toLowerCase();
+                if (pName.includes(query)) {
+                    matches.push({ key: key, data: p });
+                }
+            }
+
+            if (matches.length > 0) {
+                resultsBox.classList.remove('hidden');
+                matches.forEach(m => {
+                    let div = document.createElement('div');
+                    div.className = "px-4 py-2 hover:bg-indigo-50 cursor-pointer text-sm border-b bg-white";
+                    div.innerText = m.data.ps_name;
+                    div.onclick = () => {
+                        rpSelectedKey = m.key;
+                        document.getElementById('rp-search-name').value = m.data.ps_name;
+                        document.getElementById('rp-selected-display').value = m.data.ps_name;
+                        resultsBox.classList.add('hidden');
+                    };
+                    resultsBox.appendChild(div);
+                });
+            } else {
+                resultsBox.classList.add('hidden');
+            }
+        }
+
+        function submitResetPassword() {
+            if (!rpSelectedKey || !allParticipants[rpSelectedKey]) {
+                alert("Please search and select a valid participant.");
+                return;
+            }
+
+            // Call Google Apps Script backend function if available via google.script.run, otherwise update Firebase directly
+            if (typeof google !== 'undefined' && google.script && google.script.run) {
+                google.script.run
+                    .withSuccessHandler(() => {
+                        alert("Password reset to 123456");
+                        allParticipants[rpSelectedKey].password = "123456";
+                        showLoginScreen();
+                    })
+                    .withFailureHandler((err) => {
+                        alert("Failed to sync reset password: " + err.message);
+                    })
+                    .updateParticipantPassword(rpSelectedKey, "123456");
+            } else {
+                // Fallback for standalone Github Pages deployment
+                db.ref('control_tower/participants/' + rpSelectedKey).update({ password: "123456" }).then(() => {
+                    alert("Password reset to 123456");
+                    allParticipants[rpSelectedKey].password = "123456";
+                    showLoginScreen();
+                }).catch(err => {
+                    alert("Failed to reset password.");
+                });
+            }
+        }
+
+        // Masking helper functions
         function maskMobile(mob) {
             if (!mob) return "***";
             let s = mob.toString().trim();
@@ -216,14 +473,14 @@
             return maskedName + "@" + domain;
         }
 
-        // Render Dashboard matching all 8 requirements
+        // Render Dashboard
         function renderDashboard() {
             document.getElementById('login-screen').classList.add('hidden');
-            document.getElementById('password-screen').classList.add('hidden');
+            document.getElementById('change-password-screen').classList.add('hidden');
+            document.getElementById('reset-password-screen').classList.add('hidden');
             document.getElementById('dashboard-screen').classList.remove('hidden');
             document.getElementById('app-header').classList.remove('hidden');
 
-            // Header Horizontal Masked Display: ps_name (ps_id, ps_mob, ps_email)
             let pName = currentActiveUser.ps_name || "Participant";
             let pId = currentActiveUser.ps_id || "N/A";
             let pMob = maskMobile(currentActiveUser.ps_mob);
@@ -231,14 +488,11 @@
             
             document.getElementById('header-user-info').innerText = `${pName} (${pId}, ${pMob}, ${pEmail})`;
 
-            // Fetch workshop details matching workshop_id from Firebase workshops node
             let wId = currentActiveUser.workshop_id;
             let workshop = allWorkshops[wId] || {};
 
-            // Dynamic Active Workshop name display (without "Workshop Portal" text)
             document.getElementById('workshop-title-display').innerText = workshop.workshop_name || "Active Workshop";
 
-            // Resource Table Mapping: Zoom link from participant node, others from workshop node
             const resourcesContainer = document.getElementById('resources-container');
             resourcesContainer.innerHTML = '';
 
@@ -273,53 +527,33 @@
         function logout() {
             currentActiveUser = null;
             selectedParticipantKey = null;
+            cpSelectedKey = null;
+            rpSelectedKey = null;
             document.getElementById('login-password').value = '';
             document.getElementById('search-name').value = '';
             document.getElementById('selected-participant-display').value = '';
+            document.getElementById('selected-participant-container').classList.add('hidden');
             document.getElementById('dashboard-screen').classList.add('hidden');
             document.getElementById('app-header').classList.add('hidden');
             document.getElementById('login-screen').classList.remove('hidden');
         }
 
-        function showPasswordResetScreen() {
+        function showChangePasswordScreen() {
             document.getElementById('login-screen').classList.add('hidden');
-            document.getElementById('password-screen').classList.remove('hidden');
+            document.getElementById('reset-password-screen').classList.add('hidden');
+            document.getElementById('change-password-screen').classList.remove('hidden');
+        }
+
+        function showResetPasswordScreen() {
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('change-password-screen').classList.add('hidden');
+            document.getElementById('reset-password-screen').classList.remove('hidden');
         }
 
         function showLoginScreen() {
-            document.getElementById('password-screen').classList.add('hidden');
+            document.getElementById('change-password-screen').classList.add('hidden');
+            document.getElementById('reset-password-screen').classList.add('hidden');
             document.getElementById('login-screen').classList.remove('hidden');
-        }
-
-        function submitPasswordChange() {
-            const identifier = document.getElementById('reset-identifier').value.trim();
-            const newPass = document.getElementById('new-password').value.trim();
-
-            if (!identifier || !newPass) {
-                alert("Please fill in all fields.");
-                return;
-            }
-
-            let foundKey = null;
-            for (let key in allParticipants) {
-                let p = allParticipants[key];
-                if ((p.ps_email && p.ps_email.toString() === identifier) || (p.ps_mob && p.ps_mob.toString() === identifier)) {
-                    foundKey = key;
-                    break;
-                }
-            }
-
-            if (foundKey) {
-                db.ref('control_tower/participants/' + foundKey).update({ password: newPass }).then(() => {
-                    alert("Password successfully updated!");
-                    allParticipants[foundKey].password = newPass;
-                    showLoginScreen();
-                }).catch(err => {
-                    alert("Failed to update password in database.");
-                });
-            } else {
-                alert("No participant found matching that email or mobile number.");
-            }
         }
     </script>
 </body>
