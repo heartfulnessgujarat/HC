@@ -12,12 +12,14 @@
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col justify-between">
 
-    <!-- Top Header Bar with matching max-w-xl width to align with the main container card -->
-    <header id="app-header" class="bg-indigo-600 text-white shadow-md hidden">
-        <div class="max-w-xl mx-auto px-4 py-3 flex justify-between items-center">
+
+    
+ <!-- Top Header Bar matching max-w-xl width and rounded styling of the cards -->
+    <header id="app-header" class="max-w-xl mx-auto px-4 pt-6 hidden">
+        <div class="bg-indigo-600 text-white shadow-md rounded-xl p-4 flex justify-between items-center">
             <!-- Left aligned combined horizontal info with masking, preventing button overlap -->
             <div class="pr-3 overflow-hidden">
-                <h1 id="header-user-info" class="text-sm sm:text-base font-bold truncate">--</h1>
+                <div id="header-user-info" class="text-xs sm:text-sm"></div>
             </div>
             <div class="flex-shrink-0">
                 <button onclick="logout()" class="bg-indigo-700 hover:bg-indigo-800 text-white px-3.5 py-1.5 rounded text-sm font-medium transition shadow">
@@ -26,6 +28,11 @@
             </div>
         </div>
     </header>
+
+
+
+
+    
 
     <!-- Main Container - Constrained compact mobile-friendly width matching Screenshot 1603 style -->
     <main class="max-w-xl mx-auto px-4 py-8 flex-grow w-full">
