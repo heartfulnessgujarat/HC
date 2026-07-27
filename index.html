@@ -508,8 +508,7 @@ function loadFirebaseData() {
 
 
            db.ref('control_tower/participants/' + cpSelectedKey).update({ password: newPass }).then(() => {
-                // Silently trigger background sheet sync after a few seconds
-                backgroundSyncToSheet(cpSelectedKey, newPass);
+              
 
                 showCustomAlert("Password successfully updated!");
                 allParticipants[cpSelectedKey].password = newPass;
@@ -582,8 +581,7 @@ function loadFirebaseData() {
 
 
               db.ref('control_tower/participants/' + rpSelectedKey).update({ password: "123456" }).then(() => {
-                // Silently trigger background sheet sync after a few seconds
-                backgroundSyncToSheet(rpSelectedKey, "123456");
+                
 
                 showCustomAlert("Password reset to 123456");
                 allParticipants[rpSelectedKey].password = "123456";
@@ -680,17 +678,6 @@ function showCustomAlert(message) {
             document.getElementById('custom-alert-modal').classList.add('hidden');
         }
 
-
-        function backgroundSyncToSheet(participantKey, newPassword) {
-            // Wait 3 seconds silently in the background so it doesn't block the UI
-            setTimeout(() => {
-                if (typeof google !== 'undefined' && google.script && google.script.run) {
-                    google.script.run
-                        .withFailureHandler(err => console.error("Background sheet sync error:", err))
-                        .updateParticipantPassword(participantKey, newPassword);
-                }
-            }, 3000);
-        }
 
 
 
