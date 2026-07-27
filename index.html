@@ -189,7 +189,7 @@
 
     <!-- Footer -->
     <footer class="text-center py-4 text-xs text-gray-500">
-        Multiple Events Registration System &copy; 2026
+        Heartful Communication - Participant Login System
     </footer>
 
     <!-- Firebase & Dynamic App Logic -->
@@ -472,7 +472,9 @@
 
 
 
-function renderDashboard() {
+
+
+        function renderDashboard() {
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('change-password-screen').classList.add('hidden');
             document.getElementById('reset-password-screen').classList.add('hidden');
@@ -496,7 +498,7 @@ function renderDashboard() {
 
             let wId = currentActiveUser.workshop_id;
             let workshop = allWorkshops[wId] || {};
-            document.getElementById('workshop-title-display').innerText = workshop.workshop_name || "Active Workshop";
+            document.getElementById('workshop-title-display').innerText = workshop.workshop_name || "Workshop Name Not Available";
 
             const resourcesContainer = document.getElementById('resources-container');
             resourcesContainer.innerHTML = '';
@@ -538,7 +540,6 @@ function renderDashboard() {
                 resourcesContainer.appendChild(row);
             });
         }
-
 
 
 
