@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multiple Events Registration System - Participant Portal</title>
+    <!-- Tailwind CSS for modern responsive design -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col justify-between">
+
+    <!-- Top Header Bar (View 1 Header) -->
+    <header id="app-header" class="bg-indigo-600 text-white shadow-md hidden">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div>
+                <span class="text-xs uppercase tracking-wider opacity-85 block">Participant Name & ID</span>
+                <h1 id="header-user-name" class="text-lg font-bold">--</h1>
+                <span id="header-user-id" class="text-xs opacity-90">ID: --</span>
+            </div>
+            <div>
+                <button onclick="logout()" class="bg-indigo-700 hover:bg-indigo-800 text-white px-4 py-2 rounded text-sm font-medium transition shadow">
+                    Logout
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-4xl mx-auto px-4 py-8 flex-grow w-full">
+
+        <!-- SCREEN 1: LOGIN VIEW -->
+        <div id="login-screen" class="bg-white rounded-xl shadow-md p-8 max-w-md mx-auto mt-10">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Participant Login</h2>
+            
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Search Name (Type at least 3 letters):</label>
+                <input type="text" id="search-name" placeholder="e.g. Raj" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" oninput="filterParticipants()">
+                <div id="search-results" class="bg-white border mt-1 rounded-lg shadow-lg max-h-40 overflow-y-auto hidden"></div>
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Selected Participant:</label>
+                <input type="text" id="selected-participant-display" readonly class="w-full px-3 py-2 bg-gray-100 border rounded-lg text-gray-600" placeholder="Select from search above">
+            </div>
+
+            <div class="mb-6">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Password:</label>
+                <input type="password" id="login-password" placeholder="Enter password" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+
+            <button onclick="handleLogin()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition">
+                Login
+            </button>
+
+            <div class="mt-4 text-center">
+                <a href="#" onclick="showPasswordResetScreen()" class="text-sm text-indigo-600 hover:underline">Forgot Password / Reset?</a>
+            </div>
+        </div>
+
+        <!-- SCREEN 2: DASHBOARD VIEW (View 1 Center + View 2 Resources) -->
+        <div id="dashboard-screen" class="hidden space-y-6">
+            <!-- Center Workshop Title Banner -->
+            <div class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl shadow-md p-6 text-white text-center">
+                <span class="text-xs uppercase tracking-widest bg-white/20 px-3 py-1 rounded-full font-semibold">Active Workshop</span>
+                <h2 id="workshop-title-display" class="text-2xl font-bold mt-3">Loading Workshop Name...</h2>
+            </div>
+
+            <!-- View 2: Participant Resources Table -->
+            <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                <div class="bg-gray-100 px-6 py-4 border-b">
+                    <h3 class="text-lg font-bold text-gray-800">Participant Resources</h3>
+                </div>
+                <div class="divide-y divide-gray-200" id="resources-container">
+                    <!-- Dynamically injected rows -->
+                </div>
+            </div>
+        </div>
+
+        <!-- SCREEN 3: PASSWORD RESET / CHANGE SCREEN (Exact Replica Style) -->
+        <div id="password-screen" class="bg-white rounded-xl shadow-md p-8 max-w-md mx-auto mt-10 hidden">
+            <h2 id="password-screen-title" class="text-2xl font-bold text-gray-800 mb-6 text-center">Password Reset</h2>
+            
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Registered Email or Mobile:</label>
+                <input type="text" id="reset-identifier" placeholder="Enter email or mobile" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+
+            <div class="mb-6">
+                <label class="block text-gray-700 text-sm font-bold mb-2">New Password:</label>
+                <input type="password" id="new-password" placeholder="Enter new password" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+
+            <button onclick="submitPasswordChange()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition mb-3">
+                Update Password
+            </button>
+            <button onclick="showLoginScreen()" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded-lg transition">
+                Back to Login
+            </button>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="text-center py-4 text-xs text-gray-500">
+        Multiple Events Registration System &copy; 2026
+    </footer>
+
+    <!-- Firebase & Dynamic App Logic -->
+    <script>
+        // TODO: Replace with your actual Firebase Project Configuration details
+        const firebaseConfig = {
+            databaseURL: "YOUR_FIREBASE_DATABASE_URL"
+        };
+
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.database();
+
+        let allParticipants = {};
+        let allWorkshops = {};
+        let currentActiveUser = null;
+        let selectedParticipantKey = null;
+
+        // Fetch master data directly from Firebase on load for maximum speed
+        function loadFirebaseData() {
+            db.ref('control_tower').once('value').then(snapshot => {
+                const data = snapshot.val();
+                if (data) {
+                    allParticipants = data.participants || {};
+                    allWorkshops = data.workshops || {};
+                }
+            }).catch(err => console.error("Error fetching data from Firebase:", err));
+        }
+
+        window.onload = loadFirebaseData;
+
+        // 3-Letter Name Search Logic
+        function filterParticipants() {
+            const query = document.getElementById('search-name').value.toLowerCase();
+            const resultsBox = document.getElementById('search-results');
+            resultsBox.innerHTML = '';
+
+            if (query.length < 3) {
+                resultsBox.classList.add('hidden');
+                return;
+            }
+
+            let matches = [];
+            for (let key in allParticipants) {
+                let p = allParticipants[key];
+                let pName = (p.ps_name || "").toLowerCase();
+                if (pName.includes(query)) {
+                    matches.push({ key: key, data: p });
+                }
+            }
+
+            if (matches.length > 0) {
+                resultsBox.classList.remove('hidden');
+                matches.forEach(m => {
+                    let div = document.createElement('div');
+                    div.className = "px-4 py-2 hover:bg-indigo-50 cursor-pointer text-sm border-b";
+                    div.innerText = `${m.data.ps_name} (ID: ${m.data.ps_id || 'N/A'})`;
+                    div.onclick = () => selectParticipant(m.key, m.data);
+                    resultsBox.appendChild(div);
+                });
+            } else {
+                resultsBox.classList.add('hidden');
+            }
+        }
+
+        function selectParticipant(key, data) {
+            selectedParticipantKey = key;
+            document.getElementById('selected-participant-display').value = data.ps_name;
+            document.getElementById('search-name').value = data.ps_name;
+            document.getElementById('search-results').classList.add('hidden');
+        }
+
+        // Authentication Handler
+        function handleLogin() {
+            const passwordInput = document.getElementById('login-password').value;
+            if (!selectedParticipantKey || !allParticipants[selectedParticipantKey]) {
+                alert("Please search and select a valid participant.");
+                return;
+            }
+
+            let user = allParticipants[selectedParticipantKey];
+            let storedPassword = user.password ? user.password.toString() : "123456"; // Default fallback
+
+            if (passwordInput === storedPassword) {
+                currentActiveUser = user;
+                renderDashboard();
+            } else {
+                alert("Incorrect password. Please try again.");
+            }
+        }
+
+        // Render Dashboard (View 1 & View 2) dynamically using Column Titles
+        function renderDashboard() {
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('password-screen').classList.add('hidden');
+            document.getElementById('dashboard-screen').classList.remove('hidden');
+            document.getElementById('app-header').classList.remove('hidden');
+
+            // View 1 Header bindings using column names
+            document.getElementById('header-user-name').innerText = currentActiveUser.ps_name || "Participant";
+            document.getElementById('header-user-id').innerText = "ID: " + (currentActiveUser.ps_id || "N/A");
+
+            // Fetch workshop details matching workshop_id dynamically
+            let wId = currentActiveUser.workshop_id;
+            let workshop = allWorkshops[wId] || {};
+
+            // Workshop Title Display
+            document.getElementById('workshop-title-display').innerText = workshop.workshop_name || "Workshop Portal";
+
+            // View 2 Resource Table Mapping
+            const resourcesContainer = document.getElementById('resources-container');
+            resourcesContainer.innerHTML = '';
+
+            const resourceLinks = [
+                { title: "Personalized zoom link to join the workshop", link: currentActiveUser.personal_zoom_link },
+                { title: "Participant WhatsApp Group Joining Link", link: workshop.participant_wg_link },
+                { title: "Workshop Schedule Link", link: workshop.workshop_shedule_link },
+                { title: "Material/Handbook Link", link: workshop.material_link },
+                { title: "Participant Feedback Link", link: workshop.participant_feedback_link }
+            ];
+
+            resourceLinks.forEach(res => {
+                let row = document.createElement('div');
+                row.className = "px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center hover:bg-gray-50 transition";
+                
+                let linkVal = res.link ? res.link.toString().trim() : "";
+                let isLinkValid = linkVal && linkVal !== "NaN" && !linkVal.startsWith("<<");
+
+                row.innerHTML = `
+                    <span class="text-sm font-medium text-gray-700 mb-2 sm:mb-0">${res.title}</span>
+                    <div>
+                        ${isLinkValid ? 
+                            `<a href="${linkVal}" target="_blank" class="inline-flex items-center px-3 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg text-sm font-semibold transition">Access Link &rarr;</a>` : 
+                            `<span class="text-xs text-gray-400 italic bg-gray-100 px-2.5 py-1 rounded">Not Available</span>`
+                        }
+                    </div>
+                `;
+                resourcesContainer.appendChild(row);
+            });
+        }
+
+        function logout() {
+            currentActiveUser = null;
+            selectedParticipantKey = null;
+            document.getElementById('login-password').value = '';
+            document.getElementById('search-name').value = '';
+            document.getElementById('selected-participant-display').value = '';
+            document.getElementById('dashboard-screen').classList.add('hidden');
+            document.getElementById('app-header').classList.add('hidden');
+            document.getElementById('login-screen').classList.remove('hidden');
+        }
+
+        // Password Reset / Change Screen Navigation (Exact Replica Style)
+        function showPasswordResetScreen() {
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('password-screen').classList.remove('hidden');
+        }
+
+        function showLoginScreen() {
+            document.getElementById('password-screen').classList.add('hidden');
+            document.getElementById('login-screen').classList.remove('hidden');
+        }
+
+        function submitPasswordChange() {
+            const identifier = document.getElementById('reset-identifier').value.trim();
+            const newPass = document.getElementById('new-password').value.trim();
+
+            if (!identifier || !newPass) {
+                alert("Please fill in all fields.");
+                return;
+            }
+
+            let foundKey = null;
+            for (let key in allParticipants) {
+                let p = allParticipants[key];
+                if ((p.ps_email && p.ps_email.toString() === identifier) || (p.ps_mob && p.ps_mob.toString() === identifier)) {
+                    foundKey = key;
+                    break;
+                }
+            }
+
+            if (foundKey) {
+                db.ref('control_tower/participants/' + foundKey).update({ password: newPass }).then(() => {
+                    alert("Password successfully updated!");
+                    allParticipants[foundKey].password = newPass;
+                    showLoginScreen();
+                }).catch(err => {
+                    alert("Failed to update password in database.");
+                });
+            } else {
+                alert("No participant found matching that email or mobile number.");
+            }
+        }
+    </script>
+</body>
+</html>
