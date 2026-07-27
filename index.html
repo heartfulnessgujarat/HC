@@ -12,27 +12,26 @@
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col justify-between">
 
-    <!-- Top Header Bar (View 1 Header) -->
+    <!-- Top Header Bar -->
     <header id="app-header" class="bg-indigo-600 text-white shadow-md hidden">
-        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-            <div>
-                <span class="text-xs uppercase tracking-wider opacity-85 block">Participant Name & ID</span>
-                <h1 id="header-user-name" class="text-lg font-bold">--</h1>
-                <span id="header-user-id" class="text-xs opacity-90">ID: --</span>
+        <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
+            <!-- Left aligned combined horizontal info with masking, preventing button overlap -->
+            <div class="pr-3 overflow-hidden">
+                <h1 id="header-user-info" class="text-sm sm:text-base font-bold truncate">--</h1>
             </div>
-            <div>
-                <button onclick="logout()" class="bg-indigo-700 hover:bg-indigo-800 text-white px-4 py-2 rounded text-sm font-medium transition shadow">
+            <div class="flex-shrink-0">
+                <button onclick="logout()" class="bg-indigo-700 hover:bg-indigo-800 text-white px-3.5 py-1.5 rounded text-sm font-medium transition shadow">
                     Logout
                 </button>
             </div>
         </div>
     </header>
 
-    <!-- Main Container -->
-    <main class="max-w-4xl mx-auto px-4 py-8 flex-grow w-full">
+    <!-- Main Container - Constrained compact mobile-friendly width matching Screenshot 1603 style -->
+    <main class="max-w-xl mx-auto px-4 py-8 flex-grow w-full">
 
         <!-- SCREEN 1: LOGIN VIEW -->
-        <div id="login-screen" class="bg-white rounded-xl shadow-md p-8 max-w-md mx-auto mt-10">
+        <div id="login-screen" class="bg-white rounded-xl shadow-md p-6 sm:p-8 mt-6">
             <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Participant Login</h2>
             
             <div class="mb-4">
@@ -60,17 +59,17 @@
             </div>
         </div>
 
-        <!-- SCREEN 2: DASHBOARD VIEW (View 1 Center + View 2 Resources) -->
+        <!-- SCREEN 2: DASHBOARD VIEW -->
         <div id="dashboard-screen" class="hidden space-y-6">
             <!-- Center Workshop Title Banner -->
             <div class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl shadow-md p-6 text-white text-center">
                 <span class="text-xs uppercase tracking-widest bg-white/20 px-3 py-1 rounded-full font-semibold">Active Workshop</span>
-                <h2 id="workshop-title-display" class="text-2xl font-bold mt-3">Loading Workshop Name...</h2>
+                <h2 id="workshop-title-display" class="text-xl sm:text-2xl font-bold mt-3">Loading Workshop Name...</h2>
             </div>
 
-            <!-- View 2: Participant Resources Table -->
+            <!-- Participant Resources Table -->
             <div class="bg-white rounded-xl shadow-md overflow-hidden">
-                <div class="bg-gray-100 px-6 py-4 border-b">
+                <div class="bg-gray-100 px-6 py-4 border-b text-center">
                     <h3 class="text-lg font-bold text-gray-800">Participant Resources</h3>
                 </div>
                 <div class="divide-y divide-gray-200" id="resources-container">
@@ -79,8 +78,8 @@
             </div>
         </div>
 
-        <!-- SCREEN 3: PASSWORD RESET / CHANGE SCREEN (Exact Replica Style) -->
-        <div id="password-screen" class="bg-white rounded-xl shadow-md p-8 max-w-md mx-auto mt-10 hidden">
+        <!-- SCREEN 3: PASSWORD RESET / CHANGE SCREEN -->
+        <div id="password-screen" class="bg-white rounded-xl shadow-md p-6 sm:p-8 mt-6 hidden">
             <h2 id="password-screen-title" class="text-2xl font-bold text-gray-800 mb-6 text-center">Password Reset</h2>
             
             <div class="mb-4">
@@ -110,18 +109,15 @@
 
     <!-- Firebase & Dynamic App Logic -->
     <script>
-
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyAt_HbqtG_kMn41NC1wPy5KDFNsDp5HTb8",
-    authDomain: "hc-app-72298.firebaseapp.com",
-    databaseURL: "https://hc-app-72298-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "hc-app-72298",
-    storageBucket: "hc-app-72298.firebasestorage.app",
-    messagingSenderId: "1013251414152",
-    appId: "1:1013251414152:web:3e598848e31a81bb43273d"
-  };
-
+        const firebaseConfig = {
+            apiKey: "AIzaSyAt_HbqtG_kMn41NC1wPy5KDFNsDp5HTb8",
+            authDomain: "hc-app-72298.firebaseapp.com",
+            databaseURL: "https://hc-app-72298-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "hc-app-72298",
+            storageBucket: "hc-app-72298.firebasestorage.app",
+            messagingSenderId: "1013251414152",
+            appId: "1:1013251414152:web:3e598848e31a81bb43273d"
+        };
 
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
@@ -133,7 +129,6 @@
         let currentActiveUser = null;
         let selectedParticipantKey = null;
 
-        // Fetch master data directly from Firebase on load for maximum speed
         function loadFirebaseData() {
             db.ref('control_tower').once('value').then(snapshot => {
                 const data = snapshot.val();
@@ -146,7 +141,6 @@
 
         window.onload = loadFirebaseData;
 
-        // 3-Letter Name Search Logic
         function filterParticipants() {
             const query = document.getElementById('search-name').value.toLowerCase();
             const resultsBox = document.getElementById('search-results');
@@ -187,7 +181,6 @@
             document.getElementById('search-results').classList.add('hidden');
         }
 
-        // Authentication Handler
         function handleLogin() {
             const passwordInput = document.getElementById('login-password').value;
             if (!selectedParticipantKey || !allParticipants[selectedParticipantKey]) {
@@ -196,7 +189,7 @@
             }
 
             let user = allParticipants[selectedParticipantKey];
-            let storedPassword = user.password ? user.password.toString() : "123456"; // Default fallback
+            let storedPassword = user.password ? user.password.toString() : "123456";
 
             if (passwordInput === storedPassword) {
                 currentActiveUser = user;
@@ -206,25 +199,46 @@
             }
         }
 
-        // Render Dashboard (View 1 & View 2) dynamically using Column Titles
+        // Masking helper functions for mobile and email privacy
+        function maskMobile(mob) {
+            if (!mob) return "***";
+            let s = mob.toString().trim();
+            if (s.length <= 4) return "****";
+            return s.substring(0, 2) + "****" + s.substring(s.length - 2);
+        }
+
+        function maskEmail(email) {
+            if (!email || !email.includes("@")) return "***@***.com";
+            let parts = email.toString().trim().split("@");
+            let name = parts[0];
+            let domain = parts[1];
+            let maskedName = name.length > 2 ? name.substring(0, 2) + "***" : "***";
+            return maskedName + "@" + domain;
+        }
+
+        // Render Dashboard matching all 8 requirements
         function renderDashboard() {
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('password-screen').classList.add('hidden');
             document.getElementById('dashboard-screen').classList.remove('hidden');
             document.getElementById('app-header').classList.remove('hidden');
 
-            // View 1 Header bindings using column names
-            document.getElementById('header-user-name').innerText = currentActiveUser.ps_name || "Participant";
-            document.getElementById('header-user-id').innerText = "ID: " + (currentActiveUser.ps_id || "N/A");
+            // Header Horizontal Masked Display: ps_name (ps_id, ps_mob, ps_email)
+            let pName = currentActiveUser.ps_name || "Participant";
+            let pId = currentActiveUser.ps_id || "N/A";
+            let pMob = maskMobile(currentActiveUser.ps_mob);
+            let pEmail = maskEmail(currentActiveUser.ps_email);
+            
+            document.getElementById('header-user-info').innerText = `${pName} (${pId}, ${pMob}, ${pEmail})`;
 
-            // Fetch workshop details matching workshop_id dynamically
+            // Fetch workshop details matching workshop_id from Firebase workshops node
             let wId = currentActiveUser.workshop_id;
             let workshop = allWorkshops[wId] || {};
 
-            // Workshop Title Display
-            document.getElementById('workshop-title-display').innerText = workshop.workshop_name || "Workshop Portal";
+            // Dynamic Active Workshop name display (without "Workshop Portal" text)
+            document.getElementById('workshop-title-display').innerText = workshop.workshop_name || "Active Workshop";
 
-            // View 2 Resource Table Mapping
+            // Resource Table Mapping: Zoom link from participant node, others from workshop node
             const resourcesContainer = document.getElementById('resources-container');
             resourcesContainer.innerHTML = '';
 
@@ -267,7 +281,6 @@
             document.getElementById('login-screen').classList.remove('hidden');
         }
 
-        // Password Reset / Change Screen Navigation (Exact Replica Style)
         function showPasswordResetScreen() {
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('password-screen').classList.remove('hidden');
