@@ -322,9 +322,7 @@ function loadFirebaseData() {
 
 
 
-
-
-        function renderDashboard() {
+function renderDashboard() {
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('change-password-screen').classList.add('hidden');
             document.getElementById('reset-password-screen').classList.add('hidden');
@@ -355,35 +353,64 @@ function loadFirebaseData() {
             resourcesContainer.innerHTML = '';
 
             const resourceLinks = [
-                { title: "Personalized zoom link to join the workshop<br>वर्कशॉप में शामिल होने के लिए पर्सनलाइज़्ड ज़ूम लिंक", link: currentActiveUser.personal_zoom_link },
-                { title: "Participant WhatsApp Group Joining Link", link: workshop.participant_wg_link },
-                { title: "Workshop Schedule Link", link: workshop.workshop_shedule_link },
-                { title: "Material/Handbook Link", link: workshop.material_link },
-                { title: "Participant Feedback Link", link: workshop.participant_feedback_link }
+                { 
+                    eng: "Personalized zoom link to join the workshop", 
+                    hin: "वर्कशॉप में शामिल होने के लिए पर्सनलाइज़्ड ज़ूम लिंक", 
+                    btnText: "Join Zoom (जूम ज्वाइन करें)", 
+                    link: currentActiveUser.personal_zoom_link 
+                },
+                { 
+                    eng: "Participant WhatsApp Group Joining Link", 
+                    hin: "प्रतिभागी व्हाट्सएप ग्रुप ज्वाइन करने का लिंक", 
+                    btnText: "Join Group (ग्रुप ज्वाइन करें)", 
+                    link: workshop.participant_wg_link 
+                },
+                { 
+                    eng: "Workshop Schedule Link", 
+                    hin: "वर्कशॉप शेड्यूल लिंक", 
+                    btnText: "View Schedule (शेड्यूल देखें)", 
+                    link: workshop.workshop_shedule_link 
+                },
+                { 
+                    eng: "Material/Handbook Link", 
+                    hin: "सामग्री / हैंडबुक लिंक", 
+                    btnText: "Read Material (सामग्री देखें)", 
+                    link: workshop.material_link 
+                },
+                { 
+                    eng: "Participant Feedback Link", 
+                    hin: "प्रतिभागी फीडबैक लिंक", 
+                    btnText: "Give Feedback (फीडबैक दें)", 
+                    link: workshop.participant_feedback_link 
+                }
             ];
 
             resourceLinks.forEach(res => {
                 let row = document.createElement('div');
-                row.className = "px-6 py-3 flex flex-col sm:flex-row justify-between items-start sm:items-center hover:bg-gray-50 transition border-b border-gray-100 last:border-b-0";
+                // Distinct card borders, spacing, and modern padding layout
+                row.className = "bg-white border border-gray-200 rounded-xl p-4 mb-3 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center hover:shadow transition";
                 
                 let linkVal = res.link ? res.link.toString().trim() : "";
                 let isLinkValid = linkVal.startsWith('http://') || linkVal.startsWith('https://');
 
-                let titleSpan = document.createElement('span');
-                titleSpan.className = "text-gray-800 font-medium text-xs sm:text-sm mb-2 sm:mb-0";
-                titleSpan.innerText = res.title;
-                row.appendChild(titleSpan);
+                let textContainer = document.createElement('div');
+                textContainer.className = "mb-3 sm:mb-0 sm:mr-4 pr-2";
+                textContainer.innerHTML = `
+                    <div class="text-gray-900 font-semibold text-xs sm:text-sm">${res.eng}</div>
+                    <div class="text-gray-500 font-normal text-xs mt-0.5">${res.hin}</div>
+                `;
+                row.appendChild(textContainer);
 
                 if (isLinkValid) {
                     let a = document.createElement('a');
                     a.href = linkVal;
                     a.target = "_blank";
-                    a.className = "bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-1.5 px-3 rounded transition shadow";
-                    a.innerText = "Click Here (यहाँ क्लिक करें)";
+                    a.className = "bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2 px-4 rounded-lg transition shadow flex-shrink-0 text-center";
+                    a.innerText = res.btnText;
                     row.appendChild(a);
                 } else {
                     let span = document.createElement('span');
-                    span.className = "text-gray-400 text-xs italic";
+                    span.className = "text-gray-400 text-xs italic flex-shrink-0";
                     span.innerText = "Not Available";
                     row.appendChild(span);
                 }
@@ -391,10 +418,6 @@ function loadFirebaseData() {
                 resourcesContainer.appendChild(row);
             });
         }
-
-
-
-
 
 
 
