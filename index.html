@@ -359,7 +359,7 @@ function loadFirebaseData() {
             resourcesContainer.innerHTML = '';
 
             const resourceLinks = [
-                { title: "Personalized zoom link to join the workshop", link: currentActiveUser.personal_zoom_link },
+                { title: "Personalized zoom link to join the workshop(वर्कशॉप में शामिल होने के लिए पर्सनलाइज़्ड ज़ूम लिंकO", link: currentActiveUser.personal_zoom_link },
                 { title: "Participant WhatsApp Group Joining Link", link: workshop.participant_wg_link },
                 { title: "Workshop Schedule Link", link: workshop.workshop_shedule_link },
                 { title: "Material/Handbook Link", link: workshop.material_link },
@@ -383,7 +383,7 @@ function loadFirebaseData() {
                     a.href = linkVal;
                     a.target = "_blank";
                     a.className = "bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-1.5 px-3 rounded transition shadow";
-                    a.innerText = "Access Link";
+                    a.innerText = "Click Here (यहाँ क्लिक करें)";
                     row.appendChild(a);
                 } else {
                     let span = document.createElement('span');
