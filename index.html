@@ -275,27 +275,23 @@ function loadFirebaseData() {
 
 
 
-
     
 
-        // Fetch and display persistent global header logo from Firebase
-            db.ref('control_tower/config/header_logo').on('value', (snapshot) => {
-                const logoBase64 = snapshot.val();
-                console.log("Logo Base64 fetched:", logoBase64 ? "Found data length: " + logoBase64.length : "Null/Empty");
-                
-                const logoElement = document.getElementById('app-logo');
-                const logoContainer = document.getElementById('global-header');
-                
-                if (logoBase64) {
-                    logoElement.src = logoBase64;
-                    logoContainer.classList.remove('hidden');
-                } else {
-                    logoContainer.classList.add('hidden');
-                }
-            });
-
-
-
+   // Fetch and display persistent global header logo based on Firebase control config
+        db.ref('control_tower/config/logo_config').on('value', (snapshot) => {
+            const config = snapshot.val();
+            console.log("Logo Config fetched:", config);
+            
+            const logoContainer = document.getElementById('global-header');
+            const logoElement = document.getElementById('app-logo');
+            
+            if (config && config.status === "ON" && config.image) {
+                logoElement.src = config.image;
+                logoContainer.classList.remove('hidden'); // Show logo box
+            } else {
+                logoContainer.classList.add('hidden');    // Hide completely if OFF or empty
+            }
+        });
     
 
 
