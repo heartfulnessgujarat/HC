@@ -824,73 +824,101 @@ function logout() {
             });
         }
 
-
 function enableField(fieldType) {
-            let inputElem = document.getElementById('update-profile-' + fieldType);
-            let btnElem = document.getElementById('btn-' + fieldType);
-            if (!inputElem || !btnElem) return;
-            
-            let isLocked = inputElem.disabled;
-            
-            if (isLocked) {
-                // Unlock for editing
-                inputElem.disabled = false;
-                inputElem.classList.remove('bg-gray-100', 'cursor-not-allowed');
-                inputElem.classList.add('bg-white', 'ring-2', 'ring-indigo-500');
+    let inputElem = document.getElementById('update-profile-' + fieldType);
+    let btnElem = document.getElementById('btn-' + fieldType);
+    if (!inputElem || !btnElem) return;
+    
+    let isLocked = inputElem.disabled;
+    
+    if (isLocked) {
+        // Unlock for editing
+        inputElem.disabled = false;
+        inputElem.classList.remove('bg-gray-100', 'cursor-not-allowed');
+        inputElem.classList.add('bg-white', 'ring-2', 'ring-indigo-500');
+        inputElem.focus();
+        
+        btnElem.textContent = "Done";
+        btnElem.classList.remove('bg-indigo-600', 'hover:bg-indigo-700', 'text-white');
+        btnElem.classList.add('bg-green-600', 'hover:bg-green-700', 'text-white');
+        
+        let saveBtn = document.getElementById('save-profile-btn');
+        if (saveBtn) {
+            saveBtn.disabled = true;
+            saveBtn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700', 'text-white', 'cursor-pointer');
+            saveBtn.classList.add('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+        }
+    } else {
+        // Clicked "Done"
+        let val = inputElem.value.trim();
+        
+        if (fieldType === 'email') {
+            if (!validateEmailFormat(val)) {
+                showCustomAlert("Please check the email entered by you. It does not have a proper format (missing '@' or domain).");
                 inputElem.focus();
-                
-                btnElem.textContent = "Done";
-                btnElem.classList.remove('bg-indigo-600', 'hover:bg-indigo-700', 'text-white');
-                btnElem.classList.add('bg-green-600', 'hover:bg-green-700', 'text-white');
-                
-                let saveBtn = document.getElementById('save-profile-btn');
-                if (saveBtn) {
-                    saveBtn.disabled = true;
-                    saveBtn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700', 'text-white', 'cursor-pointer');
-                    saveBtn.classList.add('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
-                }
-            } else {
-                // Clicked "Done"
-                let val = inputElem.value.trim();
-                
-                if (fieldType === 'email') {
-                    if (!validateEmailFormat(val)) {
-                        showCustomAlert("Please check the email entered by you. It does not have a proper format (missing '@' or domain).");
-                        inputElem.focus();
-                        return; // Keep open until valid format is provided
-                    }
-                    
-                    // Lock field back down visually
-                    inputElem.disabled = true;
-                    inputElem.classList.add('bg-gray-100', 'cursor-not-allowed');
-                    inputElem.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
-                    
-                    btnElem.textContent = "Edit";
-                    btnElem.classList.remove('bg-green-600', 'hover:bg-green-700', 'text-white');
-                    btnElem.classList.add('bg-indigo-600', 'hover:bg-indigo-700', 'text-white');
-                    
-                    // Trigger email verification dispatch safely with the validated value
-                    triggerEmailVerification(val);
-                } else {
-                    // For Mobile, Centre, State fields
-                    inputElem.disabled = true;
-                    inputElem.classList.add('bg-gray-100', 'cursor-not-allowed');
-                    inputElem.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
-                    
-                    btnElem.textContent = "Edit";
-                    btnElem.classList.remove('bg-green-600', 'hover:bg-green-700', 'text-white');
-                    btnElem.classList.add('bg-indigo-600', 'hover:bg-indigo-700', 'text-white');
-                    
-                    let saveBtn = document.getElementById('save-profile-btn');
-                    if (saveBtn) {
-                        saveBtn.disabled = false;
-                        saveBtn.classList.remove('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
-                        saveBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700', 'text-white', 'cursor-pointer');
-                    }
-                }
+                return; // Keep open until valid format is provided
+            }
+            
+            // Lock field back down visually
+            inputElem.disabled = true;
+            inputElem.classList.add('bg-gray-100', 'cursor-not-allowed');
+            inputElem.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
+            
+            btnElem.textContent = "Edit";
+            btnElem.classList.remove('bg-green-600', 'hover:bg-green-700', 'text-white');
+            btnElem.classList.add('bg-indigo-600', 'hover:bg-indigo-700', 'text-white');
+            
+            // Trigger email verification dispatch safely with the validated value
+            triggerEmailVerification(val);
+            
+        } else if (fieldType === 'mob') {
+            // Validate Indian mobile number (e.g., 10 digits starting with 6-9, or optional +91 prefix)
+            const mobileRegex = /^(\+91[\-\s]?)?[6-9]\d{9}$/;
+            if (!mobileRegex.test(val)) {
+                showCustomAlert("Please enter a valid 10-digit Indian mobile number starting with digits 6 through 9.");
+                inputElem.focus();
+                return; // Keep open until valid format is provided
+            }
+            
+            // Lock field back down visually
+            inputElem.disabled = true;
+            inputElem.classList.add('bg-gray-100', 'cursor-not-allowed');
+            inputElem.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
+            
+            btnElem.textContent = "Edit";
+            btnElem.classList.remove('bg-green-600', 'hover:bg-green-700', 'text-white');
+            btnElem.classList.add('bg-indigo-600', 'hover:bg-indigo-700', 'text-white');
+            
+            let saveBtn = document.getElementById('save-profile-btn');
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.classList.remove('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+                saveBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700', 'text-white', 'cursor-pointer');
+            }
+            
+        } else {
+            // For Centre, State or other fields
+            inputElem.disabled = true;
+            inputElem.classList.add('bg-gray-100', 'cursor-not-allowed');
+            inputElem.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
+            
+            btnElem.textContent = "Edit";
+            btnElem.classList.remove('bg-green-600', 'hover:bg-green-700', 'text-white');
+            btnElem.classList.add('bg-indigo-600', 'hover:bg-indigo-700', 'text-white');
+            
+            let saveBtn = document.getElementById('save-profile-btn');
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.classList.remove('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+                saveBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700', 'text-white', 'cursor-pointer');
             }
         }
+    }
+}
 
+
+
+        
         function triggerEmailVerification(emailVal) {
             let statusElem = document.getElementById('profile-update-status');
             statusElem.textContent = "Sending verification code to " + emailVal + "... Please wait.";
