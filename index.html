@@ -930,7 +930,9 @@ function saveProfileChanges() {
         showCustomAlert("Firebase update error: " + err);
     });
 }    
- 
+
+
+
 function enableField(fieldType) {
     let inputElem = document.getElementById('update-profile-' + fieldType);
     if (!inputElem) return;
@@ -950,10 +952,23 @@ function enableField(fieldType) {
             saveBtn.classList.add('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
         }
     } else {
-        // Lock it back if clicked again
-        inputElem.disabled = true;
-        inputElem.classList.add('bg-gray-100', 'cursor-not-allowed');
-        inputElem.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
+        // If it was open and they are locking it back:
+        if (fieldType === 'email') {
+            // Trigger the email verification workflow!
+            triggerEmailVerification();
+        } else {
+            // For other fields (mobile, centre, state), just lock it and re-enable the save button if no other fields are open
+            inputElem.disabled = true;
+            inputElem.classList.add('bg-gray-100', 'cursor-not-allowed');
+            inputElem.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
+            
+            let saveBtn = document.getElementById('save-profile-btn');
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.classList.remove('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+                saveBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700', 'text-white', 'cursor-pointer');
+            }
+        }
     }
 }
 
