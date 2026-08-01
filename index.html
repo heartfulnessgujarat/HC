@@ -865,7 +865,7 @@ function validateEmailFormat(email) {
 
 
 
-function triggerEmailVerification() {
+        function triggerEmailVerification() {
             let emailInput = document.getElementById('update-profile-email');
             let emailVal = emailInput.value.trim();
             
@@ -892,10 +892,10 @@ function triggerEmailVerification() {
                     statusElem.classList.remove('text-blue-600');
                     statusElem.classList.add('text-green-600');
                     
-                    // Small delay so user can read the success message before the prompt pops up
+                    // Small delay to let the user see the success confirmation before the prompt opens
                     setTimeout(() => {
                         openVerificationPopup(emailVal);
-                    }, 500);
+                    }, 600);
                 } else {
                     statusElem.classList.add('hidden');
                     showCustomAlert("Error: " + result.message);
@@ -909,7 +909,7 @@ function triggerEmailVerification() {
             });
         }
 
-
+        
 
         
         function openVerificationPopup(email) {
