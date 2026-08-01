@@ -220,6 +220,7 @@
             </button>
         </div>
 
+
 <!-- SCREEN 5: UPDATE PROFILE SCREEN -->
         <div id="update-profile-screen" class="bg-white rounded-xl shadow-md p-6 sm:p-8 mt-6 hidden">
             <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Update Profile Details</h2>
@@ -233,33 +234,54 @@
                     <label class="block text-gray-700 text-sm font-bold mb-1">Unique ID Number (Read-only)</label>
                     <input type="text" id="update-profile-id" disabled class="w-full bg-gray-100 border rounded-lg px-3 py-2 text-gray-600 cursor-not-allowed">
                 </div>
+
+                <!-- Mobile Number Field with Edit Button -->
                 <div>
                     <label class="block text-gray-700 text-sm font-bold mb-1">Mobile Number</label>
-                    <input type="text" id="update-profile-mob" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <div class="flex space-x-2">
+                        <input type="text" id="update-profile-mob" disabled class="w-full bg-gray-100 border rounded-lg px-3 py-2 text-gray-600 cursor-not-allowed">
+                        <button type="button" onclick="enableField('mob')" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded-lg text-sm font-semibold transition">Edit</button>
+                    </div>
                 </div>
+
+                <!-- Email Address Field with Edit Button -->
                 <div>
                     <label class="block text-gray-700 text-sm font-bold mb-1">Email Address</label>
-                    <input type="email" id="update-profile-email" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <div class="flex space-x-2">
+                        <input type="email" id="update-profile-email" disabled class="w-full bg-gray-100 border rounded-lg px-3 py-2 text-gray-600 cursor-not-allowed">
+                        <button type="button" onclick="enableField('email')" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded-lg text-sm font-semibold transition">Edit</button>
+                    </div>
                 </div>
+
+                <!-- Centre Field with Edit Button -->
                 <div>
                     <label class="block text-gray-700 text-sm font-bold mb-1">Centre</label>
-                    <input type="text" id="update-profile-centre" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <div class="flex space-x-2">
+                        <input type="text" id="update-profile-centre" disabled class="w-full bg-gray-100 border rounded-lg px-3 py-2 text-gray-600 cursor-not-allowed">
+                        <button type="button" onclick="enableField('centre')" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded-lg text-sm font-semibold transition">Edit</button>
+                    </div>
                 </div>
+
+                <!-- State Field with Edit Button -->
                 <div class="mb-6">
                     <label class="block text-gray-700 text-sm font-bold mb-1">State</label>
-                    <input type="text" id="update-profile-state" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <div class="flex space-x-2">
+                        <input type="text" id="update-profile-state" disabled class="w-full bg-gray-100 border rounded-lg px-3 py-2 text-gray-600 cursor-not-allowed">
+                        <button type="button" onclick="enableField('state')" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded-lg text-sm font-semibold transition">Edit</button>
+                    </div>
                 </div>
             </div>
 
-            <button onclick="saveProfileChanges()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition mb-3">
+            <!-- Loading status text -->
+            <p id="profile-update-status" class="text-sm text-blue-600 font-medium hidden mb-3 text-center"></p>
+
+            <button id="save-profile-btn" onclick="saveProfileChanges()" disabled class="w-full bg-gray-300 text-gray-500 font-bold py-2 px-4 rounded-lg cursor-not-allowed transition mb-3">
                 Save Changes
             </button>
             <button onclick="closeUpdateProfileModal()" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded-lg transition">
                 Cancel / Back to Dashboard
             </button>
         </div>
-
-
 
 
         
