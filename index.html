@@ -984,7 +984,97 @@ function handleEmailEditAction() {
     showCustomAlert("Email format is valid! Next, we will set up the verification code step.");
     // (We will hook up the Apps Script verification trigger here in the next step)
 }
-       
+
+
+
+        // Step 1: Trigger sending the code to the updated email
+function triggerEmailVerification() {
+    let emailInput = document.getElementById('update-profile-email');
+    let emailVal = emailInput.value.trim();
+    
+    // Run Layer 1 format check first
+    if (!validateEmailFormat(emailVal)) {
+        showCustomAlert("Please check the email entered by you. It does not have a proper format (e.g., missing '@').");
+        emailInput.focus();
+        return;
+    }
+    
+    let statusElem = document.getElementById('profile-update-status');
+    statusElem.textContent = "Sending verification code to " + emailVal + "... Please wait.";
+    statusElem.classList.remove('hidden');
+    
+    // Call Apps Script backend
+    fetch(WEB_APP_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: "sendEmailVerificationCode", email: emailVal })
+    })
+    .then(response => response.json())
+    .then(result => {
+        statusElem.classList.add('hidden');
+        if (result.status === "Success") {
+            // Open the verification code popup/modal prompt
+            openVerificationPopup(emailVal);
+        } else {
+            showCustomAlert("Error: " + result.message);
+        }
+    })
+    .catch(error => {
+        statusElem.classList.add('hidden');
+        showCustomAlert("Network error while sending verification code: " + error.toString());
+    });
+}
+
+// Step 2: Prompt user to enter the code
+function openVerificationPopup(email) {
+    let enteredCode = prompt("A 6-digit verification code has been sent to " + email + ".\nIt is valid for 5 minutes.\n\nPlease enter the code below:");
+    if (!enteredCode) return;
+    
+    verifyCodeWithBackend(email, enteredCode.trim());
+}
+
+// Step 3: Verify the code with the backend
+function verifyCodeWithBackend(email, code) {
+    let statusElem = document.getElementById('profile-update-status');
+    statusElem.textContent = "Verifying code...";
+    statusElem.classList.remove('hidden');
+    
+    fetch(WEB_APP_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: "verifyEmailCode", email: email, code: code })
+    })
+    .then(response => response.json())
+    .then(result => {
+        statusElem.classList.add('hidden');
+        if (result.status === "Success") {
+            showCustomAlert("Email verified successfully! You can now click 'Save Changes'.");
+            
+            // Lock the email input field back since it's verified
+            let emailInput = document.getElementById('update-profile-email');
+            emailInput.disabled = true;
+            emailInput.classList.add('bg-gray-100', 'cursor-not-allowed');
+            emailInput.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
+            
+            // Unlock the main Save Changes button!
+            let saveBtn = document.getElementById('save-profile-btn');
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.classList.remove('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+                saveBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700', 'text-white', 'cursor-pointer');
+            }
+        } else {
+            showCustomAlert("Verification Failed: " + result.message);
+        }
+    })
+    .catch(error => {
+        statusElem.classList.add('hidden');
+        showCustomAlert("Network error during code verification: " + error.toString());
+    });
+}
+
+
+
+
+        
 
         
     </script>
