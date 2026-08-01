@@ -889,6 +889,14 @@ function closeUpdateProfileModal() {
 function saveProfileChanges() {
     if (!currentActiveUser) return;
     
+    // Safety check: ensure email field is locked (verified) before saving
+    let emailInput = document.getElementById('update-profile-email');
+    if (emailInput && !emailInput.disabled) {
+        showCustomAlert("Please lock/verify your email address before saving changes.");
+        emailInput.focus();
+        return;
+    }
+    
     let participantKey = currentActiveUser.ps_id ? currentActiveUser.ps_id.toString().trim().replace(/[\.\#\$\[\]\/]/g, "_").replace(/\s+/g, "_") : "";
     if (!participantKey) {
         showCustomAlert("Invalid Participant ID.");
@@ -896,7 +904,7 @@ function saveProfileChanges() {
     }
     
     let newMob = document.getElementById('update-profile-mob').value.trim();
-    let newEmail = document.getElementById('update-profile-email').value.trim();
+    let newEmail = emailInput.value.trim();
     let newCentre = document.getElementById('update-profile-centre').value.trim();
     let newState = document.getElementById('update-profile-state').value.trim();
     
@@ -929,7 +937,9 @@ function saveProfileChanges() {
         if (statusDiv) statusDiv.classList.add('hidden');
         showCustomAlert("Firebase update error: " + err);
     });
-}    
+}
+
+        
 
 
 
