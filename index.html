@@ -38,8 +38,8 @@
                 <button onclick="openUpdateProfileModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-1.5 px-3 rounded transition shadow">
                     Update Profile
                 </button>
-                <button onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white text-xs font-bold py-1.5 px-3 rounded transition shadow">
-                    Logout
+                <button onclick="()" class="bg-red-500 hover:bg-red-600 text-white text-xs font-bold py-1.5 px-3 rounded transition shadow">
+                    
                 </button>
             </div>
         </div>
@@ -787,6 +787,9 @@ let pName = currentActiveUser.ps_name || "Participant";
         }
 
 
+
+
+        
         function showLoginScreen() {
     // Hide all other screens
     document.getElementById('dashboard-screen').classList.add('hidden');
@@ -834,12 +837,14 @@ function closeUpdateProfileModal() {
     document.getElementById('dashboard-screen').classList.remove('hidden');
 }
 
-function saveProfileChanges() {
+
+
+        function saveProfileChanges() {
     if (!currentActiveUser) return;
     
     let participantKey = currentActiveUser.ps_id ? currentActiveUser.ps_id.toString().trim().replace(/[\.\#\$\[\]\/]/g, "_").replace(/\s+/g, "_") : "";
     if (!participantKey) {
-        showCustomMessage("Invalid Participant ID.");
+        showCustomAlert("Invalid Participant ID.");
         return;
     }
     
@@ -859,37 +864,44 @@ function saveProfileChanges() {
         }
     };
     
-    const WEB_APP_URL = "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE";
+    // REPLACE THIS STRING WITH YOUR ACTUAL GOOGLE APPS SCRIPT WEB APP URL
+
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw8Pu9hMW7hBbLyft64yBUXjnYZKxxX5keg5gAJZm8i5AusRjiFFxoQBtB1n2CNE3hlsQ/exec";
     
     fetch(WEB_APP_URL, {
         method: "POST",
         headers: {
-            "Content-Type": "text/plain;charset=utf-8" // Prevents CORS preflight issues with Apps Script
+            "Content-Type": "text/plain;charset=utf-8"
         },
         body: JSON.stringify(payload)
     })
     .then(response => response.json())
     .then(data => {
         if (data.status === "Success") {
-            // Update local session cache
+            // Update local session cache and Firebase directly for instant UI sync
+            db.ref('control_tower/participants/' + participantKey).update({
+                ps_mob: newMob,
+                ps_email: newEmail,
+                ps_centre: newCentre,
+                ps_state: newState
+            });
+
             currentActiveUser.ps_mob = newMob;
             currentActiveUser.ps_email = newEmail;
             currentActiveUser.ps_centre = newCentre;
             currentActiveUser.ps_state = newState;
             
-            showCustomMessage("Profile updated successfully!");
+            showCustomAlert("Profile updated successfully!");
             closeUpdateProfileModal();
             renderDashboard();
         } else {
-            showCustomMessage("Error: " + (data.message || "Could not update profile"));
+            showCustomAlert("Error: " + (data.message || "Could not update profile"));
         }
     })
     .catch(err => {
-        showCustomMessage("Connection error: " + err);
+        showCustomAlert("Connection error: " + err);
     });
-}
-
-        
+}        
 
         
 
