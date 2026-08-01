@@ -861,8 +861,7 @@ function closeUpdateProfileModal() {
 }
 
 
-
-        function saveProfileChanges() {
+function saveProfileChanges() {
     if (!currentActiveUser) return;
     
     let participantKey = currentActiveUser.ps_id ? currentActiveUser.ps_id.toString().trim().replace(/[\.\#\$\[\]\/]/g, "_").replace(/\s+/g, "_") : "";
@@ -887,9 +886,10 @@ function closeUpdateProfileModal() {
         }
     };
     
-    // REPLACE THIS STRING WITH YOUR ACTUAL GOOGLE APPS SCRIPT WEB APP URL
-
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw8Pu9hMW7hBbLyft64yBUXjnYZKxxX5keg5gAJZm8i5AusRjiFFxoQBtB1n2CNE3hlsQ/exec";
+
+
+    
     
     fetch(WEB_APP_URL, {
         method: "POST",
@@ -901,14 +901,7 @@ function closeUpdateProfileModal() {
     .then(response => response.json())
     .then(data => {
         if (data.status === "Success") {
-            // Update local session cache and Firebase directly for instant UI sync
-            db.ref('control_tower/participants/' + participantKey).update({
-                ps_mob: newMob,
-                ps_email: newEmail,
-                ps_centre: newCentre,
-                ps_state: newState
-            });
-
+            // Update local session cache
             currentActiveUser.ps_mob = newMob;
             currentActiveUser.ps_email = newEmail;
             currentActiveUser.ps_centre = newCentre;
@@ -924,8 +917,7 @@ function closeUpdateProfileModal() {
     .catch(err => {
         showCustomAlert("Connection error: " + err);
     });
-}        
-
+}
         
 
         
