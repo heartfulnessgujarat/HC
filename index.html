@@ -1010,13 +1010,15 @@ function handleEmailEditAction() {
 
 
         // Step 1: Trigger sending the code to the updated email
+
 function triggerEmailVerification() {
     let emailInput = document.getElementById('update-profile-email');
     let emailVal = emailInput.value.trim();
     
-    // Run Layer 1 format check first
+    // Layer 1: Format check
     if (!validateEmailFormat(emailVal)) {
-        showCustomAlert("Please check the email entered by you. It does not have a proper format (e.g., missing '@').");
+        showCustomAlert("Please check the email entered by you. It does not have a proper format (missing '@' or domain).");
+        emailInput.disabled = false;
         emailInput.focus();
         return;
     }
@@ -1034,18 +1036,22 @@ function triggerEmailVerification() {
     .then(result => {
         statusElem.classList.add('hidden');
         if (result.status === "Success") {
-            // Open the verification code popup/modal prompt
             openVerificationPopup(emailVal);
         } else {
             showCustomAlert("Error: " + result.message);
+            emailInput.disabled = false;
         }
     })
     .catch(error => {
         statusElem.classList.add('hidden');
-        showCustomAlert("Network error while sending verification code: " + error.toString());
+        showCustomAlert("Network error while sending code: " + error.toString());
+        emailInput.disabled = false;
     });
 }
 
+        
+
+        
 // Step 2: Prompt user to enter the code
 function openVerificationPopup(email) {
     let enteredCode = prompt("A 6-digit verification code has been sent to " + email + ".\nIt is valid for 5 minutes.\n\nPlease enter the code below:");
