@@ -778,7 +778,6 @@ let pName = currentActiveUser.ps_name || "Participant";
 
 
 
-
         
         function logout() {
             currentActiveUser = null;
@@ -786,26 +785,41 @@ let pName = currentActiveUser.ps_name || "Participant";
             showLoginScreen();
         }
 
-
-
-
-        
-        function showLoginScreen() {
-    // Hide all other screens
-    document.getElementById('dashboard-screen').classList.add('hidden');
-    document.getElementById('change-password-screen').classList.add('hidden');
-    document.getElementById('reset-password-screen').classList.add('hidden');
-    document.getElementById('update-profile-screen').classList.add('hidden'); // <-- Add this line
+function clearForms() {
+    // Reset login inputs
+    let loginInput = document.getElementById('search-name');
+    let passInput = document.getElementById('login-password');
+    let selectedDisplay = document.getElementById('selected-participant-display');
+    let selectedContainer = document.getElementById('selected-participant-container');
     
-    // Show login screen and header elements appropriately
-    document.getElementById('login-screen').classList.remove('hidden');
-    document.getElementById('app-header').classList.add('hidden');
+    if (loginInput) loginInput.value = '';
+    if (passInput) passInput.value = '';
+    if (selectedDisplay) selectedDisplay.value = '';
+    if (selectedContainer) selectedContainer.classList.add('hidden');
+    selectedParticipantKey = null;
+
+    // Reset Change Password form inputs
+    let cpSearch = document.getElementById('cp-search-name');
+    let cpDisplay = document.getElementById('cp-selected-display');
+    let cpCurrent = document.getElementById('cp-current-password');
+    let cpNew = document.getElementById('cp-new-password');
+    let cpConfirm = document.getElementById('cp-confirm-password');
     
-    // Clear forms
-    clearForms();
+    if (cpSearch) cpSearch.value = '';
+    if (cpDisplay) cpDisplay.value = '';
+    if (cpCurrent) cpCurrent.value = '';
+    if (cpNew) cpNew.value = '';
+    if (cpConfirm) cpConfirm.value = '';
+    cpSelectedKey = null;
+
+    // Reset Reset Password form inputs
+    let rpSearch = document.getElementById('rp-search-name');
+    let rpDisplay = document.getElementById('rp-selected-display');
+    
+    if (rpSearch) rpSearch.value = '';
+    if (rpDisplay) rpDisplay.value = '';
+    rpSelectedKey = null;
 }
-
-
         
 function showCustomAlert(message) {
             document.getElementById('custom-alert-message').innerText = message;
