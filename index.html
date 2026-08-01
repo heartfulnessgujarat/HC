@@ -235,43 +235,40 @@
                     <input type="text" id="update-profile-id" disabled class="w-full bg-gray-100 border rounded-lg px-3 py-2 text-gray-600 cursor-not-allowed">
                 </div>
 
-                <!-- Mobile Number Field with Edit Button -->
-                <div>
-                    <label class="block text-gray-700 text-sm font-bold mb-1">Mobile Number</label>
-                    <div class="flex space-x-2">
-                        <input type="text" id="update-profile-mob" autocomplete="off" disabled class="w-full bg-gray-100 border rounded-lg px-3 py-2 text-gray-600 cursor-not-allowed">
-                        <button type="button" onclick="enableField('mob')" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded-lg text-sm font-semibold transition">Edit</button>
-                    </div>
-                </div>
 
-                <!-- Email Address Field with Edit Button -->
-                <div>
-                    <label class="block text-gray-700 text-sm font-bold mb-1">Email Address</label>
-                    <div class="flex space-x-2">
-                        <input type="email" id="update-profile-email" autocomplete="off" disabled class="w-full bg-gray-100 border rounded-lg px-3 py-2 text-gray-600 cursor-not-allowed">
-                        <button type="button" onclick="enableField('email')" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded-lg text-sm font-semibold transition">Edit</button>
-                    </div>
-                </div>
 
-                <!-- Centre Field with Edit Button -->
-                <div>
-                    <label class="block text-gray-700 text-sm font-bold mb-1">Centre</label>
-                    <div class="flex space-x-2">
-                        <input type="text" id="update-profile-centre" autocomplete="off" disabled class="w-full bg-gray-100 border rounded-lg px-3 py-2 text-gray-600 cursor-not-allowed">
-                        <button type="button" onclick="enableField('centre')" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded-lg text-sm font-semibold transition">Edit</button>
-                    </div>
-                </div>
 
-                <!-- State Field with Edit Button -->
-                <div class="mb-6">
-                    <label class="block text-gray-700 text-sm font-bold mb-1">State</label>
-                    <div class="flex space-x-2">
-                        <input type="text" id="update-profile-state" autocomplete="off" disabled class="w-full bg-gray-100 border rounded-lg px-3 py-2 text-gray-600 cursor-not-allowed">
-                        <button type="button" onclick="enableField('state')" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded-lg text-sm font-semibold transition">Edit</button>
-                    </div>
-                </div>
-            </div>
+                <!-- Mobile Number Field -->
+<div class="flex items-center space-x-2">
+    <input type="text" id="update-profile-mob" autocomplete="off" disabled class="bg-gray-100 cursor-not-allowed ...">
+    <button type="button" id="btn-mob" onclick="toggleFieldEdit('mob')" class="...">Edit</button>
+</div>
 
+<!-- Email Address Field -->
+<div class="flex items-center space-x-2">
+    <input type="email" id="update-profile-email" autocomplete="off" disabled class="bg-gray-100 cursor-not-allowed ...">
+    <button type="button" id="btn-email" onclick="toggleFieldEdit('email')" class="...">Edit</button>
+</div>
+
+<!-- Centre Field -->
+<div class="flex items-center space-x-2">
+    <input type="text" id="update-profile-centre" autocomplete="off" disabled class="bg-gray-100 cursor-not-allowed ...">
+    <button type="button" id="btn-centre" onclick="toggleFieldEdit('centre')" class="...">Edit</button>
+</div>
+
+<!-- State Field -->
+<div class="flex items-center space-x-2">
+    <input type="text" id="update-profile-state" autocomplete="off" disabled class="bg-gray-100 cursor-not-allowed ...">
+    <button type="button" id="btn-state" onclick="toggleFieldEdit('state')" class="...">Edit</button>
+</div>
+
+
+
+
+
+
+
+            
             <!-- Loading status text -->
             <p id="profile-update-status" class="text-sm text-blue-600 font-medium hidden mb-3 text-center"></p>
 
@@ -941,21 +938,27 @@ function saveProfileChanges() {
 
         
 
-
-
-        
-
 function enableField(fieldType) {
     let inputElem = document.getElementById('update-profile-' + fieldType);
-    if (!inputElem) return;
+    let btnElem = document.getElementById('btn-' + fieldType);
+    if (!inputElem || !btnElem) return;
     
-    if (inputElem.disabled) {
+    // Check if the field is currently locked
+    let isLocked = inputElem.disabled;
+    
+    if (isLocked) {
+        // --- MODE 1: UNLOCK FOR EDITING ---
         inputElem.disabled = false;
         inputElem.classList.remove('bg-gray-100', 'cursor-not-allowed');
         inputElem.classList.add('bg-white', 'ring-2', 'ring-indigo-500');
         inputElem.focus();
         
-        // Disable save button while any field is being actively edited
+        // Change button to "Done" state
+        btnElem.textContent = "Done";
+        btnElem.classList.remove('bg-indigo-600', 'hover:bg-indigo-700', 'text-white');
+        btnElem.classList.add('bg-green-600', 'hover:bg-green-700', 'text-white');
+        
+        // Disable main save button while editing
         let saveBtn = document.getElementById('save-profile-btn');
         if (saveBtn) {
             saveBtn.disabled = true;
@@ -963,15 +966,42 @@ function enableField(fieldType) {
             saveBtn.classList.add('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
         }
     } else {
-        // Locking it back
-        inputElem.disabled = true;
-        inputElem.classList.add('bg-gray-100', 'cursor-not-allowed');
-        inputElem.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
+        // --- MODE 2: USER EXPLICITLY CLICKED "DONE" ---
         
         if (fieldType === 'email') {
-            triggerEmailVerification();
+            let emailVal = inputElem.value.trim();
+            // Layer 1: Format check
+            if (!validateEmailFormat(emailVal)) {
+                showCustomAlert("Please check the email entered by you. It does not have a proper format (missing '@' or domain).");
+                inputElem.focus();
+                return; // Keep field open and button as "Done" so they can fix it
+            }
+            
+            // Lock input temporarily during verification dispatch
+            inputElem.disabled = true;
+            inputElem.classList.add('bg-gray-100', 'cursor-not-allowed');
+            inputElem.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
+            
+            // Reset button back to "Edit"
+            btnElem.textContent = "Edit";
+            btnElem.classList.remove('bg-green-600', 'hover:bg-green-700', 'text-white');
+            btnElem.classList.add('bg-indigo-600', 'hover:bg-indigo-700', 'text-white');
+            
+            // Trigger email verification workflow
+            triggerEmailVerification(emailVal);
+            
         } else {
-            // Re-enable the save changes button once done editing non-email fields
+            // For Mobile, Centre, State: lock the field and re-enable main save button
+            inputElem.disabled = true;
+            inputElem.classList.add('bg-gray-100', 'cursor-not-allowed');
+            inputElem.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
+            
+            // Reset button back to "Edit"
+            btnElem.textContent = "Edit";
+            btnElem.classList.remove('bg-green-600', 'hover:bg-green-700', 'text-white');
+            btnElem.classList.add('bg-indigo-600', 'hover:bg-indigo-700', 'text-white');
+            
+            // Re-enable main save button
             let saveBtn = document.getElementById('save-profile-btn');
             if (saveBtn) {
                 saveBtn.disabled = false;
@@ -980,10 +1010,11 @@ function enableField(fieldType) {
             }
         }
     }
-}
+}        
 
 
 
+        
         // Layer 1: Check basic email format syntax
 function validateEmailFormat(email) {
     let re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
