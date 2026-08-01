@@ -810,7 +810,62 @@ function showCustomAlert(message) {
             document.getElementById('custom-alert-modal').classList.add('hidden');
         }
 
+function openUpdateProfileModal() {
+    if (!currentActiveUser) return;
+    
+    // Populate fields with current values (unmasked for editing)
+    document.getElementById('update-profile-name').value = currentActiveUser.ps_name || "";
+    document.getElementById('update-profile-id').value = currentActiveUser.ps_id || "";
+    document.getElementById('update-profile-mob').value = currentActiveUser.ps_mob || "";
+    document.getElementById('update-profile-email').value = currentActiveUser.ps_email || "";
+    document.getElementById('update-profile-centre').value = currentActiveUser.ps_centre || "";
+    document.getElementById('update-profile-state').value = currentActiveUser.ps_state || "";
+    
+    // Hide dashboard contents / show update profile container
+    document.getElementById('dashboard-screen').classList.add('hidden');
+    document.getElementById('update-profile-screen').classList.remove('hidden');
+}
 
+function closeUpdateProfileModal() {
+    document.getElementById('update-profile-screen').classList.add('hidden');
+    document.getElementById('dashboard-screen').classList.remove('hidden');
+}
+
+function saveProfileChanges() {
+    if (!currentActiveUser) return;
+    
+    let participantKey = currentActiveUser.ps_id ? currentActiveUser.ps_id.toString().trim().replace(/[\.\#\$\[\]\/]/g, "_").replace(/\s+/g, "_") : "";
+    if (!participantKey) {
+        alert("Invalid Participant ID.");
+        return;
+    }
+    
+    let newMob = document.getElementById('update-profile-mob').value.trim();
+    let newEmail = document.getElementById('update-profile-email').value.trim();
+    let newCentre = document.getElementById('update-profile-centre').value.trim();
+    let newState = document.getElementById('update-profile-state').value.trim();
+    
+    // Call Apps Script sequentially or update objects directly
+    // Assuming you call the generic updateParticipantField function for each changed field or run them via google.script.run
+    google.script.run.withSuccessHandler(function(res) {
+        // Update local session cache
+        currentActiveUser.ps_mob = newMob;
+        currentActiveUser.ps_email = newEmail;
+        currentActiveUser.ps_centre = newCentre;
+        currentActiveUser.ps_state = newState;
+        
+        alert("Profile updated successfully!");
+        closeUpdateProfileModal();
+        renderDashboard();
+    }).withFailureHandler(function(err) {
+        alert("Error updating profile: " + err.message);
+    }).updateMultipleParticipantFields(participantKey, {
+        ps_mob: newMob,
+        ps_email: newEmail,
+        ps_centre: newCentre,
+        ps_state: newState
+    });
+}
 
 
 
