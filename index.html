@@ -558,12 +558,23 @@ const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz5M-tuxgcJb9_4G3q9
             }
         }
 
-
 function submitChangePassword() {
+            // Auto-resolve key from input text if not already selected
+            if (!cpSelectedKey || !allParticipants[cpSelectedKey]) {
+                const typedName = document.getElementById('cp-search-name').value.trim().toLowerCase();
+                for (let key in allParticipants) {
+                    if (allParticipants[key].name && allParticipants[key].name.toLowerCase() === typedName) {
+                        cpSelectedKey = key;
+                        break;
+                    }
+                }
+            }
+
             if (!cpSelectedKey || !allParticipants[cpSelectedKey]) {
                 showCustomAlert("Please search and select a valid participant.");
                 return;
             }
+
             const currentPass = document.getElementById('cp-current-password').value.trim();
             const newPass = document.getElementById('cp-new-password').value.trim();
             const confirmPass = document.getElementById('cp-confirm-password').value.trim();
@@ -595,7 +606,7 @@ function submitChangePassword() {
                 showLoginScreen();
 
                 // SILENT BACKGROUND SYNC TO GOOGLE SHEET VIA WEB APP POST
-                const webAppUrl = "https://script.google.com/macros/s/AKfycbz5M-tuxgcJb9_4G3q96MZ4XII8DK56_i_MtaUi_oGYRWmoRISUHeL-L73aladft49R/exec"; // Replace with your actual deployed Apps Script Web App URL
+                const webAppUrl = "https://script.google.com/macros/s/AKfycbz5M-tuxgcJb9_4G3q96MZ4XII8DK56_i_MtaUi_oGYRWmoRISUHeL-L73aladft49R/exec";
                 
                 fetch(webAppUrl, {
                     method: "POST",
@@ -618,8 +629,6 @@ function submitChangePassword() {
                 showCustomAlert("Failed to update password: " + err);
             });
         }
-
-
 
         
         function filterResetPasswordParticipants() {
@@ -657,8 +666,18 @@ function submitChangePassword() {
             }
         }
 
+function submitResetPassword() {
+            // Auto-resolve key from input text if not already selected
+            if (!rpSelectedKey || !allParticipants[rpSelectedKey]) {
+                const typedName = document.getElementById('rp-search-name').value.trim().toLowerCase();
+                for (let key in allParticipants) {
+                    if (allParticipants[key].name && allParticipants[key].name.toLowerCase() === typedName) {
+                        rpSelectedKey = key;
+                        break;
+                    }
+                }
+            }
 
-        function submitResetPassword() {
             if (!rpSelectedKey || !allParticipants[rpSelectedKey]) {
                 showCustomAlert("Please search and select a valid participant.");
                 return;
@@ -676,7 +695,7 @@ function submitChangePassword() {
                 showLoginScreen();
 
                 // SILENT BACKGROUND SYNC TO GOOGLE SHEET VIA WEB APP POST
-                const webAppUrl = "https://script.google.com/macros/s/AKfycbz5M-tuxgcJb9_4G3q96MZ4XII8DK56_i_MtaUi_oGYRWmoRISUHeL-L73aladft49R/exec"; // Replace with your actual deployed Apps Script Web App URL
+                const webAppUrl = "https://script.google.com/macros/s/AKfycbz5M-tuxgcJb9_4G3q96MZ4XII8DK56_i_MtaUi_oGYRWmoRISUHeL-L73aladft49R/exec";
                 
                 fetch(webAppUrl, {
                     method: "POST",
@@ -698,10 +717,7 @@ function submitChangePassword() {
             }).catch(err => {
                 showCustomAlert("Failed to reset password: " + err);
             });
-        }
-
-
-        
+        }        
 
 
         
