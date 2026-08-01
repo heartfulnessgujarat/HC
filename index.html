@@ -28,22 +28,31 @@
         </div>
     </div>
 
+    
 <!-- Top Header Bar (Full width layout matching dashboard cards) -->
-    <header id="app-header" class="max-w-xl mx-auto px-4 pt-2 hidden w-full">
-        <div class="bg-blue-50 border border-blue-200 text-blue-900 shadow-sm rounded-xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center w-full">
-            <div id="header-user-info" class="w-full mb-3 sm:mb-0">
-                <!-- Populated dynamically via renderDashboard -->
-            </div>
-            <div class="flex-shrink-0 self-end sm:self-center flex space-x-2">
-                <button onclick="openUpdateProfileModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-1.5 px-3 rounded transition shadow">
-                    Update Profile
-                </button>
-                <button onclick="()" class="bg-red-500 hover:bg-red-600 text-white text-xs font-bold py-1.5 px-3 rounded transition shadow">
-                    
-                </button>
-            </div>
+
+
+
+   <header id="app-header" class="max-w-xl mx-auto px-4 pt-2 hidden w-full">
+    <div class="bg-blue-50 border border-blue-200 text-blue-900 shadow-sm rounded-xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center w-full">
+        <div id="header-user-info" class="w-full mb-3 sm:mb-0">
+            <!-- Populated dynamically via renderDashboard -->
         </div>
-    </header>
+        <div class="flex-shrink-0 self-end sm:self-center flex space-x-2">
+            <button onclick="openUpdateProfileModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-1.5 px-3 rounded transition shadow">
+                Update Profile
+            </button>
+            <button onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white text-xs font-bold py-1.5 px-3 rounded transition shadow">
+                Logout
+            </button>
+        </div>
+    </div>
+</header>
+
+
+
+
+
     
 
     <!-- Main Container with minimal vertical padding -->
