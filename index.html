@@ -780,6 +780,7 @@ function logout() {
         }
 
 
+
 function saveProfileChanges() {
             if (!currentActiveUser) return;
             
@@ -801,18 +802,41 @@ function saveProfileChanges() {
             let newCentre = document.getElementById('update-profile-centre').value.trim();
             let newState = document.getElementById('update-profile-state').value.trim();
             
+            // Build payload dynamically by comparing with currentActiveUser to track exact changes
+            let payload = {};
+            let updatedFieldsList = [];
+
+            if (newMob !== (currentActiveUser.ps_mob || "")) {
+                payload.ps_mob = newMob;
+                updatedFieldsList.push("ps_mob");
+            }
+            if (newEmail !== (currentActiveUser.ps_email || "")) {
+                payload.ps_email = newEmail;
+                updatedFieldsList.push("ps_email");
+            }
+            if (newCentre !== (currentActiveUser.ps_centre || "")) {
+                payload.ps_centre = newCentre;
+                updatedFieldsList.push("ps_centre");
+            }
+            if (newState !== (currentActiveUser.ps_state || "")) {
+                payload.ps_state = newState;
+                updatedFieldsList.push("ps_state");
+            }
+
+            if (Object.keys(payload).length === 0) {
+                showCustomAlert("No changes detected to save.");
+                return;
+            }
+
+            // Include fieldupdated in the payload so it syncs correctly to Firebase and Sheet
+            payload.fieldupdated = updatedFieldsList.join(", ");
+            payload.lastsyntimestamp = new Date().toLocaleString();
+
             let statusDiv = document.getElementById('profile-update-status');
             if (statusDiv) {
                 statusDiv.innerText = "Your Profile is being updated.... Please wait.....";
                 statusDiv.classList.remove('hidden');
             }
-            
-            let payload = {
-                ps_mob: newMob,
-                ps_email: newEmail,
-                ps_centre: newCentre,
-                ps_state: newState
-            };
 
             db.ref('control_tower/participants/' + participantKey).update(payload).then(() => {
                 currentActiveUser.ps_mob = newMob;
@@ -826,11 +850,11 @@ function saveProfileChanges() {
                 renderDashboard();
 
                 // SILENT BACKGROUND SYNC TO GOOGLE SHEET VIA WEB APP POST
-                const webAppUrl = "https://script.google.com/macros/s/AKfycbz5M-tuxgcJb9_4G3q96MZ4XII8DK56_i_MtaUi_oGYRWmoRISUHeL-L73aladft49R/exec"; // Replace with your actual deployed Apps Script Web App URL
+                const webAppUrl = "YOUR_APPS_SCRIPT_WEB_APP_URL_HERE"; // Replace with your actual deployed Apps Script Web App URL
                 
                 fetch(webAppUrl, {
                     method: "POST",
-                    mode: "no-cors", // Bypasses CORS restrictions from GitHub Pages
+                    mode: "no-cors",
                     headers: {
                         "Content-Type": "application/json"
                     },
@@ -840,7 +864,7 @@ function saveProfileChanges() {
                         fields: payload
                     })
                 }).then(() => {
-                    console.log("Background sheet sync payload dispatched.");
+                    console.log("Background sheet sync payload dispatched for fields: " + payload.fieldupdated);
                 }).catch(err => {
                     console.warn("Background sheet sync failed:", err);
                 });
@@ -850,7 +874,11 @@ function saveProfileChanges() {
                 showCustomAlert("Firebase update error: " + err);
             });
         }
+
+
         
+
+
 function enableField(fieldType) {
     let inputElem = document.getElementById('update-profile-' + fieldType);
     let btnElem = document.getElementById('btn-' + fieldType);
