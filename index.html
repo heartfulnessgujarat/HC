@@ -864,8 +864,8 @@ function validateEmailFormat(email) {
 }
 
 
-        
-        function triggerEmailVerification() {
+
+function triggerEmailVerification() {
             let emailInput = document.getElementById('update-profile-email');
             let emailVal = emailInput.value.trim();
             
@@ -878,7 +878,8 @@ function validateEmailFormat(email) {
             
             let statusElem = document.getElementById('profile-update-status');
             statusElem.textContent = "Sending verification code to " + emailVal + "... Please wait.";
-            statusElem.classList.remove('hidden');
+            statusElem.classList.remove('hidden', 'text-red-600', 'text-green-600');
+            statusElem.classList.add('text-blue-600');
             
             fetch(WEB_APP_URL, {
                 method: "POST",
@@ -886,10 +887,17 @@ function validateEmailFormat(email) {
             })
             .then(response => response.json())
             .then(result => {
-                statusElem.classList.add('hidden');
                 if (result.status === "Success") {
-                    openVerificationPopup(emailVal);
+                    statusElem.textContent = "Verification code sent successfully! Please check your inbox.";
+                    statusElem.classList.remove('text-blue-600');
+                    statusElem.classList.add('text-green-600');
+                    
+                    // Small delay so user can read the success message before the prompt pops up
+                    setTimeout(() => {
+                        openVerificationPopup(emailVal);
+                    }, 500);
                 } else {
+                    statusElem.classList.add('hidden');
                     showCustomAlert("Error: " + result.message);
                     emailInput.disabled = false;
                 }
@@ -901,6 +909,9 @@ function validateEmailFormat(email) {
             });
         }
 
+
+
+        
         function openVerificationPopup(email) {
             let enteredCode = prompt("A 6-digit verification code has been sent to " + email + ".\nIt is valid for 5 minutes.\n\nPlease enter the code below:");
             if (!enteredCode) return;
