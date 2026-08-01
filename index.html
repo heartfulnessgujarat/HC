@@ -875,6 +875,13 @@ function saveProfileChanges() {
     let newCentre = document.getElementById('update-profile-centre').value.trim();
     let newState = document.getElementById('update-profile-state').value.trim();
     
+    // 1. Show immediate loading feedback message to the user
+    let statusDiv = document.getElementById('profile-update-status');
+    if (statusDiv) {
+        statusDiv.innerText = "Your Profile is being updated.... Please wait.....";
+        statusDiv.classList.remove('hidden');
+    }
+    
     let payload = {
         action: "updateProfile",
         participantKey: participantKey,
@@ -886,10 +893,8 @@ function saveProfileChanges() {
         }
     };
     
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw8Pu9hMW7hBbLyft64yBUXjnYZKxxX5keg5gAJZm8i5AusRjiFFxoQBtB1n2CNE3hlsQ/exec";
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw8Pu9hMW7hBbLyft64yBUXjnYZKxxX5keg5gAJZm8i5AusRjiFFxoQBtB1n2CNE3hlsQ/exec";
 
-
-    
     
     fetch(WEB_APP_URL, {
         method: "POST",
@@ -900,6 +905,9 @@ function saveProfileChanges() {
     })
     .then(response => response.json())
     .then(data => {
+        // Clear the loading message
+        if (statusDiv) statusDiv.classList.add('hidden');
+        
         if (data.status === "Success") {
             // Update local session cache
             currentActiveUser.ps_mob = newMob;
@@ -915,10 +923,12 @@ function saveProfileChanges() {
         }
     })
     .catch(err => {
+        if (statusDiv) statusDiv.classList.add('hidden');
         showCustomAlert("Connection error: " + err);
     });
-}
-        
+}    
+
+       
 
         
     </script>
