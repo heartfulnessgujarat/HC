@@ -780,8 +780,7 @@ function logout() {
         }
 
 
-
-        function saveProfileChanges() {
+function saveProfileChanges() {
             if (!currentActiveUser) return;
             
             let emailInput = document.getElementById('update-profile-email');
@@ -826,29 +825,31 @@ function logout() {
                 closeUpdateProfileModal();
                 renderDashboard();
 
-                // SILENT BACKGROUND SYNC TO GOOGLE SHEET (Non-blocking)
-                google.script.run
-                    .withSuccessHandler(function(res) {
-                        if (res && res.success) {
-                            console.log("Google Sheet updated silently in the background.");
-                        } else {
-                            console.warn("Sheet sync notice:", res ? res.error : "Unknown response");
-                        }
+                // SILENT BACKGROUND SYNC TO GOOGLE SHEET VIA WEB APP POST
+                const webAppUrl = "https://script.google.com/macros/s/AKfycbz5M-tuxgcJb9_4G3q96MZ4XII8DK56_i_MtaUi_oGYRWmoRISUHeL-L73aladft49R/exec"; // Replace with your actual deployed Apps Script Web App URL
+                
+                fetch(webAppUrl, {
+                    method: "POST",
+                    mode: "no-cors", // Bypasses CORS restrictions from GitHub Pages
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        action: "updateProfile",
+                        participantKey: currentActiveUser.ps_id,
+                        fields: payload
                     })
-                    .withFailureHandler(function(err) {
-                        console.warn("Background sheet sync failed silently:", err);
-                    })
-                    .updateSingleParticipantInSheet(currentActiveUser.ps_id, payload);
+                }).then(() => {
+                    console.log("Background sheet sync payload dispatched.");
+                }).catch(err => {
+                    console.warn("Background sheet sync failed:", err);
+                });
 
             }).catch(err => {
                 if (statusDiv) statusDiv.classList.add('hidden');
                 showCustomAlert("Firebase update error: " + err);
             });
         }
-
-
-
-
         
 function enableField(fieldType) {
     let inputElem = document.getElementById('update-profile-' + fieldType);
