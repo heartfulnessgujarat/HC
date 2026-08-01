@@ -557,8 +557,9 @@ const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz5M-tuxgcJb9_4G3q9
                 resultsBox.classList.add('hidden');
             }
         }
-        
-        function submitChangePassword() {
+
+
+function submitChangePassword() {
             if (!cpSelectedKey || !allParticipants[cpSelectedKey]) {
                 showCustomAlert("Please search and select a valid participant.");
                 return;
@@ -566,6 +567,7 @@ const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz5M-tuxgcJb9_4G3q9
             const currentPass = document.getElementById('cp-current-password').value.trim();
             const newPass = document.getElementById('cp-new-password').value.trim();
             const confirmPass = document.getElementById('cp-confirm-password').value.trim();
+            
             if (!currentPass || !newPass || !confirmPass) {
                 showCustomAlert("Please fill in all password fields.");
                 return;
@@ -580,15 +582,46 @@ const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz5M-tuxgcJb9_4G3q9
                 showCustomAlert("Current password is incorrect.");
                 return;
             }
-            db.ref('control_tower/participants/' + cpSelectedKey).update({ password: newPass }).then(() => {
+
+            let payload = {
+                password: newPass,
+                fieldupdated: "password",
+                lastsyntimestamp: new Date().toLocaleString()
+            };
+
+            db.ref('control_tower/participants/' + cpSelectedKey).update(payload).then(() => {
                 showCustomAlert("Password successfully updated!");
                 allParticipants[cpSelectedKey].password = newPass;
                 showLoginScreen();
+
+                // SILENT BACKGROUND SYNC TO GOOGLE SHEET VIA WEB APP POST
+                const webAppUrl = "YOUR_APPS_SCRIPT_WEB_APP_URL_HERE"; // Replace with your actual deployed Apps Script Web App URL
+                
+                fetch(webAppUrl, {
+                    method: "POST",
+                    mode: "no-cors",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        action: "updateProfile",
+                        participantKey: cpSelectedKey,
+                        fields: payload
+                    })
+                }).then(() => {
+                    console.log("Background sheet sync dispatched for password change.");
+                }).catch(err => {
+                    console.warn("Background sheet sync failed:", err);
+                });
+
             }).catch(err => {
-                showCustomAlert("Failed to update password.");
+                showCustomAlert("Failed to update password: " + err);
             });
         }
 
+
+
+        
         function filterResetPasswordParticipants() {
             const query = document.getElementById('rp-search-name').value.toLowerCase();
             const resultsBox = document.getElementById('rp-search-results');
@@ -624,33 +657,54 @@ const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz5M-tuxgcJb9_4G3q9
             }
         }
 
+
         function submitResetPassword() {
             if (!rpSelectedKey || !allParticipants[rpSelectedKey]) {
                 showCustomAlert("Please search and select a valid participant.");
                 return;
             }
-            if (typeof google !== 'undefined' && google.script && google.script.run) {
-                google.script.run
-                    .withSuccessHandler(() => {
-                        showCustomAlert("Password reset to 123456");
-                        allParticipants[rpSelectedKey].password = "123456";
-                        showLoginScreen();
+
+            let payload = {
+                password: "123456",
+                fieldupdated: "password",
+                lastsyntimestamp: new Date().toLocaleString()
+            };
+
+            db.ref('control_tower/participants/' + rpSelectedKey).update(payload).then(() => {
+                showCustomAlert("Password reset to 123456");
+                allParticipants[rpSelectedKey].password = "123456";
+                showLoginScreen();
+
+                // SILENT BACKGROUND SYNC TO GOOGLE SHEET VIA WEB APP POST
+                const webAppUrl = "YOUR_APPS_SCRIPT_WEB_APP_URL_HERE"; // Replace with your actual deployed Apps Script Web App URL
+                
+                fetch(webAppUrl, {
+                    method: "POST",
+                    mode: "no-cors",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        action: "updateProfile",
+                        participantKey: rpSelectedKey,
+                        fields: payload
                     })
-                    .withFailureHandler((err) => {
-                        showCustomAlert("Failed to sync reset password: " + err.message);
-                    })
-                    .updateParticipantPassword(rpSelectedKey, "123456");
-            } else {
-                db.ref('control_tower/participants/' + rpSelectedKey).update({ password: "123456" }).then(() => {
-                    showCustomAlert("Password reset to 123456");
-                    allParticipants[rpSelectedKey].password = "123456";
-                    showLoginScreen();
+                }).then(() => {
+                    console.log("Background sheet sync dispatched for password reset.");
                 }).catch(err => {
-                    showCustomAlert("Failed to reset password.");
+                    console.warn("Background sheet sync failed:", err);
                 });
-            }
+
+            }).catch(err => {
+                showCustomAlert("Failed to reset password: " + err);
+            });
         }
 
+
+        
+
+
+        
         function maskMobile(mob) {
             if (!mob) return "***";
             let s = mob.toString().trim();
