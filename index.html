@@ -558,8 +558,8 @@ const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz5M-tuxgcJb9_4G3q9
             }
         }
 
+
 function submitChangePassword() {
-            // Auto-resolve key from input text if not already selected
             if (!cpSelectedKey || !allParticipants[cpSelectedKey]) {
                 const typedName = document.getElementById('cp-search-name').value.trim().toLowerCase();
                 for (let key in allParticipants) {
@@ -605,9 +605,6 @@ function submitChangePassword() {
                 allParticipants[cpSelectedKey].password = newPass;
                 showLoginScreen();
 
-             
-                
-                // SILENT BACKGROUND SYNC TO GOOGLE SHEET VIA WEB APP POST
                 const webAppUrl = "https://script.google.com/macros/s/AKfycbz5M-tuxgcJb9_4G3q96MZ4XII8DK56_i_MtaUi_oGYRWmoRISUHeL-L73aladft49R/exec";
                 
                 fetch(webAppUrl, {
@@ -617,24 +614,25 @@ function submitChangePassword() {
                     },
                     body: JSON.stringify({
                         action: "updateProfile",
-                        participantKey: cpSelectedKey, // (or rpSelectedKey for reset)
+                        participantKey: cpSelectedKey,
                         fields: payload
                     })
-                }).then(response => {
+                }).then(() => {
                     console.log("Background sheet sync dispatched successfully.");
                 }).catch(err => {
                     console.warn("Background sheet sync failed:", err);
                 });
-                
-             
 
-
-
-
-
-    
+            }).catch(err => {
+                showCustomAlert("Failed to update password: " + err);
+            });
         }
 
+
+
+
+        
+        
         
         function filterResetPasswordParticipants() {
             const query = document.getElementById('rp-search-name').value.toLowerCase();
@@ -671,8 +669,8 @@ function submitChangePassword() {
             }
         }
 
+
 function submitResetPassword() {
-            // Auto-resolve key from input text if not already selected
             if (!rpSelectedKey || !allParticipants[rpSelectedKey]) {
                 const typedName = document.getElementById('rp-search-name').value.trim().toLowerCase();
                 for (let key in allParticipants) {
@@ -699,8 +697,6 @@ function submitResetPassword() {
                 allParticipants[rpSelectedKey].password = "123456";
                 showLoginScreen();
 
-                
-               // SILENT BACKGROUND SYNC TO GOOGLE SHEET VIA WEB APP POST
                 const webAppUrl = "https://script.google.com/macros/s/AKfycbz5M-tuxgcJb9_4G3q96MZ4XII8DK56_i_MtaUi_oGYRWmoRISUHeL-L73aladft49R/exec";
                 
                 fetch(webAppUrl, {
@@ -710,24 +706,22 @@ function submitResetPassword() {
                     },
                     body: JSON.stringify({
                         action: "updateProfile",
-                        participantKey: cpSelectedKey, // (or rpSelectedKey for reset)
+                        participantKey: rpSelectedKey,
                         fields: payload
                     })
-                }).then(response => {
+                }).then(() => {
                     console.log("Background sheet sync dispatched successfully.");
                 }).catch(err => {
                     console.warn("Background sheet sync failed:", err);
-                }); 
-                
-              
+                });
+
+            }).catch(err => {
+                showCustomAlert("Failed to reset password: " + err);
+            });
+        }
 
 
-
-
-
-    
-        }        
-
+        
 
         
         function maskMobile(mob) {
