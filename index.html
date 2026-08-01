@@ -653,12 +653,31 @@
             document.getElementById('reset-password-screen').classList.remove('hidden');
             clearForms();
         }
-        
-        function logout() {
+
+
+function logout() {
             currentActiveUser = null;
             selectedParticipantKey = null;
+            
+            // Ensure profile screen is hidden if left open
+            let profileScreen = document.getElementById('update-profile-screen');
+            if (profileScreen) profileScreen.classList.add('hidden');
+            
             showLoginScreen();
         }
+
+
+
+
+
+        
+ //       function logout() {
+ //           currentActiveUser = null;
+  //          selectedParticipantKey = null;
+  //          showLoginScreen();
+  //      }
+
+
 
         function clearForms() {
             let loginInput = document.getElementById('search-name');
@@ -768,8 +787,9 @@
                 showCustomAlert("Firebase update error: " + err);
             });
         }
-        
-        function enableField(fieldType) {
+
+
+function enableField(fieldType) {
             let inputElem = document.getElementById('update-profile-' + fieldType);
             let btnElem = document.getElementById('btn-' + fieldType);
             if (!inputElem || !btnElem) return;
@@ -777,6 +797,7 @@
             let isLocked = inputElem.disabled;
             
             if (isLocked) {
+                // Unlock for editing
                 inputElem.disabled = false;
                 inputElem.classList.remove('bg-gray-100', 'cursor-not-allowed');
                 inputElem.classList.add('bg-white', 'ring-2', 'ring-indigo-500');
@@ -793,14 +814,17 @@
                     saveBtn.classList.add('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
                 }
             } else {
+                // Clicked "Done"
+                let val = inputElem.value.trim();
+                
                 if (fieldType === 'email') {
-                    let emailVal = inputElem.value.trim();
-                    if (!validateEmailFormat(emailVal)) {
+                    if (!validateEmailFormat(val)) {
                         showCustomAlert("Please check the email entered by you. It does not have a proper format (missing '@' or domain).");
                         inputElem.focus();
-                        return;
+                        return; // Keep open until valid format is provided
                     }
                     
+                    // Lock field back down visually
                     inputElem.disabled = true;
                     inputElem.classList.add('bg-gray-100', 'cursor-not-allowed');
                     inputElem.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
@@ -809,8 +833,10 @@
                     btnElem.classList.remove('bg-green-600', 'hover:bg-green-700', 'text-white');
                     btnElem.classList.add('bg-indigo-600', 'hover:bg-indigo-700', 'text-white');
                     
-                    triggerEmailVerification();
+                    // Trigger email verification dispatch safely with the validated value
+                    triggerEmailVerification(val);
                 } else {
+                    // For Mobile, Centre, State fields
                     inputElem.disabled = true;
                     inputElem.classList.add('bg-gray-100', 'cursor-not-allowed');
                     inputElem.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
@@ -828,6 +854,49 @@
                 }
             }
         }
+
+        function triggerEmailVerification(emailVal) {
+            let statusElem = document.getElementById('profile-update-status');
+            statusElem.textContent = "Sending verification code to " + emailVal + "... Please wait.";
+            statusElem.classList.remove('hidden', 'text-red-600', 'text-green-600');
+            statusElem.classList.add('text-blue-600');
+            
+            fetch(WEB_APP_URL, {
+                method: "POST",
+                body: JSON.stringify({ action: "sendEmailVerificationCode", email: emailVal })
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.status === "Success") {
+                    statusElem.textContent = "Verification code sent successfully! Please check your inbox.";
+                    statusElem.classList.remove('text-blue-600');
+                    statusElem.classList.add('text-green-600');
+                    
+                    setTimeout(() => {
+                        openVerificationPopup(emailVal);
+                    }, 600);
+                } else {
+                    statusElem.classList.add('hidden');
+                    showCustomAlert("Error: " + result.message);
+                    
+                    // Re-enable email field if backend dispatch failed
+                    let emailInput = document.getElementById('update-profile-email');
+                    if (emailInput) emailInput.disabled = false;
+                }
+            })
+            .catch(error => {
+                statusElem.classList.add('hidden');
+                showCustomAlert("Network error while sending code: " + error.toString());
+                
+                let emailInput = document.getElementById('update-profile-email');
+                if (emailInput) emailInput.disabled = false;
+            });
+        }
+
+
+
+
+
 
 
 function validateEmailFormat(email) {
@@ -862,52 +931,6 @@ function validateEmailFormat(email) {
 
     return true;
 }
-
-
-
-        function triggerEmailVerification() {
-            let emailInput = document.getElementById('update-profile-email');
-            let emailVal = emailInput.value.trim();
-            
-            if (!validateEmailFormat(emailVal)) {
-                showCustomAlert("Please check the email entered by you. It does not have a proper format (missing '@' or domain).");
-                emailInput.disabled = false;
-                emailInput.focus();
-                return;
-            }
-            
-            let statusElem = document.getElementById('profile-update-status');
-            statusElem.textContent = "Sending verification code to " + emailVal + "... Please wait.";
-            statusElem.classList.remove('hidden', 'text-red-600', 'text-green-600');
-            statusElem.classList.add('text-blue-600');
-            
-            fetch(WEB_APP_URL, {
-                method: "POST",
-                body: JSON.stringify({ action: "sendEmailVerificationCode", email: emailVal })
-            })
-            .then(response => response.json())
-            .then(result => {
-                if (result.status === "Success") {
-                    statusElem.textContent = "Verification code sent successfully! Please check your inbox.";
-                    statusElem.classList.remove('text-blue-600');
-                    statusElem.classList.add('text-green-600');
-                    
-                    // Small delay to let the user see the success confirmation before the prompt opens
-                    setTimeout(() => {
-                        openVerificationPopup(emailVal);
-                    }, 600);
-                } else {
-                    statusElem.classList.add('hidden');
-                    showCustomAlert("Error: " + result.message);
-                    emailInput.disabled = false;
-                }
-            })
-            .catch(error => {
-                statusElem.classList.add('hidden');
-                showCustomAlert("Network error while sending code: " + error.toString());
-                emailInput.disabled = false;
-            });
-        }
 
         
 
