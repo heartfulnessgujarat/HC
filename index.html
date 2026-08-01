@@ -845,9 +845,28 @@ function saveProfileChanges() {
     let newCentre = document.getElementById('update-profile-centre').value.trim();
     let newState = document.getElementById('update-profile-state').value.trim();
     
-    // Call Apps Script sequentially or update objects directly
-    // Assuming you call the generic updateParticipantField function for each changed field or run them via google.script.run
-    google.script.run.withSuccessHandler(function(res) {
+    let payload = {
+        action: "updateProfile",
+        participantKey: participantKey,
+        fields: {
+            ps_mob: newMob,
+            ps_email: newEmail,
+            ps_centre: newCentre,
+            ps_state: newState
+        }
+    };
+    
+    // Replace with your actual Google Apps Script Web App URL
+    const WEB_APP_URL = "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE";
+    
+    fetch(WEB_APP_URL, {
+        method: "POST",
+        mode: "no-cors", // Required for cross-origin Apps Script requests
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+    }).then(() => {
         // Update local session cache
         currentActiveUser.ps_mob = newMob;
         currentActiveUser.ps_email = newEmail;
@@ -857,17 +876,13 @@ function saveProfileChanges() {
         alert("Profile updated successfully!");
         closeUpdateProfileModal();
         renderDashboard();
-    }).withFailureHandler(function(err) {
-        alert("Error updating profile: " + err.message);
-    }).updateMultipleParticipantFields(participantKey, {
-        ps_mob: newMob,
-        ps_email: newEmail,
-        ps_centre: newCentre,
-        ps_state: newState
+    }).catch(err => {
+        alert("Error updating profile: " + err);
     });
 }
 
 
+        
 
         
     </script>
