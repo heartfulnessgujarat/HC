@@ -776,31 +776,34 @@ let pName = currentActiveUser.ps_name || "Participant";
             clearForms();
         }
 
+
+
+
+        
         function logout() {
             currentActiveUser = null;
             selectedParticipantKey = null;
             showLoginScreen();
         }
 
-        function clearForms() {
-            document.getElementById('search-name').value = '';
-            document.getElementById('selected-participant-display').value = '';
-            document.getElementById('selected-participant-container').classList.add('hidden');
-            document.getElementById('login-password').value = '';
-            
-            document.getElementById('cp-search-name').value = '';
-            document.getElementById('cp-selected-display').value = '';
-            document.getElementById('cp-current-password').value = '';
-            document.getElementById('cp-new-password').value = '';
-            document.getElementById('cp-confirm-password').value = '';
-            cpSelectedKey = null;
 
-            document.getElementById('rp-search-name').value = '';
-            document.getElementById('rp-selected-display').value = '';
-            rpSelectedKey = null;
-        }
+        function showLoginScreen() {
+    // Hide all other screens
+    document.getElementById('dashboard-screen').classList.add('hidden');
+    document.getElementById('change-password-screen').classList.add('hidden');
+    document.getElementById('reset-password-screen').classList.add('hidden');
+    document.getElementById('update-profile-screen').classList.add('hidden'); // <-- Add this line
+    
+    // Show login screen and header elements appropriately
+    document.getElementById('login-screen').classList.remove('hidden');
+    document.getElementById('app-header').classList.add('hidden');
+    
+    // Clear forms
+    clearForms();
+}
 
 
+        
 function showCustomAlert(message) {
             document.getElementById('custom-alert-message').innerText = message;
             document.getElementById('custom-alert-modal').classList.remove('hidden');
