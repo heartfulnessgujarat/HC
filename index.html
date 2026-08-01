@@ -839,7 +839,7 @@ function saveProfileChanges() {
     
     let participantKey = currentActiveUser.ps_id ? currentActiveUser.ps_id.toString().trim().replace(/[\.\#\$\[\]\/]/g, "_").replace(/\s+/g, "_") : "";
     if (!participantKey) {
-        alert("Invalid Participant ID.");
+        showCustomMessage("Invalid Participant ID.");
         return;
     }
     
@@ -859,31 +859,37 @@ function saveProfileChanges() {
         }
     };
     
-    // Replace with your actual Google Apps Script Web App URL
     const WEB_APP_URL = "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE";
     
     fetch(WEB_APP_URL, {
         method: "POST",
-        mode: "no-cors", // Required for cross-origin Apps Script requests
         headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "text/plain;charset=utf-8" // Prevents CORS preflight issues with Apps Script
         },
         body: JSON.stringify(payload)
-    }).then(() => {
-        // Update local session cache
-        currentActiveUser.ps_mob = newMob;
-        currentActiveUser.ps_email = newEmail;
-        currentActiveUser.ps_centre = newCentre;
-        currentActiveUser.ps_state = newState;
-        
-        alert("Profile updated successfully!");
-        closeUpdateProfileModal();
-        renderDashboard();
-    }).catch(err => {
-        alert("Error updating profile: " + err);
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === "Success") {
+            // Update local session cache
+            currentActiveUser.ps_mob = newMob;
+            currentActiveUser.ps_email = newEmail;
+            currentActiveUser.ps_centre = newCentre;
+            currentActiveUser.ps_state = newState;
+            
+            showCustomMessage("Profile updated successfully!");
+            closeUpdateProfileModal();
+            renderDashboard();
+        } else {
+            showCustomMessage("Error: " + (data.message || "Could not update profile"));
+        }
+    })
+    .catch(err => {
+        showCustomMessage("Connection error: " + err);
     });
 }
 
+        
 
         
 
