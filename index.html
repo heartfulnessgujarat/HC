@@ -878,58 +878,37 @@ function saveProfileChanges() {
     let newCentre = document.getElementById('update-profile-centre').value.trim();
     let newState = document.getElementById('update-profile-state').value.trim();
     
-    // 1. Show immediate loading feedback message to the user
+    // 1. Show the "Please wait..." loading message immediately
     let statusDiv = document.getElementById('profile-update-status');
     if (statusDiv) {
         statusDiv.innerText = "Your Profile is being updated.... Please wait.....";
         statusDiv.classList.remove('hidden');
     }
     
-    let payload = {
-        action: "updateProfile",
-        participantKey: participantKey,
-        fields: {
-            ps_mob: newMob,
-            ps_email: newEmail,
-            ps_centre: newCentre,
-            ps_state: newState
-        }
-    };
-    
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw8Pu9hMW7hBbLyft64yBUXjnYZKxxX5keg5gAJZm8i5AusRjiFFxoQBtB1n2CNE3hlsQ/exec";
-
-    
-    fetch(WEB_APP_URL, {
-        method: "POST",
-        headers: {
-            "Content-Type": "text/plain;charset=utf-8"
-        },
-        body: JSON.stringify(payload)
-    })
-    .then(response => response.json())
-    .then(data => {
-        // Clear the loading message
-        if (statusDiv) statusDiv.classList.add('hidden');
+    // 2. Instantly update Firebase from the browser
+    db.ref('control_tower/participants/' + participantKey).update({
+        ps_mob: newMob,
+        ps_email: newEmail,
+        ps_centre: newCentre,
+        ps_state: newState
+    }).then(() => {
+        // Update local session cache instantly
+        currentActiveUser.ps_mob = newMob;
+        currentActiveUser.ps_email = newEmail;
+        currentActiveUser.ps_centre = newCentre;
+        currentActiveUser.ps_state = newState;
         
-        if (data.status === "Success") {
-            // Update local session cache
-            currentActiveUser.ps_mob = newMob;
-            currentActiveUser.ps_email = newEmail;
-            currentActiveUser.ps_centre = newCentre;
-            currentActiveUser.ps_state = newState;
-            
-            showCustomAlert("Profile updated successfully!");
-            closeUpdateProfileModal();
-            renderDashboard();
-        } else {
-            showCustomAlert("Error: " + (data.message || "Could not update profile"));
-        }
-    })
-    .catch(err => {
+        // 3. Clear loading message and show success message
         if (statusDiv) statusDiv.classList.add('hidden');
-        showCustomAlert("Connection error: " + err);
+        showCustomAlert("Profile updated successfully!");
+        closeUpdateProfileModal();
+        renderDashboard();
+    }).catch(err => {
+        if (statusDiv) statusDiv.classList.add('hidden');
+        showCustomAlert("Firebase update error: " + err);
     });
 }    
+ 
 
        
 
