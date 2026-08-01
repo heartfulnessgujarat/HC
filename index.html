@@ -28,6 +28,11 @@
         </div>
     </div>
 
+
+
+
+    
+
     <!-- Top Header Bar (Compact top padding) -->
     <header id="app-header" class="max-w-xl mx-auto px-4 pt-2 hidden">
         <div class="bg-blue-50 border border-blue-200 text-blue-900 shadow-sm rounded-xl p-3 flex justify-between items-center">
@@ -41,6 +46,10 @@
             </div>
         </div>
     </header>
+
+
+
+    
 
     <!-- Main Container with minimal vertical padding -->
     <main class="max-w-xl mx-auto px-4 py-3 flex-grow w-full">
@@ -332,10 +341,15 @@ function renderDashboard() {
             document.getElementById('dashboard-screen').classList.remove('hidden');
             document.getElementById('app-header').classList.remove('hidden');
 
-            let pName = currentActiveUser.ps_name || "Participant";
+
+
+    
+let pName = currentActiveUser.ps_name || "Participant";
             let pId = currentActiveUser.ps_id || "N/A";
             let pMob = maskMobile(currentActiveUser.ps_mob);
             let pEmail = maskEmail(currentActiveUser.ps_email);
+            let pCentre = currentActiveUser.ps_centre || "N/A";
+            let pState = currentActiveUser.ps_state || "N/A";
 
             const headerInfo = document.getElementById('header-user-info');
             headerInfo.innerHTML = `
@@ -344,8 +358,15 @@ function renderDashboard() {
                     <div><strong>Unique ID Number:</strong> ${pId}</div>
                     <div><strong>Mobile Number:</strong> ${pMob}</div>
                     <div><strong>Email Address:</strong> ${pEmail}</div>
+                    <div><strong>Centre:</strong> ${pCentre}</div>
+                    <div><strong>State:</strong> ${pState}</div>
                 </div>
             `;
+
+
+
+
+    
 
             let wId = currentActiveUser.workshop_id;
             let workshop = allWorkshops[wId] || {};
