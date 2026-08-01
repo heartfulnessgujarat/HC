@@ -829,11 +829,42 @@
             }
         }
 
-        function validateEmailFormat(email) {
-            let re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            return re.test(email);
-        }
 
+function validateEmailFormat(email) {
+    if (!email) return false;
+    
+    // 1. Basic structural check (@ and single dot in domain)
+    let re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!re.test(email)) return false;
+    
+    // 2. Prevent consecutive dots (e.g., test..email@gmail.com)
+    if (email.includes('..')) return false;
+    
+    // 3. Split into local part and domain
+    let parts = email.split('@');
+    if (parts.length !== 2) return false;
+    let localPart = parts[0];
+    let domain = parts[1];
+    
+    // 4. Local part or domain cannot start or end with a dot
+    if (localPart.startsWith('.') || localPart.endsWith('.') || domain.startsWith('.') || domain.endsWith('.')) {
+        return false;
+    }
+    
+    // 5. Ensure domain has at least one valid top-level domain (TLD) of at least 2 characters, 
+    // and prevent bizarre multi-level gibberish extensions like .comfdfdf.in.fdsf
+    let domainParts = domain.split('.');
+    let tld = domainParts[domainParts.length - 1];
+    if (tld.length < 2) return false;
+    
+    // Optional: restrict maximum TLD length to avoid absurd entries (e.g. max 6-7 chars for standard TLDs)
+    if (tld.length > 10) return false;
+
+    return true;
+}
+
+
+        
         function triggerEmailVerification() {
             let emailInput = document.getElementById('update-profile-email');
             let emailVal = emailInput.value.trim();
