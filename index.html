@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Heartful Communication - Facilitator Training Workshop (FT3H) | Participant Portal</title>
     
    
@@ -12,27 +11,16 @@
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
-
-
 </head>
-
-
-
 <body class="bg-gray-50 min-h-screen flex flex-col justify-between">
-
     <!-- Persistent Global Header Logo (Compact top padding) -->
     <div id="global-header" class="max-w-xl mx-auto w-full px-4 pt-2 hidden">
         <div class="bg-white rounded-xl shadow-md p-0 overflow-hidden">
             <img id="app-logo" src="" alt="App Logo" class="w-full h-auto object-cover" />
         </div>
     </div>
-
     
 <!-- Top Header Bar (Full width layout matching dashboard cards) -->
-
-
-
    <header id="app-header" class="max-w-xl mx-auto px-4 pt-2 hidden w-full">
     <div class="bg-blue-50 border border-blue-200 text-blue-900 shadow-sm rounded-xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center w-full">
         <div id="header-user-info" class="w-full mb-3 sm:mb-0">
@@ -48,16 +36,9 @@
         </div>
     </div>
 </header>
-
-
-
-
-
     
-
     <!-- Main Container with minimal vertical padding -->
     <main class="max-w-xl mx-auto px-4 py-3 flex-grow w-full">
-
         <!-- SCREEN 1: LOGIN VIEW (Compact padding & margins) -->
         <div id="login-screen" class="bg-white rounded-xl shadow-md p-4 sm:p-6 mt-2">
             <!-- Dynamic workshop name above title -->
@@ -68,19 +49,16 @@
             
             <div class="mb-3 relative">
                 <label class="block text-gray-700 text-xs font-bold mb-1">Type your name in English, (at least 3 letters):</label>
-
                 
                 <input type="text" id="search-name" autocomplete="off" placeholder="e.g. Raj" class="w-full px-3 py-1.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" oninput="filterParticipants()">
                 
                 <div id="search-results" class="absolute left-0 right-0 bg-white border mt-1 rounded-lg shadow-lg max-h-40 overflow-y-auto hidden z-20"></div>
             </div>
-
             <!-- Conditionally shown Participant Name container -->
             <div id="selected-participant-container" class="mb-3 hidden">
                 <label class="block text-gray-700 text-xs font-bold mb-1">Name of the Participant:</label>
                 <input type="text" id="selected-participant-display" readonly class="w-full px-3 py-1.5 text-sm bg-gray-100 border rounded-lg text-gray-600">
             </div>
-
             <div class="mb-4 relative">
                 <label class="block text-gray-700 text-xs font-bold mb-1">Password:</label>
                 <div class="relative">
@@ -93,37 +71,24 @@
                     </button>
                 </div>
             </div>
-
             <button onclick="handleLogin()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 text-sm rounded-lg transition mb-3">
                 Login
             </button>
-
             <!-- Separate Footer Links -->
             <div class="flex justify-between items-center text-xs px-1">
                 <a href="#" onclick="showChangePasswordScreen()" class="text-indigo-600 hover:underline font-medium">Change Password</a>
                 <a href="#" onclick="showResetPasswordScreen()" class="text-indigo-600 hover:underline font-medium">Reset Password</a>
             </div>
         </div>
-
-
-
-
         
         
         <!-- SCREEN 2: DASHBOARD VIEW -->
         <div id="dashboard-screen" class="hidden space-y-6">
             <!-- Center Workshop Title Banner -->
-
-            <!-- Updated Middle Box HTML -->
-<div class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md rounded-xl py-3 px-6 text-center mb-6">
-    <h2 id="workshop-title-display" class="text-lg font-bold"></h2>
-</div>
-
-
-
+            <div class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md rounded-xl py-3 px-6 text-center mb-6">
+                <h2 id="workshop-title-display" class="text-lg font-bold"></h2>
+            </div>
            
-            
-
             <!-- Participant Resources Table -->
             <div class="bg-white rounded-xl shadow-md overflow-hidden">
                 <div class="bg-gray-100 px-6 py-4 border-b text-center">
@@ -144,12 +109,10 @@
                 <input type="text" id="cp-search-name" placeholder="e.g. Raj" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" oninput="filterChangePasswordParticipants()">
                 <div id="cp-search-results" class="absolute left-0 right-0 bg-white border mt-1 rounded-lg shadow-lg max-h-40 overflow-y-auto hidden z-20"></div>
             </div>
-
             <div class="mb-4">
                 <label class="block text-gray-700 text-sm font-bold mb-2">Name of the Participant:</label>
                 <input type="text" id="cp-selected-display" readonly class="w-full px-3 py-2 bg-gray-100 border rounded-lg text-gray-600" placeholder="Selected participant name">
             </div>
-
             <div class="mb-4 relative">
                 <label class="block text-gray-700 text-sm font-bold mb-2">Current Password:</label>
                 <div class="relative">
@@ -162,7 +125,6 @@
                     </button>
                 </div>
             </div>
-
             <div class="mb-4 relative">
                 <label class="block text-gray-700 text-sm font-bold mb-2">New Password (Max 6 Chars):</label>
                 <div class="relative">
@@ -175,7 +137,6 @@
                     </button>
                 </div>
             </div>
-
             <div class="mb-6 relative">
                 <label class="block text-gray-700 text-sm font-bold mb-2">Confirm New Password:</label>
                 <div class="relative">
@@ -188,7 +149,6 @@
                     </button>
                 </div>
             </div>
-
             <button onclick="submitChangePassword()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition mb-3">
                 Update Password
             </button>
@@ -206,12 +166,10 @@
                 <input type="text" id="rp-search-name" placeholder="e.g. Raj" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" oninput="filterResetPasswordParticipants()">
                 <div id="rp-search-results" class="absolute left-0 right-0 bg-white border mt-1 rounded-lg shadow-lg max-h-40 overflow-y-auto hidden z-20"></div>
             </div>
-
             <div class="mb-6">
                 <label class="block text-gray-700 text-sm font-bold mb-2">Name of the Participant:</label>
                 <input type="text" id="rp-selected-display" readonly class="w-full px-3 py-2 bg-gray-100 border rounded-lg text-gray-600" placeholder="Selected participant name">
             </div>
-
             <button onclick="submitResetPassword()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition mb-3">
                 Reset Password to 123456
             </button>
@@ -220,8 +178,7 @@
             </button>
         </div>
 
-
-<!-- SCREEN 5: UPDATE PROFILE SCREEN -->
+        <!-- SCREEN 5: UPDATE PROFILE SCREEN -->
         <div id="update-profile-screen" class="bg-white rounded-xl shadow-md p-6 sm:p-8 mt-6 hidden">
             <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Update Profile Details</h2>
             
@@ -234,60 +191,56 @@
                     <label class="block text-gray-700 text-sm font-bold mb-1">Unique ID Number (Read-only)</label>
                     <input type="text" id="update-profile-id" disabled class="w-full bg-gray-100 border rounded-lg px-3 py-2 text-gray-600 cursor-not-allowed">
                 </div>
-
-
-
-
+                
                 <!-- Mobile Number Field -->
-<div class="flex items-center space-x-2">
-    <input type="text" id="update-profile-mob" autocomplete="off" disabled class="bg-gray-100 cursor-not-allowed ...">
-    <button type="button" id="btn-mob" onclick="toggleFieldEdit('mob')" class="...">Edit</button>
-</div>
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-1">Mobile Number</label>
+                    <div class="flex items-center space-x-2">
+                        <input type="text" id="update-profile-mob" autocomplete="off" disabled class="w-full bg-gray-100 border rounded-lg px-3 py-2 text-gray-600 cursor-not-allowed">
+                        <button type="button" id="btn-mob" onclick="enableField('mob')" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2.5 px-4 rounded-lg transition flex-shrink-0">Edit</button>
+                    </div>
+                </div>
 
-<!-- Email Address Field -->
-<div class="flex items-center space-x-2">
-    <input type="email" id="update-profile-email" autocomplete="off" disabled class="bg-gray-100 cursor-not-allowed ...">
-    <button type="button" id="btn-email" onclick="toggleFieldEdit('email')" class="...">Edit</button>
-</div>
+                <!-- Email Address Field -->
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-1">Email Address</label>
+                    <div class="flex items-center space-x-2">
+                        <input type="email" id="update-profile-email" autocomplete="off" disabled class="w-full bg-gray-100 border rounded-lg px-3 py-2 text-gray-600 cursor-not-allowed">
+                        <button type="button" id="btn-email" onclick="enableField('email')" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2.5 px-4 rounded-lg transition flex-shrink-0">Edit</button>
+                    </div>
+                </div>
 
-<!-- Centre Field -->
-<div class="flex items-center space-x-2">
-    <input type="text" id="update-profile-centre" autocomplete="off" disabled class="bg-gray-100 cursor-not-allowed ...">
-    <button type="button" id="btn-centre" onclick="toggleFieldEdit('centre')" class="...">Edit</button>
-</div>
+                <!-- Centre Field -->
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-1">Centre</label>
+                    <div class="flex items-center space-x-2">
+                        <input type="text" id="update-profile-centre" autocomplete="off" disabled class="w-full bg-gray-100 border rounded-lg px-3 py-2 text-gray-600 cursor-not-allowed">
+                        <button type="button" id="btn-centre" onclick="enableField('centre')" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2.5 px-4 rounded-lg transition flex-shrink-0">Edit</button>
+                    </div>
+                </div>
 
-<!-- State Field -->
-<div class="flex items-center space-x-2">
-    <input type="text" id="update-profile-state" autocomplete="off" disabled class="bg-gray-100 cursor-not-allowed ...">
-    <button type="button" id="btn-state" onclick="toggleFieldEdit('state')" class="...">Edit</button>
-</div>
-
-
-
-
-
-
-
+                <!-- State Field -->
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-1">State</label>
+                    <div class="flex items-center space-x-2">
+                        <input type="text" id="update-profile-state" autocomplete="off" disabled class="w-full bg-gray-100 border rounded-lg px-3 py-2 text-gray-600 cursor-not-allowed">
+                        <button type="button" id="btn-state" onclick="enableField('state')" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2.5 px-4 rounded-lg transition flex-shrink-0">Edit</button>
+                    </div>
+                </div>
+            </div>
             
             <!-- Loading status text -->
-            <p id="profile-update-status" class="text-sm text-blue-600 font-medium hidden mb-3 text-center"></p>
-
-            <button id="save-profile-btn" onclick="saveProfileChanges()" disabled class="w-full bg-gray-300 text-gray-500 font-bold py-2 px-4 rounded-lg cursor-not-allowed transition mb-3">
-                Save Changes
-            </button>
-            <button onclick="closeUpdateProfileModal()" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded-lg transition">
-                Cancel / Back to Dashboard
-            </button>
+            <p id="profile-update-status" class="text-sm text-blue-600 font-medium hidden my-3 text-center"></p>
+            
+            <div class="mt-6 space-y-3">
+                <button id="save-profile-btn" onclick="saveProfileChanges()" disabled class="w-full bg-gray-300 text-gray-500 font-bold py-2 px-4 rounded-lg cursor-not-allowed transition">
+                    Save Changes
+                </button>
+                <button onclick="closeUpdateProfileModal()" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded-lg transition">
+                    Cancel / Back to Dashboard
+                </button>
+            </div>
         </div>
-
-
-        
-
-
-
-
-
-        
     </main>
 
     <!-- Footer -->
@@ -295,23 +248,15 @@
         Heartful Communication - Participant Login System
     </footer>
 
-    <!-- Firebase & Dynamic App Logic -->
-
-<!-- Custom Message Box Modal -->
-<div id="custom-alert-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4">
-    <div class="bg-white rounded-xl shadow-xl max-w-sm w-full p-6 text-center transform transition-all">
-        <div id="custom-alert-message" class="text-gray-800 text-sm mb-6 font-medium"></div>
-        <button onclick="closeCustomAlert()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2 px-6 rounded transition shadow">
-            OK
-        </button>
+    <!-- Custom Message Box Modal -->
+    <div id="custom-alert-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4">
+        <div class="bg-white rounded-xl shadow-xl max-w-sm w-full p-6 text-center transform transition-all">
+            <div id="custom-alert-message" class="text-gray-800 text-sm mb-6 font-medium"></div>
+            <button onclick="closeCustomAlert()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2 px-6 rounded transition shadow">
+                OK
+            </button>
+        </div>
     </div>
-</div>
-
-
-
-    
-
-
     
     <script>
         const firebaseConfig = {
@@ -323,12 +268,10 @@
             messagingSenderId: "1013251414152",
             appId: "1:1013251414152:web:3e598848e31a81bb43273d"
         };
-
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
         }
         const db = firebase.database();
-
         let allParticipants = {};
         let allWorkshops = {};
         let currentActiveUser = null;
@@ -336,13 +279,8 @@
         
         let cpSelectedKey = null;
         let rpSelectedKey = null;
-
-
-
-
-
         
-function loadFirebaseData() {
+        function loadFirebaseData() {
             db.ref('control_tower').once('value').then(snapshot => {
                 const data = snapshot.val();
                 console.log("Firebase Raw Data Loaded for control_tower:", data);
@@ -358,41 +296,24 @@ function loadFirebaseData() {
                     console.warn("Firebase returned empty data for control_tower.");
                 }
             }).catch(err => console.error("Error fetching data from Firebase:", err));
-
-
-
-
     
-
-   // Fetch and display persistent global header logo based on Firebase control config
-        db.ref('control_tower/config/logo_config').on('value', (snapshot) => {
-            const config = snapshot.val();
-            console.log("Logo Config fetched:", config);
-            
-            const logoContainer = document.getElementById('global-header');
-            const logoElement = document.getElementById('app-logo');
-            
-            if (config && config.status === "ON" && config.image) {
-                logoElement.src = config.image;
-                logoContainer.classList.remove('hidden'); // Show logo box
-            } else {
-                logoContainer.classList.add('hidden');    // Hide completely if OFF or empty
-            }
-        });
-    
-
-
-    
+            // Fetch and display persistent global header logo based on Firebase control config
+            db.ref('control_tower/config/logo_config').on('value', (snapshot) => {
+                const config = snapshot.val();
+                console.log("Logo Config fetched:", config);
+                
+                const logoContainer = document.getElementById('global-header');
+                const logoElement = document.getElementById('app-logo');
+                
+                if (config && config.status === "ON" && config.image) {
+                    logoElement.src = config.image;
+                    logoContainer.classList.remove('hidden'); // Show logo box
+                } else {
+                    logoContainer.classList.add('hidden');    // Hide completely if OFF or empty
+                }
+            });
         }
-
         window.onload = loadFirebaseData;
-
-
-
-
-
-
-
 
         function updateLoginWorkshopBadge() {
             let workshopKeys = Object.keys(allWorkshops);
@@ -407,25 +328,19 @@ function loadFirebaseData() {
             }
         }
 
-
-
-function renderDashboard() {
+        function renderDashboard() {
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('change-password-screen').classList.add('hidden');
             document.getElementById('reset-password-screen').classList.add('hidden');
             document.getElementById('dashboard-screen').classList.remove('hidden');
             document.getElementById('app-header').classList.remove('hidden');
-
-
-
     
-let pName = currentActiveUser.ps_name || "Participant";
+            let pName = currentActiveUser.ps_name || "Participant";
             let pId = currentActiveUser.ps_id || "N/A";
             let pMob = maskMobile(currentActiveUser.ps_mob);
             let pEmail = maskEmail(currentActiveUser.ps_email);
             let pCentre = currentActiveUser.ps_centre || "N/A";
             let pState = currentActiveUser.ps_state || "N/A";
-
             const headerInfo = document.getElementById('header-user-info');
             headerInfo.innerHTML = `
                 <div class="grid grid-cols-1 gap-y-1 text-xs sm:text-sm">
@@ -437,20 +352,13 @@ let pName = currentActiveUser.ps_name || "Participant";
                     <div><strong>State:</strong> ${pState}</div>
                 </div>
             `;
-
-
-
-
     
-
             let wId = currentActiveUser.workshop_id;
             let workshop = allWorkshops[wId] || {};
             let workshopName = workshop.workshop_name || "Workshop Name Not Available";
             document.getElementById('workshop-title-display').innerText = workshopName;
-
             const resourcesContainer = document.getElementById('resources-container');
             resourcesContainer.innerHTML = '';
-
             const resourceLinks = [
                 { 
                     eng: "Personalized zoom link to join the workshop", 
@@ -483,15 +391,12 @@ let pName = currentActiveUser.ps_name || "Participant";
                     link: workshop.participant_feedback_link 
                 }
             ];
-
             resourceLinks.forEach(res => {
                 let row = document.createElement('div');
-                // Distinct card borders, spacing, and modern padding layout
                 row.className = "bg-white border border-gray-200 rounded-xl p-4 mb-3 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center hover:shadow transition";
                 
                 let linkVal = res.link ? res.link.toString().trim() : "";
                 let isLinkValid = linkVal.startsWith('http://') || linkVal.startsWith('https://');
-
                 let textContainer = document.createElement('div');
                 textContainer.className = "mb-3 sm:mb-0 sm:mr-4 pr-2";
                 textContainer.innerHTML = `
@@ -499,7 +404,6 @@ let pName = currentActiveUser.ps_name || "Participant";
                     <div class="text-gray-500 font-normal text-xs mt-0.5">${res.hin}</div>
                 `;
                 row.appendChild(textContainer);
-
                 if (isLinkValid) {
                     let a = document.createElement('a');
                     a.href = linkVal;
@@ -513,21 +417,10 @@ let pName = currentActiveUser.ps_name || "Participant";
                     span.innerText = "Not Available";
                     row.appendChild(span);
                 }
-
                 resourcesContainer.appendChild(row);
             });
         }
-
-
-
-
-
-
-
-
-
         
-
         function togglePasswordVisibility(inputId, iconId) {
             const input = document.getElementById(inputId);
             const icon = document.getElementById(iconId);
@@ -544,12 +437,10 @@ let pName = currentActiveUser.ps_name || "Participant";
             const query = document.getElementById('search-name').value.toLowerCase();
             const resultsBox = document.getElementById('search-results');
             resultsBox.innerHTML = '';
-
             if (query.length < 3) {
                 resultsBox.classList.add('hidden');
                 return;
             }
-
             let matches = [];
             for (let key in allParticipants) {
                 let p = allParticipants[key];
@@ -558,7 +449,6 @@ let pName = currentActiveUser.ps_name || "Participant";
                     matches.push({ key: key, data: p });
                 }
             }
-
             if (matches.length > 0) {
                 resultsBox.classList.remove('hidden');
                 matches.forEach(m => {
@@ -587,10 +477,8 @@ let pName = currentActiveUser.ps_name || "Participant";
                 showCustomAlert("Please search and select a valid participant.");
                 return;
             }
-
             let user = allParticipants[selectedParticipantKey];
             let storedPassword = user.password ? user.password.toString() : "123456";
-
             if (passwordInput === storedPassword) {
                 currentActiveUser = user;
                 renderDashboard();
@@ -603,12 +491,10 @@ let pName = currentActiveUser.ps_name || "Participant";
             const query = document.getElementById('cp-search-name').value.toLowerCase();
             const resultsBox = document.getElementById('cp-search-results');
             resultsBox.innerHTML = '';
-
             if (query.length < 3) {
                 resultsBox.classList.add('hidden');
                 return;
             }
-
             let matches = [];
             for (let key in allParticipants) {
                 let p = allParticipants[key];
@@ -617,7 +503,6 @@ let pName = currentActiveUser.ps_name || "Participant";
                     matches.push({ key: key, data: p });
                 }
             }
-
             if (matches.length > 0) {
                 resultsBox.classList.remove('hidden');
                 matches.forEach(m => {
@@ -636,65 +521,46 @@ let pName = currentActiveUser.ps_name || "Participant";
                 resultsBox.classList.add('hidden');
             }
         }
-
-
-
         
         function submitChangePassword() {
             if (!cpSelectedKey || !allParticipants[cpSelectedKey]) {
                 showCustomAlert("Please search and select a valid participant.");
                 return;
             }
-
             const currentPass = document.getElementById('cp-current-password').value.trim();
             const newPass = document.getElementById('cp-new-password').value.trim();
             const confirmPass = document.getElementById('cp-confirm-password').value.trim();
-
             if (!currentPass || !newPass || !confirmPass) {
                 showCustomAlert("Please fill in all password fields.");
                 return;
             }
-
             if (newPass !== confirmPass) {
                 showCustomAlert("New password and confirm password do not match.");
                 return;
             }
-
             let user = allParticipants[cpSelectedKey];
             let storedPass = user.password ? user.password.toString() : "123456";
-
             if (currentPass !== storedPass) {
                 showCustomAlert("Current password is incorrect.");
                 return;
             }
-
-
-
-           db.ref('control_tower/participants/' + cpSelectedKey).update({ password: newPass }).then(() => {
-              
-
+            db.ref('control_tower/participants/' + cpSelectedKey).update({ password: newPass }).then(() => {
                 showCustomAlert("Password successfully updated!");
                 allParticipants[cpSelectedKey].password = newPass;
                 showLoginScreen();
             }).catch(err => {
                 showCustomAlert("Failed to update password.");
             });
-
-
-
-            
         }
 
         function filterResetPasswordParticipants() {
             const query = document.getElementById('rp-search-name').value.toLowerCase();
             const resultsBox = document.getElementById('rp-search-results');
             resultsBox.innerHTML = '';
-
             if (query.length < 3) {
                 resultsBox.classList.add('hidden');
                 return;
             }
-
             let matches = [];
             for (let key in allParticipants) {
                 let p = allParticipants[key];
@@ -703,7 +569,6 @@ let pName = currentActiveUser.ps_name || "Participant";
                     matches.push({ key: key, data: p });
                 }
             }
-
             if (matches.length > 0) {
                 resultsBox.classList.remove('hidden');
                 matches.forEach(m => {
@@ -728,7 +593,6 @@ let pName = currentActiveUser.ps_name || "Participant";
                 showCustomAlert("Please search and select a valid participant.");
                 return;
             }
-
             if (typeof google !== 'undefined' && google.script && google.script.run) {
                 google.script.run
                     .withSuccessHandler(() => {
@@ -741,19 +605,13 @@ let pName = currentActiveUser.ps_name || "Participant";
                     })
                     .updateParticipantPassword(rpSelectedKey, "123456");
             } else {
-
-
-              db.ref('control_tower/participants/' + rpSelectedKey).update({ password: "123456" }).then(() => {
-                
-
-                showCustomAlert("Password reset to 123456");
-                allParticipants[rpSelectedKey].password = "123456";
-                showLoginScreen();
-            }).catch(err => {
-                showCustomAlert("Failed to reset password.");
-            });
-
-                
+                db.ref('control_tower/participants/' + rpSelectedKey).update({ password: "123456" }).then(() => {
+                    showCustomAlert("Password reset to 123456");
+                    allParticipants[rpSelectedKey].password = "123456";
+                    showLoginScreen();
+                }).catch(err => {
+                    showCustomAlert("Failed to reset password.");
+                });
             }
         }
 
@@ -772,18 +630,7 @@ let pName = currentActiveUser.ps_name || "Participant";
             let maskedName = name.length > 2 ? name.substring(0, 2) + "***" : "***";
             return maskedName + "@" + domain;
         }
-
-
-
-
-
-
-
-
-
         
-
-
         function showLoginScreen() {
             document.getElementById('login-screen').classList.remove('hidden');
             document.getElementById('change-password-screen').classList.add('hidden');
@@ -806,9 +653,6 @@ let pName = currentActiveUser.ps_name || "Participant";
             document.getElementById('reset-password-screen').classList.remove('hidden');
             clearForms();
         }
-
-
-
         
         function logout() {
             currentActiveUser = null;
@@ -816,43 +660,40 @@ let pName = currentActiveUser.ps_name || "Participant";
             showLoginScreen();
         }
 
-function clearForms() {
-    // Reset login inputs
-    let loginInput = document.getElementById('search-name');
-    let passInput = document.getElementById('login-password');
-    let selectedDisplay = document.getElementById('selected-participant-display');
-    let selectedContainer = document.getElementById('selected-participant-container');
-    
-    if (loginInput) loginInput.value = '';
-    if (passInput) passInput.value = '';
-    if (selectedDisplay) selectedDisplay.value = '';
-    if (selectedContainer) selectedContainer.classList.add('hidden');
-    selectedParticipantKey = null;
+        function clearForms() {
+            let loginInput = document.getElementById('search-name');
+            let passInput = document.getElementById('login-password');
+            let selectedDisplay = document.getElementById('selected-participant-display');
+            let selectedContainer = document.getElementById('selected-participant-container');
+            
+            if (loginInput) loginInput.value = '';
+            if (passInput) passInput.value = '';
+            if (selectedDisplay) selectedDisplay.value = '';
+            if (selectedContainer) selectedContainer.classList.add('hidden');
+            selectedParticipantKey = null;
 
-    // Reset Change Password form inputs
-    let cpSearch = document.getElementById('cp-search-name');
-    let cpDisplay = document.getElementById('cp-selected-display');
-    let cpCurrent = document.getElementById('cp-current-password');
-    let cpNew = document.getElementById('cp-new-password');
-    let cpConfirm = document.getElementById('cp-confirm-password');
-    
-    if (cpSearch) cpSearch.value = '';
-    if (cpDisplay) cpDisplay.value = '';
-    if (cpCurrent) cpCurrent.value = '';
-    if (cpNew) cpNew.value = '';
-    if (cpConfirm) cpConfirm.value = '';
-    cpSelectedKey = null;
+            let cpSearch = document.getElementById('cp-search-name');
+            let cpDisplay = document.getElementById('cp-selected-display');
+            let cpCurrent = document.getElementById('cp-current-password');
+            let cpNew = document.getElementById('cp-new-password');
+            let cpConfirm = document.getElementById('cp-confirm-password');
+            
+            if (cpSearch) cpSearch.value = '';
+            if (cpDisplay) cpDisplay.value = '';
+            if (cpCurrent) cpCurrent.value = '';
+            if (cpNew) cpNew.value = '';
+            if (cpConfirm) cpConfirm.value = '';
+            cpSelectedKey = null;
 
-    // Reset Reset Password form inputs
-    let rpSearch = document.getElementById('rp-search-name');
-    let rpDisplay = document.getElementById('rp-selected-display');
-    
-    if (rpSearch) rpSearch.value = '';
-    if (rpDisplay) rpDisplay.value = '';
-    rpSelectedKey = null;
-}
+            let rpSearch = document.getElementById('rp-search-name');
+            let rpDisplay = document.getElementById('rp-selected-display');
+            
+            if (rpSearch) rpSearch.value = '';
+            if (rpDisplay) rpDisplay.value = '';
+            rpSelectedKey = null;
+        }
         
-function showCustomAlert(message) {
+        function showCustomAlert(message) {
             document.getElementById('custom-alert-message').innerText = message;
             document.getElementById('custom-alert-modal').classList.remove('hidden');
         }
@@ -861,281 +702,216 @@ function showCustomAlert(message) {
             document.getElementById('custom-alert-modal').classList.add('hidden');
         }
 
-function openUpdateProfileModal() {
-    if (!currentActiveUser) return;
-    
-    // Populate fields with current values (unmasked for editing)
-    document.getElementById('update-profile-name').value = currentActiveUser.ps_name || "";
-    document.getElementById('update-profile-id').value = currentActiveUser.ps_id || "";
-    document.getElementById('update-profile-mob').value = currentActiveUser.ps_mob || "";
-    document.getElementById('update-profile-email').value = currentActiveUser.ps_email || "";
-    document.getElementById('update-profile-centre').value = currentActiveUser.ps_centre || "";
-    document.getElementById('update-profile-state').value = currentActiveUser.ps_state || "";
-    
-    // Hide dashboard contents / show update profile container
-    document.getElementById('dashboard-screen').classList.add('hidden');
-    document.getElementById('update-profile-screen').classList.remove('hidden');
-}
-
-function closeUpdateProfileModal() {
-    document.getElementById('update-profile-screen').classList.add('hidden');
-    document.getElementById('dashboard-screen').classList.remove('hidden');
-}
-
-
-function saveProfileChanges() {
-    if (!currentActiveUser) return;
-    
-    // Safety check: ensure email field is locked (verified) before saving
-    let emailInput = document.getElementById('update-profile-email');
-    if (emailInput && !emailInput.disabled) {
-        showCustomAlert("Please lock/verify your email address before saving changes.");
-        emailInput.focus();
-        return;
-    }
-    
-    let participantKey = currentActiveUser.ps_id ? currentActiveUser.ps_id.toString().trim().replace(/[\.\#\$\[\]\/]/g, "_").replace(/\s+/g, "_") : "";
-    if (!participantKey) {
-        showCustomAlert("Invalid Participant ID.");
-        return;
-    }
-    
-    let newMob = document.getElementById('update-profile-mob').value.trim();
-    let newEmail = emailInput.value.trim();
-    let newCentre = document.getElementById('update-profile-centre').value.trim();
-    let newState = document.getElementById('update-profile-state').value.trim();
-    
-    // 1. Show the "Please wait..." loading message immediately
-    let statusDiv = document.getElementById('profile-update-status');
-    if (statusDiv) {
-        statusDiv.innerText = "Your Profile is being updated.... Please wait.....";
-        statusDiv.classList.remove('hidden');
-    }
-    
-    // 2. Instantly update Firebase from the browser
-    db.ref('control_tower/participants/' + participantKey).update({
-        ps_mob: newMob,
-        ps_email: newEmail,
-        ps_centre: newCentre,
-        ps_state: newState
-    }).then(() => {
-        // Update local session cache instantly
-        currentActiveUser.ps_mob = newMob;
-        currentActiveUser.ps_email = newEmail;
-        currentActiveUser.ps_centre = newCentre;
-        currentActiveUser.ps_state = newState;
-        
-        // 3. Clear loading message and show success message
-        if (statusDiv) statusDiv.classList.add('hidden');
-        showCustomAlert("Profile updated successfully!");
-        closeUpdateProfileModal();
-        renderDashboard();
-    }).catch(err => {
-        if (statusDiv) statusDiv.classList.add('hidden');
-        showCustomAlert("Firebase update error: " + err);
-    });
-}
-
-        
-
-function enableField(fieldType) {
-    let inputElem = document.getElementById('update-profile-' + fieldType);
-    let btnElem = document.getElementById('btn-' + fieldType);
-    if (!inputElem || !btnElem) return;
-    
-    // Check if the field is currently locked
-    let isLocked = inputElem.disabled;
-    
-    if (isLocked) {
-        // --- MODE 1: UNLOCK FOR EDITING ---
-        inputElem.disabled = false;
-        inputElem.classList.remove('bg-gray-100', 'cursor-not-allowed');
-        inputElem.classList.add('bg-white', 'ring-2', 'ring-indigo-500');
-        inputElem.focus();
-        
-        // Change button to "Done" state
-        btnElem.textContent = "Done";
-        btnElem.classList.remove('bg-indigo-600', 'hover:bg-indigo-700', 'text-white');
-        btnElem.classList.add('bg-green-600', 'hover:bg-green-700', 'text-white');
-        
-        // Disable main save button while editing
-        let saveBtn = document.getElementById('save-profile-btn');
-        if (saveBtn) {
-            saveBtn.disabled = true;
-            saveBtn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700', 'text-white', 'cursor-pointer');
-            saveBtn.classList.add('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+        function openUpdateProfileModal() {
+            if (!currentActiveUser) return;
+            
+            document.getElementById('update-profile-name').value = currentActiveUser.ps_name || "";
+            document.getElementById('update-profile-id').value = currentActiveUser.ps_id || "";
+            document.getElementById('update-profile-mob').value = currentActiveUser.ps_mob || "";
+            document.getElementById('update-profile-email').value = currentActiveUser.ps_email || "";
+            document.getElementById('update-profile-centre').value = currentActiveUser.ps_centre || "";
+            document.getElementById('update-profile-state').value = currentActiveUser.ps_state || "";
+            
+            document.getElementById('dashboard-screen').classList.add('hidden');
+            document.getElementById('update-profile-screen').classList.remove('hidden');
         }
-    } else {
-        // --- MODE 2: USER EXPLICITLY CLICKED "DONE" ---
+
+        function closeUpdateProfileModal() {
+            document.getElementById('update-profile-screen').classList.add('hidden');
+            document.getElementById('dashboard-screen').classList.remove('hidden');
+        }
+
+        function saveProfileChanges() {
+            if (!currentActiveUser) return;
+            
+            let emailInput = document.getElementById('update-profile-email');
+            if (emailInput && !emailInput.disabled) {
+                showCustomAlert("Please lock/verify your email address before saving changes.");
+                emailInput.focus();
+                return;
+            }
+            
+            let participantKey = currentActiveUser.ps_id ? currentActiveUser.ps_id.toString().trim().replace(/[\.\#\$\[\]\/]/g, "_").replace(/\s+/g, "_") : "";
+            if (!participantKey) {
+                showCustomAlert("Invalid Participant ID.");
+                return;
+            }
+            
+            let newMob = document.getElementById('update-profile-mob').value.trim();
+            let newEmail = emailInput.value.trim();
+            let newCentre = document.getElementById('update-profile-centre').value.trim();
+            let newState = document.getElementById('update-profile-state').value.trim();
+            
+            let statusDiv = document.getElementById('profile-update-status');
+            if (statusDiv) {
+                statusDiv.innerText = "Your Profile is being updated.... Please wait.....";
+                statusDiv.classList.remove('hidden');
+            }
+            
+            db.ref('control_tower/participants/' + participantKey).update({
+                ps_mob: newMob,
+                ps_email: newEmail,
+                ps_centre: newCentre,
+                ps_state: newState
+            }).then(() => {
+                currentActiveUser.ps_mob = newMob;
+                currentActiveUser.ps_email = newEmail;
+                currentActiveUser.ps_centre = newCentre;
+                currentActiveUser.ps_state = newState;
+                
+                if (statusDiv) statusDiv.classList.add('hidden');
+                showCustomAlert("Profile updated successfully!");
+                closeUpdateProfileModal();
+                renderDashboard();
+            }).catch(err => {
+                if (statusDiv) statusDiv.classList.add('hidden');
+                showCustomAlert("Firebase update error: " + err);
+            });
+        }
         
-        if (fieldType === 'email') {
-            let emailVal = inputElem.value.trim();
-            // Layer 1: Format check
+        function enableField(fieldType) {
+            let inputElem = document.getElementById('update-profile-' + fieldType);
+            let btnElem = document.getElementById('btn-' + fieldType);
+            if (!inputElem || !btnElem) return;
+            
+            let isLocked = inputElem.disabled;
+            
+            if (isLocked) {
+                inputElem.disabled = false;
+                inputElem.classList.remove('bg-gray-100', 'cursor-not-allowed');
+                inputElem.classList.add('bg-white', 'ring-2', 'ring-indigo-500');
+                inputElem.focus();
+                
+                btnElem.textContent = "Done";
+                btnElem.classList.remove('bg-indigo-600', 'hover:bg-indigo-700', 'text-white');
+                btnElem.classList.add('bg-green-600', 'hover:bg-green-700', 'text-white');
+                
+                let saveBtn = document.getElementById('save-profile-btn');
+                if (saveBtn) {
+                    saveBtn.disabled = true;
+                    saveBtn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700', 'text-white', 'cursor-pointer');
+                    saveBtn.classList.add('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+                }
+            } else {
+                if (fieldType === 'email') {
+                    let emailVal = inputElem.value.trim();
+                    if (!validateEmailFormat(emailVal)) {
+                        showCustomAlert("Please check the email entered by you. It does not have a proper format (missing '@' or domain).");
+                        inputElem.focus();
+                        return;
+                    }
+                    
+                    inputElem.disabled = true;
+                    inputElem.classList.add('bg-gray-100', 'cursor-not-allowed');
+                    inputElem.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
+                    
+                    btnElem.textContent = "Edit";
+                    btnElem.classList.remove('bg-green-600', 'hover:bg-green-700', 'text-white');
+                    btnElem.classList.add('bg-indigo-600', 'hover:bg-indigo-700', 'text-white');
+                    
+                    triggerEmailVerification();
+                } else {
+                    inputElem.disabled = true;
+                    inputElem.classList.add('bg-gray-100', 'cursor-not-allowed');
+                    inputElem.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
+                    
+                    btnElem.textContent = "Edit";
+                    btnElem.classList.remove('bg-green-600', 'hover:bg-green-700', 'text-white');
+                    btnElem.classList.add('bg-indigo-600', 'hover:bg-indigo-700', 'text-white');
+                    
+                    let saveBtn = document.getElementById('save-profile-btn');
+                    if (saveBtn) {
+                        saveBtn.disabled = false;
+                        saveBtn.classList.remove('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+                        saveBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700', 'text-white', 'cursor-pointer');
+                    }
+                }
+            }
+        }
+
+        function validateEmailFormat(email) {
+            let re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+
+        function triggerEmailVerification() {
+            let emailInput = document.getElementById('update-profile-email');
+            let emailVal = emailInput.value.trim();
+            
             if (!validateEmailFormat(emailVal)) {
                 showCustomAlert("Please check the email entered by you. It does not have a proper format (missing '@' or domain).");
-                inputElem.focus();
-                return; // Keep field open and button as "Done" so they can fix it
+                emailInput.disabled = false;
+                emailInput.focus();
+                return;
             }
             
-            // Lock input temporarily during verification dispatch
-            inputElem.disabled = true;
-            inputElem.classList.add('bg-gray-100', 'cursor-not-allowed');
-            inputElem.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
+            let statusElem = document.getElementById('profile-update-status');
+            statusElem.textContent = "Sending verification code to " + emailVal + "... Please wait.";
+            statusElem.classList.remove('hidden');
             
-            // Reset button back to "Edit"
-            btnElem.textContent = "Edit";
-            btnElem.classList.remove('bg-green-600', 'hover:bg-green-700', 'text-white');
-            btnElem.classList.add('bg-indigo-600', 'hover:bg-indigo-700', 'text-white');
-            
-            // Trigger email verification workflow
-            triggerEmailVerification(emailVal);
-            
-        } else {
-            // For Mobile, Centre, State: lock the field and re-enable main save button
-            inputElem.disabled = true;
-            inputElem.classList.add('bg-gray-100', 'cursor-not-allowed');
-            inputElem.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
-            
-            // Reset button back to "Edit"
-            btnElem.textContent = "Edit";
-            btnElem.classList.remove('bg-green-600', 'hover:bg-green-700', 'text-white');
-            btnElem.classList.add('bg-indigo-600', 'hover:bg-indigo-700', 'text-white');
-            
-            // Re-enable main save button
-            let saveBtn = document.getElementById('save-profile-btn');
-            if (saveBtn) {
-                saveBtn.disabled = false;
-                saveBtn.classList.remove('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
-                saveBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700', 'text-white', 'cursor-pointer');
-            }
+            fetch(WEB_APP_URL, {
+                method: "POST",
+                body: JSON.stringify({ action: "sendEmailVerificationCode", email: emailVal })
+            })
+            .then(response => response.json())
+            .then(result => {
+                statusElem.classList.add('hidden');
+                if (result.status === "Success") {
+                    openVerificationPopup(emailVal);
+                } else {
+                    showCustomAlert("Error: " + result.message);
+                    emailInput.disabled = false;
+                }
+            })
+            .catch(error => {
+                statusElem.classList.add('hidden');
+                showCustomAlert("Network error while sending code: " + error.toString());
+                emailInput.disabled = false;
+            });
         }
-    }
-}        
 
-
-
-        
-        // Layer 1: Check basic email format syntax
-function validateEmailFormat(email) {
-    let re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return re.test(email);
-}
-
-// Function triggered when user finishes editing email or clicks a verify button
-function handleEmailEditAction() {
-    let emailInput = document.getElementById('update-profile-email');
-    let emailVal = emailInput.value.trim();
-    
-    // Run Layer 1 Validation
-    if (!validateEmailFormat(emailVal)) {
-        showCustomAlert("Please check the email entered by you. It does not have a proper format (e.g., missing '@' or domain).");
-        emailInput.focus();
-        return;
-    }
-    
-    // If format is valid, we prepare for Layer 2 (Verification Code)
-    showCustomAlert("Email format is valid! Next, we will set up the verification code step.");
-    // (We will hook up the Apps Script verification trigger here in the next step)
-}
-
-
-
-        // Step 1: Trigger sending the code to the updated email
-
-function triggerEmailVerification() {
-    let emailInput = document.getElementById('update-profile-email');
-    let emailVal = emailInput.value.trim();
-    
-    // Layer 1: Format check
-    if (!validateEmailFormat(emailVal)) {
-        showCustomAlert("Please check the email entered by you. It does not have a proper format (missing '@' or domain).");
-        emailInput.disabled = false;
-        emailInput.focus();
-        return;
-    }
-    
-    let statusElem = document.getElementById('profile-update-status');
-    statusElem.textContent = "Sending verification code to " + emailVal + "... Please wait.";
-    statusElem.classList.remove('hidden');
-    
-    // Call Apps Script backend
-    fetch(WEB_APP_URL, {
-        method: "POST",
-        body: JSON.stringify({ action: "sendEmailVerificationCode", email: emailVal })
-    })
-    .then(response => response.json())
-    .then(result => {
-        statusElem.classList.add('hidden');
-        if (result.status === "Success") {
-            openVerificationPopup(emailVal);
-        } else {
-            showCustomAlert("Error: " + result.message);
-            emailInput.disabled = false;
-        }
-    })
-    .catch(error => {
-        statusElem.classList.add('hidden');
-        showCustomAlert("Network error while sending code: " + error.toString());
-        emailInput.disabled = false;
-    });
-}
-
-        
-
-        
-// Step 2: Prompt user to enter the code
-function openVerificationPopup(email) {
-    let enteredCode = prompt("A 6-digit verification code has been sent to " + email + ".\nIt is valid for 5 minutes.\n\nPlease enter the code below:");
-    if (!enteredCode) return;
-    
-    verifyCodeWithBackend(email, enteredCode.trim());
-}
-
-// Step 3: Verify the code with the backend
-function verifyCodeWithBackend(email, code) {
-    let statusElem = document.getElementById('profile-update-status');
-    statusElem.textContent = "Verifying code...";
-    statusElem.classList.remove('hidden');
-    
-    fetch(WEB_APP_URL, {
-        method: "POST",
-        body: JSON.stringify({ action: "verifyEmailCode", email: email, code: code })
-    })
-    .then(response => response.json())
-    .then(result => {
-        statusElem.classList.add('hidden');
-        if (result.status === "Success") {
-            showCustomAlert("Email verified successfully! You can now click 'Save Changes'.");
+        function openVerificationPopup(email) {
+            let enteredCode = prompt("A 6-digit verification code has been sent to " + email + ".\nIt is valid for 5 minutes.\n\nPlease enter the code below:");
+            if (!enteredCode) return;
             
-            // Lock the email input field back since it's verified
-            let emailInput = document.getElementById('update-profile-email');
-            emailInput.disabled = true;
-            emailInput.classList.add('bg-gray-100', 'cursor-not-allowed');
-            emailInput.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
-            
-            // Unlock the main Save Changes button!
-            let saveBtn = document.getElementById('save-profile-btn');
-            if (saveBtn) {
-                saveBtn.disabled = false;
-                saveBtn.classList.remove('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
-                saveBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700', 'text-white', 'cursor-pointer');
-            }
-        } else {
-            showCustomAlert("Verification Failed: " + result.message);
+            verifyCodeWithBackend(email, enteredCode.trim());
         }
-    })
-    .catch(error => {
-        statusElem.classList.add('hidden');
-        showCustomAlert("Network error during code verification: " + error.toString());
-    });
-}
 
-
-
-
-        
-
-        
+        function verifyCodeWithBackend(email, code) {
+            let statusElem = document.getElementById('profile-update-status');
+            statusElem.textContent = "Verifying code...";
+            statusElem.classList.remove('hidden');
+            
+            fetch(WEB_APP_URL, {
+                method: "POST",
+                body: JSON.stringify({ action: "verifyEmailCode", email: email, code: code })
+            })
+            .then(response => response.json())
+            .then(result => {
+                statusElem.classList.add('hidden');
+                if (result.status === "Success") {
+                    showCustomAlert("Email verified successfully! You can now click 'Save Changes'.");
+                    
+                    let emailInput = document.getElementById('update-profile-email');
+                    emailInput.disabled = true;
+                    emailInput.classList.add('bg-gray-100', 'cursor-not-allowed');
+                    emailInput.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
+                    
+                    let saveBtn = document.getElementById('save-profile-btn');
+                    if (saveBtn) {
+                        saveBtn.disabled = false;
+                        saveBtn.classList.remove('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+                        saveBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700', 'text-white', 'cursor-pointer');
+                    }
+                } else {
+                    showCustomAlert("Verification Failed: " + result.message);
+                }
+            })
+            .catch(error => {
+                statusElem.classList.add('hidden');
+                showCustomAlert("Network error during code verification: " + error.toString());
+            });
+        }
     </script>
 </body>
 </html>
