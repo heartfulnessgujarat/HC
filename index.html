@@ -931,7 +931,59 @@ function saveProfileChanges() {
     });
 }    
  
+function enableField(fieldType) {
+    let inputElem = document.getElementById('update-profile-' + fieldType);
+    if (!inputElem) return;
+    
+    // Toggle state: if it's currently disabled, enable it
+    if (inputElem.disabled) {
+        inputElem.disabled = false;
+        inputElem.classList.remove('bg-gray-100', 'cursor-not-allowed');
+        inputElem.classList.add('bg-white', 'ring-2', 'ring-indigo-500');
+        inputElem.focus();
+        
+        // Immediately disable the main Save Changes button when any field enters edit mode
+        let saveBtn = document.getElementById('save-profile-btn');
+        if (saveBtn) {
+            saveBtn.disabled = true;
+            saveBtn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700', 'text-white', 'cursor-pointer');
+            saveBtn.classList.add('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+        }
+    } else {
+        // Lock it back if clicked again
+        inputElem.disabled = true;
+        inputElem.classList.add('bg-gray-100', 'cursor-not-allowed');
+        inputElem.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
+    }
+}
 
+
+
+
+
+
+        // Layer 1: Check basic email format syntax
+function validateEmailFormat(email) {
+    let re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+}
+
+// Function triggered when user finishes editing email or clicks a verify button
+function handleEmailEditAction() {
+    let emailInput = document.getElementById('update-profile-email');
+    let emailVal = emailInput.value.trim();
+    
+    // Run Layer 1 Validation
+    if (!validateEmailFormat(emailVal)) {
+        showCustomAlert("Please check the email entered by you. It does not have a proper format (e.g., missing '@' or domain).");
+        emailInput.focus();
+        return;
+    }
+    
+    // If format is valid, we prepare for Layer 2 (Verification Code)
+    showCustomAlert("Email format is valid! Next, we will set up the verification code step.");
+    // (We will hook up the Apps Script verification trigger here in the next step)
+}
        
 
         
