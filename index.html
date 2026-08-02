@@ -816,93 +816,151 @@ function logout() {
             document.getElementById('dashboard-screen').classList.remove('hidden');
         }
 
+// Global variable to hold the zone-state master mapping
+let zoneStateMapping = {};
 
+// 1. Fetch Master List Zone State from Firebase when opening the profile modal
+function fetchZoneStateMaster() {
+    db.ref('control_tower/Master_List_Zone_State').once('value').then(snapshot => {
+        const data = snapshot.val();
+        if (data) {
+            zoneStateMapping = data;
+            populateStateDropdown();
+        }
+    }).catch(error => {
+        console.error("Error fetching zone-state master:", error);
+    });
+}
+
+// 2. Populate the State dropdown dynamically
+function populateStateDropdown() {
+    let stateSelect = document.getElementById('update-profile-state');
+    if (!stateSelect) return;
+    
+    // Save current state value if any, to retain selection if re-opened
+    let currentValue = stateSelect.value || (currentActiveUser ? currentActiveUser.ps_state : "");
+    
+    stateSelect.innerHTML = '<option value="">Select State</option>';
+    
+    Object.keys(zoneStateMapping).forEach(state => {
+        let option = document.createElement('option');
+        option.value = state;
+        option.textContent = state;
+        if (state === currentValue) {
+            option.selected = true;
+        }
+        stateSelect.appendChild(option);
+    });
+    
+    // Trigger zone population based on the selected state
+    onStateSelected();
+}
+
+// 3. Automatically update Zone options when State changes
+function onStateSelected() {
+    let stateSelect = document.getElementById('update-profile-state');
+    let zoneSelect = document.getElementById('update-profile-zone');
+    
+    if (!stateSelect || !zoneSelect) return;
+    
+    let selectedState = stateSelect.value;
+    let currentZoneValue = zoneSelect.value || (currentActiveUser ? currentActiveUser.ps_zone : "");
+    
+    zoneSelect.innerHTML = '<option value="">Select Zone</option>';
+    
+    if (selectedState && zoneStateMapping[selectedState]) {
+        zoneStateMapping[selectedState].forEach(zone => {
+            let option = document.createElement('option');
+            option.value = zone;
+            option.textContent = zone;
+            if (zone === currentZoneValue) {
+                option.selected = true;
+            }
+            zoneSelect.appendChild(option);
+        });
+    }
+}
+
+// 4. Existing Save Profile Changes function with Zone & State logic intact
 function saveProfileChanges() {
-            if (!currentActiveUser) return;
-            
-            let emailInput = document.getElementById('update-profile-email');
-            if (emailInput && !emailInput.disabled) {
-                showCustomAlert("Please lock/verify your email address before saving changes.");
-                emailInput.focus();
-                return;
-            }
-            
-            let participantKey = currentActiveUser.ps_id ? currentActiveUser.ps_id.toString().trim().replace(/[\.\#\$\[\]\/]/g, "_").replace(/\s+/g, "_") : "";
-            if (!participantKey) {
-                showCustomAlert("Invalid Participant ID.");
-                return;
-            }
-            
-            let newMob = document.getElementById('update-profile-mob').value.trim();
-            let newEmail = emailInput.value.trim();
-            let newCentre = document.getElementById('update-profile-centre').value.trim();
-            let newZone = document.getElementById('update-profile-zone').value.trim(); // <-- MUST ADD THIS LINE
-         
-            let newState = document.getElementById('update-profile-state').value.trim();
-            
-            // Build payload dynamically by comparing with currentActiveUser to track exact changes
-            let payload = {};
-            let updatedFieldsList = [];
+    if (!currentActiveUser) return;
+    
+    let emailInput = document.getElementById('update-profile-email');
+    if (emailInput && !emailInput.disabled) {
+        showCustomAlert("Please lock/verify your email address before saving changes.");
+        emailInput.focus();
+        return;
+    }
+    
+    let participantKey = currentActiveUser.ps_id ? currentActiveUser.ps_id.toString().trim().replace(/[\.\#\$\[\]\/]/g, "_").replace(/\s+/g, "_") : "";
+    if (!participantKey) {
+        showCustomAlert("Invalid Participant ID.");
+        return;
+    }
+    
+    let newMob = document.getElementById('update-profile-mob').value.trim();
+    let newEmail = emailInput.value.trim();
+    let newCentre = document.getElementById('update-profile-centre').value.trim();
+    let newZone = document.getElementById('update-profile-zone').value.trim();
+    let newState = document.getElementById('update-profile-state').value.trim();
+    
+    // Build payload dynamically by comparing with currentActiveUser to track exact changes
+    let payload = {};
+    let updatedFieldsList = [];
 
-            if (newMob !== (currentActiveUser.ps_mob || "")) {
-                payload.ps_mob = newMob;
-                updatedFieldsList.push("ps_mob");
-            }
-            if (newEmail !== (currentActiveUser.ps_email || "")) {
-                payload.ps_email = newEmail;
-                updatedFieldsList.push("ps_email");
-            }
-            if (newCentre !== (currentActiveUser.ps_centre || "")) {
-                payload.ps_centre = newCentre;
-                updatedFieldsList.push("ps_centre");                
-            }
-    if (newZone !== (currentActiveUser.ps_zone || "")) { // Added Zone check
+    if (newMob !== (currentActiveUser.ps_mob || "")) {
+        payload.ps_mob = newMob;
+        updatedFieldsList.push("ps_mob");
+    }
+    if (newEmail !== (currentActiveUser.ps_email || "")) {
+        payload.ps_email = newEmail;
+        updatedFieldsList.push("ps_email");
+    }
+    if (newCentre !== (currentActiveUser.ps_centre || "")) {
+        payload.ps_centre = newCentre;
+        updatedFieldsList.push("ps_centre");                
+    }
+    if (newZone !== (currentActiveUser.ps_zone || "")) {
         payload.ps_zone = newZone;
         updatedFieldsList.push("ps_zone");
     }
-    
-            if (newState !== (currentActiveUser.ps_state || "")) {
-                payload.ps_state = newState;
-                updatedFieldsList.push("ps_state");
-            }
+    if (newState !== (currentActiveUser.ps_state || "")) {
+        payload.ps_state = newState;
+        updatedFieldsList.push("ps_state");
+    }
 
-            if (Object.keys(payload).length === 0) {
-                showCustomAlert("No changes detected to save.");
-                return;
-            }
+    if (Object.keys(payload).length === 0) {
+        showCustomAlert("No changes detected to save.");
+        return;
+    }
 
-            // Include fieldupdated in the payload so it syncs correctly to Firebase and Sheet
-            payload.fieldupdated = updatedFieldsList.join(", ");
-            payload.lastsyntimestamp = new Date().toLocaleString();
+    // Include fieldupdated in the payload so it syncs correctly to Firebase and Sheet
+    payload.fieldupdated = updatedFieldsList.join(", ");
+    payload.lastsyntimestamp = new Date().toLocaleString();
 
-            let statusDiv = document.getElementById('profile-update-status');
-            if (statusDiv) {
-                statusDiv.innerText = "Your Profile is being updated.... Please wait.....";
-                statusDiv.classList.remove('hidden');
-            }
+    let statusDiv = document.getElementById('profile-update-status');
+    if (statusDiv) {
+        statusDiv.innerText = "Your Profile is being updated.... Please wait.....";
+        statusDiv.classList.remove('hidden');
+    }
 
-            db.ref('control_tower/participants/' + participantKey).update(payload).then(() => {
-                currentActiveUser.ps_mob = newMob;
-                currentActiveUser.ps_email = newEmail;
-                currentActiveUser.ps_centre = newCentre;
-                currentActiveUser.ps_zone = newZone; // Updated local zone
-                currentActiveUser.ps_state = newState;
-                
-                if (statusDiv) statusDiv.classList.add('hidden');
-                showCustomAlert("Profile updated successfully!");
-                closeUpdateProfileModal();
-                renderDashboard();
-
-            }).catch(err => {
-                if (statusDiv) statusDiv.classList.add('hidden');
-                showCustomAlert("Firebase update error: " + err);
-            });
-        }
-
-
-
+    db.ref('control_tower/participants/' + participantKey).update(payload).then(() => {
+        currentActiveUser.ps_mob = newMob;
+        currentActiveUser.ps_email = newEmail;
+        currentActiveUser.ps_centre = newCentre;
+        currentActiveUser.ps_zone = newZone;
+        currentActiveUser.ps_state = newState;
         
+        if (statusDiv) statusDiv.classList.add('hidden');
+        showCustomAlert("Profile updated successfully!");
+        closeUpdateProfileModal();
+        renderDashboard();
 
+    }).catch(err => {
+        if (statusDiv) statusDiv.classList.add('hidden');
+        showCustomAlert("Firebase update error: " + err);
+    });
+}
         
 
 
