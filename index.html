@@ -378,6 +378,7 @@ const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzy4iylXw-mY7lWPxb-
             let pMob = maskMobile(currentActiveUser.ps_mob);
             let pEmail = maskEmail(currentActiveUser.ps_email);
             let pCentre = currentActiveUser.ps_centre || "N/A";
+            let pZone = currentActiveUser.ps_zone || "N/A";
             let pState = currentActiveUser.ps_state || "N/A";
             const headerInfo = document.getElementById('header-user-info');
             headerInfo.innerHTML = `
