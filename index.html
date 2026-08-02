@@ -219,26 +219,27 @@
                     </div>
                 </div>
 
+<!-- State Field (Dropdown) -->
+<div>
+    <label class="block text-gray-700 text-sm font-bold mb-1">State</label>
+    <div class="flex items-center space-x-2">
+        <select id="update-profile-state" disabled onchange="onStateSelected()" class="w-full bg-gray-100 border rounded-lg px-3 py-2 text-gray-600 cursor-not-allowed">
+            <option value="">Select State</option>
+        </select>
+        <button type="button" id="btn-state" onclick="enableField('state')" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2.5 px-4 rounded-lg transition flex-shrink-0">Edit</button>
+    </div>
+</div>
 
-                <!-- Zone Field -->
-                <div>
-                    <label class="block text-gray-700 text-sm font-bold mb-1">Zone</label>
-                    <div class="flex items-center space-x-2">
-                        <input type="text" id="update-profile-zone" autocomplete="off" disabled class="w-full bg-gray-100 border rounded-lg px-3 py-2 text-gray-600 cursor-not-allowed">
-                        <button type="button" id="btn-zone" onclick="enableField('zone')" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2.5 px-4 rounded-lg transition flex-shrink-0">Edit</button>
-                    </div>
-                </div>
-             
-
-                <!-- State Field -->
-                <div>
-                    <label class="block text-gray-700 text-sm font-bold mb-1">State</label>
-                    <div class="flex items-center space-x-2">
-                        <input type="text" id="update-profile-state" autocomplete="off" disabled class="w-full bg-gray-100 border rounded-lg px-3 py-2 text-gray-600 cursor-not-allowed">
-                        <button type="button" id="btn-state" onclick="enableField('state')" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2.5 px-4 rounded-lg transition flex-shrink-0">Edit</button>
-                    </div>
-                </div>
-            </div>
+<!-- Zone Field (Cascading Dropdown) -->
+<div>
+    <label class="block text-gray-700 text-sm font-bold mb-1">Zone</label>
+    <div class="flex items-center space-x-2">
+        <select id="update-profile-zone" disabled class="w-full bg-gray-100 border rounded-lg px-3 py-2 text-gray-600 cursor-not-allowed">
+            <option value="">Select Zone</option>
+        </select>
+        <button type="button" id="btn-zone" onclick="enableField('zone')" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2.5 px-4 rounded-lg transition flex-shrink-0">Edit</button>
+    </div>
+</div>
             
             <!-- Loading status text -->
             <p id="profile-update-status" class="text-sm text-blue-600 font-medium hidden my-3 text-center"></p>
