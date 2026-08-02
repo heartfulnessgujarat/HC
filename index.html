@@ -278,26 +278,6 @@
 </div>
 
 
-<!-- Update Profile State Field Container -->
-            <div class="relative mb-4">
-                <label class="block text-sm font-medium text-gray-700">State</label>
-                <div class="flex items-center gap-2">
-                    <input type="text" id="update-profile-state" class="w-full border rounded p-2" placeholder="Type state name..." autocomplete="off" oninput="handleStateInput(this.value)">
-                </div>
-                <!-- Suggestions Dropdown Box -->
-                <div id="state-suggestions" class="absolute z-50 left-0 right-0 bg-white border border-gray-300 rounded shadow-lg mt-1 max-h-40 overflow-y-auto hidden"></div>
-            </div>
-
-            <!-- Followed by your other modal buttons or script tag -->
-            <div class="flex justify-end space-x-2">
-                <button onclick="closeVerificationModal()" 
-                    class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 text-sm">Cancel</button>
-                <button onclick="handleVerifyCodeClick()" 
-                    class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm">Verify</button>
-            </div>
-        </div>
-    </div>
-
     <script>
    
 
@@ -815,9 +795,7 @@ function logout() {
         }
 
 
-
-        
-        function openUpdateProfileModal() {
+function openUpdateProfileModal() {
             if (!currentActiveUser) return;
             
             document.getElementById('update-profile-name').value = currentActiveUser.ps_name || "";
@@ -827,9 +805,17 @@ function logout() {
             document.getElementById('update-profile-centre').value = currentActiveUser.ps_centre || "";
             document.getElementById('update-profile-state').value = currentActiveUser.ps_state || "";
             
+            // Ensure the state input has the autocomplete handler attached
+            document.getElementById('update-profile-state').setAttribute('oninput', 'handleStateInput(this.value)');
+            
             document.getElementById('dashboard-screen').classList.add('hidden');
             document.getElementById('update-profile-screen').classList.remove('hidden');
         }
+
+
+
+
+        
 
         function closeUpdateProfileModal() {
             document.getElementById('update-profile-screen').classList.add('hidden');
