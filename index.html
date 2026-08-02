@@ -834,6 +834,8 @@ function saveProfileChanges() {
             let newMob = document.getElementById('update-profile-mob').value.trim();
             let newEmail = emailInput.value.trim();
             let newCentre = document.getElementById('update-profile-centre').value.trim();
+            let newZone = document.getElementById('update-profile-zone').value.trim(); // <-- MUST ADD THIS LINE
+         
             let newState = document.getElementById('update-profile-state').value.trim();
             
             // Build payload dynamically by comparing with currentActiveUser to track exact changes
