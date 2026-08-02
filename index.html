@@ -336,14 +336,18 @@ const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz5M-tuxgcJb9_4G3q9
         
         let cpSelectedKey = null;
         let rpSelectedKey = null;
-        
-        function loadFirebaseData() {
+
+
+function loadFirebaseData() {
             db.ref('control_tower').once('value').then(snapshot => {
                 const data = snapshot.val();
                 console.log("Firebase Raw Data Loaded for control_tower:", data);
                 if (data) {
                     allParticipants = data.participants || {};
                     allWorkshops = data.workshops || {};
+                    
+                    // --> HOOK IT UP RIGHT HERE: <--
+                    loadStatesData(data.states);
                     
                     console.log("Parsed allParticipants:", allParticipants);
                     console.log("Parsed allWorkshops:", allWorkshops);
@@ -371,6 +375,10 @@ const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz5M-tuxgcJb9_4G3q9
             });
         }
         window.onload = loadFirebaseData;
+
+
+
+        
 
         function updateLoginWorkshopBadge() {
             let workshopKeys = Object.keys(allWorkshops);
