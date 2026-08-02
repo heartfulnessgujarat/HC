@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -12,17 +14,18 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col justify-between text-xs sm:text-sm">
-    <!-- Persistent Global Header Logo (Compact top padding) -->
-    <div id="global-header" class="max-w-md mx-auto w-full px-3 pt-1 hidden">
-        <div class="bg-white rounded-lg shadow-sm p-0 overflow-hidden">
-            <img id="app-logo" src="" alt="App Logo" class="w-full h-24 sm:h-28 object-contain" />
+    
+    <!-- Persistent Global Header Logo (Matched precisely to form container width) -->
+    <div id="global-header" class="max-w-md mx-auto w-full px-3 pt-2 hidden">
+        <div class="bg-white rounded-lg shadow-sm p-2 flex justify-center items-center overflow-hidden">
+            <img id="app-logo" src="" alt="App Logo" class="max-h-20 sm:max-h-24 w-auto object-contain" />
         </div>
     </div>
     
     <!-- Top Header Bar -->
     <header id="app-header" class="max-w-md mx-auto px-3 pt-1 hidden w-full">
         <div class="bg-blue-50 border border-blue-200 text-blue-900 shadow-sm rounded-lg p-2.5 flex flex-col sm:flex-row justify-between items-start sm:items-center w-full">
-            <div id="header-user-info" class="w-full mb-2 sm:mb-0 text-xs">
+            <div id="header-user-info" class="w-full mb-1.5 sm:mb-0 text-xs">
                 <!-- Populated dynamically via renderDashboard -->
             </div>
             <div class="flex-shrink-0 self-end sm:self-center flex space-x-1.5">
@@ -36,8 +39,8 @@
         </div>
     </header>
     
-    <!-- Main Container with minimal vertical padding -->
-    <main class="max-w-md mx-auto px-3 py-2 flex-grow w-full">
+    <!-- Main Container with tightened spacing -->
+    <main class="max-w-md mx-auto px-3 py-1 flex-grow w-full">
         <!-- SCREEN 1: LOGIN VIEW -->
         <div id="login-screen" class="bg-white rounded-lg shadow-md p-3 sm:p-4 mt-1">
             <div id="login-workshop-badge" class="text-center mb-1 hidden">
@@ -79,14 +82,14 @@
             </div>
         </div>
         
-        <!-- SCREEN 2: DASHBOARD VIEW -->
-        <div id="dashboard-screen" class="hidden space-y-3">
-            <div class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-sm rounded-lg py-2 px-4 text-center">
-                <h2 id="workshop-title-display" class="text-sm sm:text-base font-bold"></h2>
+        <!-- SCREEN 2: DASHBOARD VIEW (Reduced gaps between title banner and resource boxes) -->
+        <div id="dashboard-screen" class="hidden space-y-2 mt-1">
+            <div class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-sm rounded-lg py-1.5 px-3 text-center">
+                <h2 id="workshop-title-display" class="text-xs sm:text-sm font-bold"></h2>
             </div>
            
             <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                <div class="bg-gray-100 px-4 py-2 border-b text-center">
+                <div class="bg-gray-100 px-3 py-1.5 border-b text-center">
                     <h3 class="text-xs sm:text-sm font-bold text-gray-800">Participant Resources</h3>
                 </div>
                 <div class="divide-y divide-gray-200 text-xs" id="resources-container">
@@ -96,20 +99,20 @@
         </div>
 
         <!-- SCREEN 3: CHANGE PASSWORD SCREEN -->
-        <div id="change-password-screen" class="bg-white rounded-lg shadow-md p-4 mt-2 hidden text-xs">
-            <h2 class="text-base font-bold text-gray-800 mb-3 text-center">Change Password</h2>
+        <div id="change-password-screen" class="bg-white rounded-lg shadow-md p-3 sm:p-4 mt-1 hidden text-xs">
+            <h2 class="text-base font-bold text-gray-800 mb-2.5 text-center">Change Password</h2>
             
             <div class="mb-2 relative">
-                <label class="block text-gray-700 text-[11px] font-bold mb-1">Type your name in English (at least 3 letters):</label>
+                <label class="block text-gray-700 text-[11px] font-bold mb-0.5">Type your name in English (at least 3 letters):</label>
                 <input type="text" id="cp-search-name" placeholder="e.g. Raj" class="w-full px-2.5 py-1 border rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500" oninput="filterChangePasswordParticipants()">
                 <div id="cp-search-results" class="absolute left-0 right-0 bg-white border mt-1 rounded-md shadow-lg max-h-32 overflow-y-auto hidden z-20"></div>
             </div>
             <div class="mb-2">
-                <label class="block text-gray-700 text-[11px] font-bold mb-1">Name of the Participant:</label>
+                <label class="block text-gray-700 text-[11px] font-bold mb-0.5">Name of the Participant:</label>
                 <input type="text" id="cp-selected-display" readonly class="w-full px-2.5 py-1 bg-gray-100 border rounded-md text-gray-600" placeholder="Selected participant name">
             </div>
             <div class="mb-2 relative">
-                <label class="block text-gray-700 text-[11px] font-bold mb-1">Current Password:</label>
+                <label class="block text-gray-700 text-[11px] font-bold mb-0.5">Current Password:</label>
                 <div class="relative">
                     <input type="password" id="cp-current-password" placeholder="Current Password" class="w-full px-2.5 py-1 pr-8 border rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500">
                     <button type="button" onclick="togglePasswordVisibility('cp-current-password', 'cp-eye-1')" class="absolute inset-y-0 right-0 px-2 flex items-center text-gray-500 hover:text-gray-700 focus:outline-none">
@@ -121,7 +124,7 @@
                 </div>
             </div>
             <div class="mb-2 relative">
-                <label class="block text-gray-700 text-[11px] font-bold mb-1">New Password (Max 6 Chars):</label>
+                <label class="block text-gray-700 text-[11px] font-bold mb-0.5">New Password (Max 6 Chars):</label>
                 <div class="relative">
                     <input type="password" id="cp-new-password" placeholder="New Password" maxlength="6" class="w-full px-2.5 py-1 pr-8 border rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500">
                     <button type="button" onclick="togglePasswordVisibility('cp-new-password', 'cp-eye-2')" class="absolute inset-y-0 right-0 px-2 flex items-center text-gray-500 hover:text-gray-700 focus:outline-none">
@@ -133,7 +136,7 @@
                 </div>
             </div>
             <div class="mb-3 relative">
-                <label class="block text-gray-700 text-[11px] font-bold mb-1">Confirm New Password:</label>
+                <label class="block text-gray-700 text-[11px] font-bold mb-0.5">Confirm New Password:</label>
                 <div class="relative">
                     <input type="password" id="cp-confirm-password" placeholder="Confirm New Password" maxlength="6" class="w-full px-2.5 py-1 pr-8 border rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500">
                     <button type="button" onclick="togglePasswordVisibility('cp-confirm-password', 'cp-eye-3')" class="absolute inset-y-0 right-0 px-2 flex items-center text-gray-500 hover:text-gray-700 focus:outline-none">
@@ -153,16 +156,16 @@
         </div>
 
         <!-- SCREEN 4: RESET PASSWORD SCREEN -->
-        <div id="reset-password-screen" class="bg-white rounded-lg shadow-md p-4 mt-2 hidden text-xs">
-            <h2 class="text-base font-bold text-gray-800 mb-3 text-center">Reset Password</h2>
+        <div id="reset-password-screen" class="bg-white rounded-lg shadow-md p-3 sm:p-4 mt-1 hidden text-xs">
+            <h2 class="text-base font-bold text-gray-800 mb-2.5 text-center">Reset Password</h2>
             
             <div class="mb-2 relative">
-                <label class="block text-gray-700 text-[11px] font-bold mb-1">Type your name in English (at least 3 letters):</label>
+                <label class="block text-gray-700 text-[11px] font-bold mb-0.5">Type your name in English (at least 3 letters):</label>
                 <input type="text" id="rp-search-name" placeholder="e.g. Raj" class="w-full px-2.5 py-1 border rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500" oninput="filterResetPasswordParticipants()">
                 <div id="rp-search-results" class="absolute left-0 right-0 bg-white border mt-1 rounded-md shadow-lg max-h-32 overflow-y-auto hidden z-20"></div>
             </div>
             <div class="mb-3">
-                <label class="block text-gray-700 text-[11px] font-bold mb-1">Name of the Participant:</label>
+                <label class="block text-gray-700 text-[11px] font-bold mb-0.5">Name of the Participant:</label>
                 <input type="text" id="rp-selected-display" readonly class="w-full px-2.5 py-1 bg-gray-100 border rounded-md text-gray-600" placeholder="Selected participant name">
             </div>
             <button onclick="submitResetPassword()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1.5 px-3 rounded-md transition mb-2">
@@ -174,10 +177,10 @@
         </div>
 
         <!-- SCREEN 5: UPDATE PROFILE SCREEN -->
-        <div id="update-profile-screen" class="bg-white rounded-lg shadow-md p-4 mt-2 hidden text-xs">
-            <h2 class="text-base font-bold text-gray-800 mb-3 text-center">Update Profile Details</h2>
+        <div id="update-profile-screen" class="bg-white rounded-lg shadow-md p-3 sm:p-4 mt-1 hidden text-xs">
+            <h2 class="text-base font-bold text-gray-800 mb-2.5 text-center">Update Profile Details</h2>
             
-            <div class="space-y-2.5">
+            <div class="space-y-2">
                 <div>
                     <label class="block text-gray-700 text-[11px] font-bold mb-0.5">Name (Read-only)</label>
                     <input type="text" id="update-profile-name" disabled class="w-full bg-gray-100 border rounded-md px-2.5 py-1 text-gray-600 cursor-not-allowed">
@@ -240,7 +243,7 @@
             <!-- Loading status text -->
             <p id="profile-update-status" class="text-xs text-blue-600 font-medium hidden my-2 text-center"></p>
             
-            <div class="mt-4 space-y-2">
+            <div class="mt-3 space-y-2">
                 <button id="save-profile-btn" onclick="saveProfileChanges()" disabled class="w-full bg-gray-300 text-gray-500 font-bold py-1.5 px-3 rounded-md cursor-not-allowed transition text-xs">
                     Save Changes
                 </button>
@@ -252,7 +255,7 @@
     </main>
 
     <!-- Footer -->
-    <footer class="text-center py-2 text-[10px] text-gray-500">
+    <footer class="text-center py-1.5 text-[10px] text-gray-500">
         Heartful Communication - Participant Login System
     </footer>
 
@@ -283,6 +286,10 @@
     </div>
     
     <script>
+
+
+
+
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwZwp6CgVUqLM9LUWob9FvgiioA3S5sACYHlkOD7RiopRucNaHzP8IsAcKMEARKbunH3A/exec";
 
 
