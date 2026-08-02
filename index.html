@@ -1,5 +1,4 @@
 
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -15,10 +14,10 @@
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col justify-between text-xs sm:text-sm">
     
-    <!-- Persistent Global Header Logo (Matched precisely to form container width) -->
+    <!-- Persistent Global Header Logo (Full width fit matching container) -->
     <div id="global-header" class="max-w-md mx-auto w-full px-3 pt-2 hidden">
-        <div class="bg-white rounded-lg shadow-sm p-2 flex justify-center items-center overflow-hidden">
-            <img id="app-logo" src="" alt="App Logo" class="max-h-20 sm:max-h-24 w-auto object-contain" />
+        <div class="bg-white rounded-lg shadow-sm p-1.5 overflow-hidden flex justify-center">
+            <img id="app-logo" src="" alt="App Logo" class="w-full h-auto max-h-24 sm:max-h-28 object-contain" />
         </div>
     </div>
     
@@ -82,7 +81,7 @@
             </div>
         </div>
         
-        <!-- SCREEN 2: DASHBOARD VIEW (Reduced gaps between title banner and resource boxes) -->
+        <!-- SCREEN 2: DASHBOARD VIEW -->
         <div id="dashboard-screen" class="hidden space-y-2 mt-1">
             <div class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-sm rounded-lg py-1.5 px-3 text-center">
                 <h2 id="workshop-title-display" class="text-xs sm:text-sm font-bold"></h2>
@@ -92,8 +91,9 @@
                 <div class="bg-gray-100 px-3 py-1.5 border-b text-center">
                     <h3 class="text-xs sm:text-sm font-bold text-gray-800">Participant Resources</h3>
                 </div>
+                <!-- Resource rows container with compact layout -->
                 <div class="divide-y divide-gray-200 text-xs" id="resources-container">
-                    <!-- Dynamically injected rows -->
+                    <!-- Dynamically injected rows using vertical stack structure -->
                 </div>
             </div>
         </div>
@@ -286,7 +286,6 @@
     </div>
     
     <script>
-
 
 
 
