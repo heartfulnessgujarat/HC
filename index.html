@@ -812,7 +812,6 @@ function logout() {
         }
 
 
-
 function saveProfileChanges() {
             if (!currentActiveUser) return;
             
@@ -881,32 +880,15 @@ function saveProfileChanges() {
                 closeUpdateProfileModal();
                 renderDashboard();
 
-                // SILENT BACKGROUND SYNC TO GOOGLE SHEET VIA WEB APP POST
-                const webAppUrl = "https://script.google.com/macros/s/AKfycbz5M-tuxgcJb9_4G3q96MZ4XII8DK56_i_MtaUi_oGYRWmoRISUHeL-L73aladft49R/exec"; // Replace with your actual deployed Apps Script Web App URL
-                
-                fetch(webAppUrl, {
-                    method: "POST",
-                    mode: "no-cors",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        action: "updateProfile",
-                        participantKey: currentActiveUser.ps_id,
-                        fields: payload
-                    })
-                }).then(() => {
-                    console.log("Background sheet sync payload dispatched for fields: " + payload.fieldupdated);
-                }).catch(err => {
-                    console.warn("Background sheet sync failed:", err);
-                });
-
             }).catch(err => {
                 if (statusDiv) statusDiv.classList.add('hidden');
                 showCustomAlert("Firebase update error: " + err);
             });
         }
 
+
+
+        
 
         
 
