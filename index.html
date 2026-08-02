@@ -1166,7 +1166,6 @@ function validateEmailFormat(email) {
             });
         }
 
-
 // Global array to store states loaded from Firebase during startup/sync
 let availableStates = [];
 
@@ -1188,14 +1187,12 @@ function handleStateInput(query) {
 
     query = query.trim();
     
-    // Check if user typed at least 3 characters
     if (query.length < 3) {
         suggestionBox.innerHTML = '';
         suggestionBox.classList.add('hidden');
         return;
     }
 
-    // Filter states matching the typed string (case-insensitive)
     const matches = availableStates.filter(st => st.toLowerCase().includes(query.toLowerCase()));
 
     if (matches.length === 0) {
@@ -1204,10 +1201,8 @@ function handleStateInput(query) {
         return;
     }
 
-    // Build the suggestion list HTML
     let html = '';
     matches.forEach(st => {
-        // Escape single quotes for safety in inline onclick
         let safeSt = st.replace(/'/g, "\\'");
         html += `<div class="p-2 hover:bg-gray-100 cursor-pointer text-sm" onclick="selectState('${safeSt}')">${st}</div>`;
     });
@@ -1227,7 +1222,6 @@ function selectState(selectedState) {
     }
 }
 
-// Optional: Close dropdown if user clicks outside of it
 document.addEventListener('click', function(e) {
     const suggestionBox = document.getElementById('state-suggestions');
     const stateInput = document.getElementById('update-profile-state');
@@ -1236,18 +1230,7 @@ document.addEventListener('click', function(e) {
     }
 });
 
-
-        }
-
-
-
-
-
-
-
-
-
-        
+             
     </script>
 </body>
 </html>
