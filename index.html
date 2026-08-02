@@ -278,7 +278,28 @@
 </div>
 
 
+<!-- Update Profile State Field Container -->
+            <div class="relative mb-4">
+                <label class="block text-sm font-medium text-gray-700">State</label>
+                <div class="flex items-center gap-2">
+                    <input type="text" id="update-profile-state" class="w-full border rounded p-2" placeholder="Type state name..." autocomplete="off" oninput="handleStateInput(this.value)">
+                </div>
+                <!-- Suggestions Dropdown Box -->
+                <div id="state-suggestions" class="absolute z-50 left-0 right-0 bg-white border border-gray-300 rounded shadow-lg mt-1 max-h-40 overflow-y-auto hidden"></div>
+            </div>
 
+            <!-- Followed by your other modal buttons or script tag -->
+            <div class="flex justify-end space-x-2">
+                <button onclick="closeVerificationModal()" 
+                    class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 text-sm">Cancel</button>
+                <button onclick="handleVerifyCodeClick()" 
+                    class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm">Verify</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // Your JS script code starts here
 
 
 
@@ -1147,6 +1168,89 @@ function validateEmailFormat(email) {
                 showCustomAlert("Network error during code verification: " + error.toString());
             });
         }
+
+
+// Global array to store states loaded from Firebase during startup/sync
+let availableStates = [];
+
+// Call this when loading your initial Firebase data to populate the array
+function loadStatesData(statesNode) {
+    availableStates = [];
+    if (statesNode) {
+        for (let key in statesNode) {
+            if (statesNode[key].state) {
+                availableStates.push(statesNode[key].state.trim());
+            }
+        }
+    }
+}
+
+function handleStateInput(query) {
+    const suggestionBox = document.getElementById('state-suggestions');
+    if (!suggestionBox) return;
+
+    query = query.trim();
+    
+    // Check if user typed at least 3 characters
+    if (query.length < 3) {
+        suggestionBox.innerHTML = '';
+        suggestionBox.classList.add('hidden');
+        return;
+    }
+
+    // Filter states matching the typed string (case-insensitive)
+    const matches = availableStates.filter(st => st.toLowerCase().includes(query.toLowerCase()));
+
+    if (matches.length === 0) {
+        suggestionBox.innerHTML = '<div class="p-2 text-gray-500 text-sm">No matching state found</div>';
+        suggestionBox.classList.remove('hidden');
+        return;
+    }
+
+    // Build the suggestion list HTML
+    let html = '';
+    matches.forEach(st => {
+        // Escape single quotes for safety in inline onclick
+        let safeSt = st.replace(/'/g, "\\'");
+        html += `<div class="p-2 hover:bg-gray-100 cursor-pointer text-sm" onclick="selectState('${safeSt}')">${st}</div>`;
+    });
+
+    suggestionBox.innerHTML = html;
+    suggestionBox.classList.remove('hidden');
+}
+
+function selectState(selectedState) {
+    const inputField = document.getElementById('update-profile-state');
+    const suggestionBox = document.getElementById('state-suggestions');
+    
+    if (inputField) inputField.value = selectedState;
+    if (suggestionBox) {
+        suggestionBox.innerHTML = '';
+        suggestionBox.classList.add('hidden');
+    }
+}
+
+// Optional: Close dropdown if user clicks outside of it
+document.addEventListener('click', function(e) {
+    const suggestionBox = document.getElementById('state-suggestions');
+    const stateInput = document.getElementById('update-profile-state');
+    if (suggestionBox && stateInput && !stateInput.contains(e.target) && !suggestionBox.contains(e.target)) {
+        suggestionBox.classList.add('hidden');
+    }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+        
     </script>
 </body>
 </html>
