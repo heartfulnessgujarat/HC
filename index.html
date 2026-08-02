@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -14,10 +15,10 @@
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col justify-between text-xs sm:text-sm">
     
-    <!-- Persistent Global Header Logo (Full width fit matching container) -->
+    <!-- Persistent Global Header Logo (Full-width box fit) -->
     <div id="global-header" class="max-w-md mx-auto w-full px-3 pt-2 hidden">
-        <div class="bg-white rounded-lg shadow-sm p-1.5 overflow-hidden flex justify-center">
-            <img id="app-logo" src="" alt="App Logo" class="w-full h-auto max-h-24 sm:max-h-28 object-contain" />
+        <div class="bg-white rounded-lg shadow-sm p-0 overflow-hidden flex justify-center w-full">
+            <img id="app-logo" src="" alt="App Logo" class="w-full h-auto object-cover block" />
         </div>
     </div>
     
@@ -91,9 +92,9 @@
                 <div class="bg-gray-100 px-3 py-1.5 border-b text-center">
                     <h3 class="text-xs sm:text-sm font-bold text-gray-800">Participant Resources</h3>
                 </div>
-                <!-- Resource rows container with compact layout -->
+                <!-- Resource items with inline clickable text rows -->
                 <div class="divide-y divide-gray-200 text-xs" id="resources-container">
-                    <!-- Dynamically injected rows using vertical stack structure -->
+                    <!-- Dynamically injected rows via JS using inline hyperlinks -->
                 </div>
             </div>
         </div>
@@ -286,7 +287,6 @@
     </div>
     
     <script>
-
 
 
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwZwp6CgVUqLM9LUWob9FvgiioA3S5sACYHlkOD7RiopRucNaHzP8IsAcKMEARKbunH3A/exec";
