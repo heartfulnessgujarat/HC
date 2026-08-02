@@ -427,24 +427,31 @@ const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwZwp6CgVUqLM9LUWob
                     link: workshop.participant_feedback_link 
                 }
             ];
-            resourceLinks.forEach(res => {
+
+
+
+
+            resourceLinks.forEach((res, index) => {
                 let row = document.createElement('div');
-                row.className = "bg-white border border-gray-200 rounded-xl p-4 mb-3 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center hover:shadow transition";
+                // Adds a clean bottom border between items, omitting it for the last item
+                row.className = `py-2.5 flex flex-col sm:flex-row justify-between items-start sm:items-center ${index !== resourceLinks.length - 1 ? 'border-b border-gray-100' : ''}`;
                 
                 let linkVal = res.link ? res.link.toString().trim() : "";
                 let isLinkValid = linkVal.startsWith('http://') || linkVal.startsWith('https://');
+                
                 let textContainer = document.createElement('div');
-                textContainer.className = "mb-3 sm:mb-0 sm:mr-4 pr-2";
+                textContainer.className = "mb-2 sm:mb-0 sm:mr-3 pr-2";
                 textContainer.innerHTML = `
-                    <div class="text-gray-900 font-semibold text-xs sm:text-sm">${res.eng}</div>
+                    <div class="text-gray-900 font-semibold text-xs sm:text-sm">${index + 1}. ${res.eng}</div>
                     <div class="text-gray-500 font-normal text-xs mt-0.5">${res.hin}</div>
                 `;
                 row.appendChild(textContainer);
+                
                 if (isLinkValid) {
                     let a = document.createElement('a');
                     a.href = linkVal;
                     a.target = "_blank";
-                    a.className = "bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2 px-4 rounded-lg transition shadow flex-shrink-0 text-center";
+                    a.className = "bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold py-1.5 px-3 rounded transition shadow flex-shrink-0 text-center";
                     a.innerText = res.btnText;
                     row.appendChild(a);
                 } else {
@@ -455,6 +462,13 @@ const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwZwp6CgVUqLM9LUWob
                 }
                 resourcesContainer.appendChild(row);
             });
+
+
+
+
+            
+
+            
         }
         
         function togglePasswordVisibility(inputId, iconId) {
