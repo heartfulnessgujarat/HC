@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Heartful Communication - Facilitator Training Workshop (FT3H) | Participant Portal</title>
+    <title>Heartful Communication - Facilitator Training Workshop (FT3H) | Participant Portal</title>
     
-   
     <!-- Tailwind CSS for modern responsive design -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Firebase SDKs -->
@@ -13,35 +12,34 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col justify-between">
-    <!-- Persistent Global Header Logo (Compact top padding) -->
+    <!-- Persistent Global Header Logo -->
     <div id="global-header" class="max-w-xl mx-auto w-full px-4 pt-2 hidden">
         <div class="bg-white rounded-xl shadow-md p-0 overflow-hidden">
             <img id="app-logo" src="" alt="App Logo" class="w-full h-auto object-cover" />
         </div>
     </div>
     
-<!-- Top Header Bar (Full width layout matching dashboard cards) -->
-   <header id="app-header" class="max-w-xl mx-auto px-4 pt-2 hidden w-full">
-    <div class="bg-blue-50 border border-blue-200 text-blue-900 shadow-sm rounded-xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center w-full">
-        <div id="header-user-info" class="w-full mb-3 sm:mb-0">
-            <!-- Populated dynamically via renderDashboard -->
+    <!-- Top Header Bar -->
+    <header id="app-header" class="max-w-xl mx-auto px-4 pt-2 hidden w-full">
+        <div class="bg-blue-50 border border-blue-200 text-blue-900 shadow-sm rounded-xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center w-full">
+            <div id="header-user-info" class="w-full mb-3 sm:mb-0">
+                <!-- Populated dynamically via renderDashboard -->
+            </div>
+            <div class="flex-shrink-0 self-end sm:self-center flex space-x-2">
+                <button onclick="openUpdateProfileModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-1.5 px-3 rounded transition shadow">
+                    Update Profile
+                </button>
+                <button onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white text-xs font-bold py-1.5 px-3 rounded transition shadow">
+                    Logout
+                </button>
+            </div>
         </div>
-        <div class="flex-shrink-0 self-end sm:self-center flex space-x-2">
-            <button onclick="openUpdateProfileModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-1.5 px-3 rounded transition shadow">
-                Update Profile
-            </button>
-            <button onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white text-xs font-bold py-1.5 px-3 rounded transition shadow">
-                Logout
-            </button>
-        </div>
-    </div>
-</header>
+    </header>
     
-    <!-- Main Container with minimal vertical padding -->
+    <!-- Main Container -->
     <main class="max-w-xl mx-auto px-4 py-3 flex-grow w-full">
-        <!-- SCREEN 1: LOGIN VIEW (Compact padding & margins) -->
+        <!-- SCREEN 1: LOGIN VIEW -->
         <div id="login-screen" class="bg-white rounded-xl shadow-md p-4 sm:p-6 mt-2">
-            <!-- Dynamic workshop name above title -->
             <div id="login-workshop-badge" class="text-center mb-1 hidden">
                 <span id="login-workshop-name" class="text-xs uppercase tracking-widest bg-indigo-50 text-indigo-600 px-3 py-0.5 rounded-full font-semibold">--</span>
             </div>
@@ -49,16 +47,15 @@
             
             <div class="mb-3 relative">
                 <label class="block text-gray-700 text-xs font-bold mb-1">Type your name in English, (at least 3 letters):</label>
-                
                 <input type="text" id="search-name" autocomplete="off" placeholder="e.g. Raj" class="w-full px-3 py-1.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" oninput="filterParticipants()">
-                
                 <div id="search-results" class="absolute left-0 right-0 bg-white border mt-1 rounded-lg shadow-lg max-h-40 overflow-y-auto hidden z-20"></div>
             </div>
-            <!-- Conditionally shown Participant Name container -->
+            
             <div id="selected-participant-container" class="mb-3 hidden">
                 <label class="block text-gray-700 text-xs font-bold mb-1">Name of the Participant:</label>
                 <input type="text" id="selected-participant-display" readonly class="w-full px-3 py-1.5 text-sm bg-gray-100 border rounded-lg text-gray-600">
             </div>
+            
             <div class="mb-4 relative">
                 <label class="block text-gray-700 text-xs font-bold mb-1">Password:</label>
                 <div class="relative">
@@ -71,39 +68,33 @@
                     </button>
                 </div>
             </div>
+            
             <button onclick="handleLogin()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 text-sm rounded-lg transition mb-3">
                 Login
             </button>
-            <!-- Separate Footer Links -->
+            
             <div class="flex justify-between items-center text-xs px-1">
                 <a href="#" onclick="showChangePasswordScreen()" class="text-indigo-600 hover:underline font-medium">Change Password</a>
                 <a href="#" onclick="showResetPasswordScreen()" class="text-indigo-600 hover:underline font-medium">Reset Password</a>
             </div>
         </div>
         
-        
         <!-- SCREEN 2: DASHBOARD VIEW -->
         <div id="dashboard-screen" class="hidden space-y-6">
-            <!-- Center Workshop Title Banner -->
             <div class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md rounded-xl py-3 px-6 text-center mb-6">
                 <h2 id="workshop-title-display" class="text-lg font-bold"></h2>
             </div>
-           
-            <!-- Participant Resources Table -->
             <div class="bg-white rounded-xl shadow-md overflow-hidden">
                 <div class="bg-gray-100 px-6 py-4 border-b text-center">
                     <h3 class="text-lg font-bold text-gray-800">Participant Resources</h3>
                 </div>
-                <div class="divide-y divide-gray-200" id="resources-container">
-                    <!-- Dynamically injected rows -->
-                </div>
+                <div class="divide-y divide-gray-200" id="resources-container"></div>
             </div>
         </div>
 
         <!-- SCREEN 3: CHANGE PASSWORD SCREEN -->
         <div id="change-password-screen" class="bg-white rounded-xl shadow-md p-6 sm:p-8 mt-6 hidden">
             <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Change Password</h2>
-            
             <div class="mb-4 relative">
                 <label class="block text-gray-700 text-sm font-bold mb-2">Type your name in English, (at least 3 letters):</label>
                 <input type="text" id="cp-search-name" placeholder="e.g. Raj" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" oninput="filterChangePasswordParticipants()">
@@ -115,39 +106,15 @@
             </div>
             <div class="mb-4 relative">
                 <label class="block text-gray-700 text-sm font-bold mb-2">Current Password:</label>
-                <div class="relative">
-                    <input type="password" id="cp-current-password" placeholder="Current Password" class="w-full px-3 py-2 pr-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    <button type="button" onclick="togglePasswordVisibility('cp-current-password', 'cp-eye-1')" class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-500 hover:text-gray-700 focus:outline-none">
-                        <svg id="cp-eye-1" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                        </svg>
-                    </button>
-                </div>
+                <input type="password" id="cp-current-password" placeholder="Current Password" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
             </div>
             <div class="mb-4 relative">
                 <label class="block text-gray-700 text-sm font-bold mb-2">New Password (Max 6 Chars):</label>
-                <div class="relative">
-                    <input type="password" id="cp-new-password" placeholder="New Password" maxlength="6" class="w-full px-3 py-2 pr-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    <button type="button" onclick="togglePasswordVisibility('cp-new-password', 'cp-eye-2')" class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-500 hover:text-gray-700 focus:outline-none">
-                        <svg id="cp-eye-2" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                        </svg>
-                    </button>
-                </div>
+                <input type="password" id="cp-new-password" placeholder="New Password" maxlength="6" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
             </div>
             <div class="mb-6 relative">
                 <label class="block text-gray-700 text-sm font-bold mb-2">Confirm New Password:</label>
-                <div class="relative">
-                    <input type="password" id="cp-confirm-password" placeholder="Confirm New Password" maxlength="6" class="w-full px-3 py-2 pr-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    <button type="button" onclick="togglePasswordVisibility('cp-confirm-password', 'cp-eye-3')" class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-500 hover:text-gray-700 focus:outline-none">
-                        <svg id="cp-eye-3" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                        </svg>
-                    </button>
-                </div>
+                <input type="password" id="cp-confirm-password" placeholder="Confirm New Password" maxlength="6" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
             </div>
             <button onclick="submitChangePassword()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition mb-3">
                 Update Password
@@ -160,7 +127,6 @@
         <!-- SCREEN 4: RESET PASSWORD SCREEN -->
         <div id="reset-password-screen" class="bg-white rounded-xl shadow-md p-6 sm:p-8 mt-6 hidden">
             <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Reset Password</h2>
-            
             <div class="mb-4 relative">
                 <label class="block text-gray-700 text-sm font-bold mb-2">Type your name in English, (at least 3 letters):</label>
                 <input type="text" id="rp-search-name" placeholder="e.g. Raj" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" oninput="filterResetPasswordParticipants()">
@@ -181,7 +147,6 @@
         <!-- SCREEN 5: UPDATE PROFILE SCREEN -->
         <div id="update-profile-screen" class="bg-white rounded-xl shadow-md p-6 sm:p-8 mt-6 hidden">
             <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Update Profile Details</h2>
-            
             <div class="space-y-4">
                 <div>
                     <label class="block text-gray-700 text-sm font-bold mb-1">Name (Read-only)</label>
@@ -191,8 +156,6 @@
                     <label class="block text-gray-700 text-sm font-bold mb-1">Unique ID Number (Read-only)</label>
                     <input type="text" id="update-profile-id" disabled class="w-full bg-gray-100 border rounded-lg px-3 py-2 text-gray-600 cursor-not-allowed">
                 </div>
-                
-                <!-- Mobile Number Field -->
                 <div>
                     <label class="block text-gray-700 text-sm font-bold mb-1">Mobile Number</label>
                     <div class="flex items-center space-x-2">
@@ -200,8 +163,6 @@
                         <button type="button" id="btn-mob" onclick="enableField('mob')" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2.5 px-4 rounded-lg transition flex-shrink-0">Edit</button>
                     </div>
                 </div>
-
-                <!-- Email Address Field -->
                 <div>
                     <label class="block text-gray-700 text-sm font-bold mb-1">Email Address</label>
                     <div class="flex items-center space-x-2">
@@ -209,8 +170,6 @@
                         <button type="button" id="btn-email" onclick="enableField('email')" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2.5 px-4 rounded-lg transition flex-shrink-0">Edit</button>
                     </div>
                 </div>
-
-                <!-- Centre Field -->
                 <div>
                     <label class="block text-gray-700 text-sm font-bold mb-1">Centre</label>
                     <div class="flex items-center space-x-2">
@@ -218,26 +177,16 @@
                         <button type="button" id="btn-centre" onclick="enableField('centre')" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2.5 px-4 rounded-lg transition flex-shrink-0">Edit</button>
                     </div>
                 </div>
-
-
-
-                <!-- State Field with Autocomplete Support -->
                 <div class="relative">
                     <label class="block text-gray-700 text-sm font-bold mb-1">State</label>
                     <div class="flex items-center space-x-2">
                         <input type="text" id="update-profile-state" autocomplete="off" disabled class="w-full bg-gray-100 border rounded-lg px-3 py-2 text-gray-600 cursor-not-allowed" oninput="handleStateInput(this.value)">
                         <button type="button" id="btn-state" onclick="enableField('state')" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2.5 px-4 rounded-lg transition flex-shrink-0">Edit</button>
                     </div>
-                    <!-- Suggestions Dropdown Box -->
                     <div id="state-suggestions" class="absolute z-50 left-0 right-0 bg-white border border-gray-300 rounded-lg shadow-lg mt-1 max-h-40 overflow-y-auto hidden"></div>
                 </div>    
-
-               
             </div>
-
-
             
-            <!-- Loading status text -->
             <p id="profile-update-status" class="text-sm text-blue-600 font-medium hidden my-3 text-center"></p>
             
             <div class="mt-6 space-y-3">
@@ -251,7 +200,6 @@
         </div>
     </main>
 
-    <!-- Footer -->
     <footer class="text-center py-4 text-xs text-gray-500">
         Heartful Communication - Participant Login System
     </footer>
@@ -266,32 +214,21 @@
         </div>
     </div>
 
-
-<!-- Custom Verification Modal -->
-<div id="customVerificationModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-lg p-6 max-w-sm w-full mx-4 shadow-xl">
-        <h3 class="text-lg font-semibold text-gray-800 mb-2">Enter Verification Code</h3>
-        <p id="modalMessage" class="text-sm text-gray-600 mb-4">A 6-digit verification code has been sent to your email.</p>
-        
-        <input type="text" id="verificationInput" maxlength="6" placeholder="Enter 6-digit code" 
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-4 text-center tracking-widest text-lg">
-        
-        <div class="flex justify-end space-x-2">
-            <button onclick="closeVerificationModal()" 
-                class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 text-sm">Cancel</button>
-            <button onclick="handleVerifyCodeClick()" 
-                class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm">Verify</button>
+    <!-- Custom Verification Modal -->
+    <div id="customVerificationModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 max-w-sm w-full mx-4 shadow-xl">
+            <h3 class="text-lg font-semibold text-gray-800 mb-2">Enter Verification Code</h3>
+            <p id="modalMessage" class="text-sm text-gray-600 mb-4">A 6-digit verification code has been sent to your email.</p>
+            <input type="text" id="verificationInput" maxlength="6" placeholder="Enter 6-digit code" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-4 text-center tracking-widest text-lg">
+            <div class="flex justify-end space-x-2">
+                <button onclick="closeVerificationModal()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 text-sm">Cancel</button>
+                <button onclick="handleVerifyCodeClick()" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm">Verify</button>
+            </div>
         </div>
     </div>
-</div>
-
 
     <script>
-   
-
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz5M-tuxgcJb9_4G3q96MZ4XII8DK56_i_MtaUi_oGYRWmoRISUHeL-L73aladft49R/exec";
-
-
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz5M-tuxgcJb9_4G3q96MZ4XII8DK56_i_MtaUi_oGYRWmoRISUHeL-L73aladft49R/exec";
         
         const firebaseConfig = {
             apiKey: "AIzaSyAt_HbqtG_kMn41NC1wPy5KDFNsDp5HTb8",
@@ -310,59 +247,47 @@ const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz5M-tuxgcJb9_4G3q9
         let allWorkshops = {};
         let currentActiveUser = null;
         let selectedParticipantKey = null;
-        
         let cpSelectedKey = null;
         let rpSelectedKey = null;
+        let availableStates = [];
+        let currentVerificationEmail = "";
 
-
-function loadFirebaseData() {
+        function loadFirebaseData() {
             db.ref('control_tower').once('value').then(snapshot => {
                 const data = snapshot.val();
                 console.log("Firebase Raw Data Loaded for control_tower:", data);
                 if (data) {
                     allParticipants = data.participants || {};
                     allWorkshops = data.workshops || {};
-                    
-                    // --> HOOK IT UP RIGHT HERE: <--
                     loadStatesData(data.states);
                     
                     console.log("Parsed allParticipants:", allParticipants);
                     console.log("Parsed allWorkshops:", allWorkshops);
-                    
                     updateLoginWorkshopBadge();
                 } else {
                     console.warn("Firebase returned empty data for control_tower.");
                 }
             }).catch(err => console.error("Error fetching data from Firebase:", err));
     
-            // Fetch and display persistent global header logo based on Firebase control config
             db.ref('control_tower/config/logo_config').on('value', (snapshot) => {
                 const config = snapshot.val();
-                console.log("Logo Config fetched:", config);
-                
                 const logoContainer = document.getElementById('global-header');
                 const logoElement = document.getElementById('app-logo');
                 
                 if (config && config.status === "ON" && config.image) {
                     logoElement.src = config.image;
-                    logoContainer.classList.remove('hidden'); // Show logo box
+                    logoContainer.classList.remove('hidden');
                 } else {
-                    logoContainer.classList.add('hidden');    // Hide completely if OFF or empty
+                    logoContainer.classList.add('hidden');
                 }
             });
         }
         window.onload = loadFirebaseData;
-
-
-
         
-
         function updateLoginWorkshopBadge() {
             let workshopKeys = Object.keys(allWorkshops);
-            console.log("Workshop Keys available:", workshopKeys);
             if (workshopKeys.length > 0) {
                 let firstWorkshop = allWorkshops[workshopKeys[0]];
-                console.log("First Workshop Object:", firstWorkshop);
                 if (firstWorkshop && firstWorkshop.workshop_name) {
                     document.getElementById('login-workshop-name').innerText = firstWorkshop.workshop_name;
                     document.getElementById('login-workshop-badge').classList.remove('hidden');
@@ -383,8 +308,8 @@ function loadFirebaseData() {
             let pEmail = maskEmail(currentActiveUser.ps_email);
             let pCentre = currentActiveUser.ps_centre || "N/A";
             let pState = currentActiveUser.ps_state || "N/A";
-            const headerInfo = document.getElementById('header-user-info');
-            headerInfo.innerHTML = `
+            
+            document.getElementById('header-user-info').innerHTML = `
                 <div class="grid grid-cols-1 gap-y-1 text-xs sm:text-sm">
                     <div><strong>Name:</strong> ${pName}</div>
                     <div><strong>Unique ID Number:</strong> ${pId}</div>
@@ -397,48 +322,26 @@ function loadFirebaseData() {
     
             let wId = currentActiveUser.workshop_id;
             let workshop = allWorkshops[wId] || {};
-            let workshopName = workshop.workshop_name || "Workshop Name Not Available";
-            document.getElementById('workshop-title-display').innerText = workshopName;
+            document.getElementById('workshop-title-display').innerText = workshop.workshop_name || "Workshop Name Not Available";
+            
             const resourcesContainer = document.getElementById('resources-container');
             resourcesContainer.innerHTML = '';
+            
             const resourceLinks = [
-                { 
-                    eng: "Personalized zoom link to join the workshop", 
-                    hin: "वर्कशॉप में शामिल होने के लिए पर्सनलाइज़्ड ज़ूम लिंक", 
-                    btnText: "Join Zoom (जूम ज्वाइन करें)", 
-                    link: currentActiveUser.personal_zoom_link 
-                },
-                { 
-                    eng: "Participant WhatsApp Group Joining Link", 
-                    hin: "प्रतिभागी व्हाट्सएप ग्रुप ज्वाइन करने का लिंक", 
-                    btnText: "Join Group (ग्रुप ज्वाइन करें)", 
-                    link: workshop.participant_wg_link 
-                },
-                { 
-                    eng: "Workshop Schedule Link", 
-                    hin: "वर्कशॉप शेड्यूल लिंक", 
-                    btnText: "View Schedule (शेड्यूल देखें)", 
-                    link: workshop.workshop_shedule_link 
-                },
-                { 
-                    eng: "Material/Handbook Link", 
-                    hin: "सामग्री / हैंडबुक लिंक", 
-                    btnText: "Read Material (सामग्री देखें)", 
-                    link: workshop.material_link 
-                },
-                { 
-                    eng: "Participant Feedback Link", 
-                    hin: "प्रतिभागी फीडबैक लिंक", 
-                    btnText: "Give Feedback (फीडबैक दें)", 
-                    link: workshop.participant_feedback_link 
-                }
+                { eng: "Personalized zoom link to join the workshop", hin: "वर्कशॉप में शामिल होने के लिए पर्सनलाइज़्ड ज़ूम लिंक", btnText: "Join Zoom", link: currentActiveUser.personal_zoom_link },
+                { eng: "Participant WhatsApp Group Joining Link", hin: "प्रतिभागी व्हाट्सएप ग्रुप ज्वाइन करने का लिंक", btnText: "Join Group", link: workshop.participant_wg_link },
+                { eng: "Workshop Schedule Link", hin: "वर्कशॉप शेड्यूल लिंक", btnText: "View Schedule", link: workshop.workshop_shedule_link },
+                { eng: "Material/Handbook Link", hin: "सामग्री / हैंडबुक लिंक", btnText: "Read Material", link: workshop.material_link },
+                { eng: "Participant Feedback Link", hin: "प्रतिभागी फीडबैक लिंक", btnText: "Give Feedback", link: workshop.participant_feedback_link }
             ];
+            
             resourceLinks.forEach(res => {
                 let row = document.createElement('div');
                 row.className = "bg-white border border-gray-200 rounded-xl p-4 mb-3 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center hover:shadow transition";
                 
                 let linkVal = res.link ? res.link.toString().trim() : "";
                 let isLinkValid = linkVal.startsWith('http://') || linkVal.startsWith('https://');
+                
                 let textContainer = document.createElement('div');
                 textContainer.className = "mb-3 sm:mb-0 sm:mr-4 pr-2";
                 textContainer.innerHTML = `
@@ -446,6 +349,7 @@ function loadFirebaseData() {
                     <div class="text-gray-500 font-normal text-xs mt-0.5">${res.hin}</div>
                 `;
                 row.appendChild(textContainer);
+                
                 if (isLinkValid) {
                     let a = document.createElement('a');
                     a.href = linkVal;
@@ -476,13 +380,15 @@ function loadFirebaseData() {
         }
 
         function filterParticipants() {
-            const query = document.getElementById('search-name').value.toLowerCase();
+            const query = document.getElementById('search-name').value.toLowerCase().trim();
             const resultsBox = document.getElementById('search-results');
             resultsBox.innerHTML = '';
+            
             if (query.length < 3) {
                 resultsBox.classList.add('hidden');
                 return;
             }
+            
             let matches = [];
             for (let key in allParticipants) {
                 let p = allParticipants[key];
@@ -491,6 +397,7 @@ function loadFirebaseData() {
                     matches.push({ key: key, data: p });
                 }
             }
+            
             if (matches.length > 0) {
                 resultsBox.classList.remove('hidden');
                 matches.forEach(m => {
@@ -530,7 +437,7 @@ function loadFirebaseData() {
         }
 
         function filterChangePasswordParticipants() {
-            const query = document.getElementById('cp-search-name').value.toLowerCase();
+            const query = document.getElementById('cp-search-name').value.toLowerCase().trim();
             const resultsBox = document.getElementById('cp-search-results');
             resultsBox.innerHTML = '';
             if (query.length < 3) {
@@ -564,22 +471,11 @@ function loadFirebaseData() {
             }
         }
 
-function submitChangePassword() {
-            if (!cpSelectedKey || !allParticipants[cpSelectedKey]) {
-                const typedName = document.getElementById('cp-search-name').value.trim().toLowerCase();
-                for (let key in allParticipants) {
-                    if (allParticipants[key].name && allParticipants[key].name.toLowerCase() === typedName) {
-                        cpSelectedKey = key;
-                        break;
-                    }
-                }
-            }
-
+        function submitChangePassword() {
             if (!cpSelectedKey || !allParticipants[cpSelectedKey]) {
                 showCustomAlert("Please search and select a valid participant.");
                 return;
             }
-
             const currentPass = document.getElementById('cp-current-password').value.trim();
             const newPass = document.getElementById('cp-new-password').value.trim();
             const confirmPass = document.getElementById('cp-confirm-password').value.trim();
@@ -598,13 +494,11 @@ function submitChangePassword() {
                 showCustomAlert("Current password is incorrect.");
                 return;
             }
-
             let payload = {
                 password: newPass,
                 fieldupdated: "password",
                 lastsyntimestamp: new Date().toLocaleString()
             };
-
             db.ref('control_tower/participants/' + cpSelectedKey).update(payload).then(() => {
                 showCustomAlert("Password successfully updated!");
                 allParticipants[cpSelectedKey].password = newPass;
@@ -614,12 +508,8 @@ function submitChangePassword() {
             });
         }
 
-
-        
-        
-        
         function filterResetPasswordParticipants() {
-            const query = document.getElementById('rp-search-name').value.toLowerCase();
+            const query = document.getElementById('rp-search-name').value.toLowerCase().trim();
             const resultsBox = document.getElementById('rp-search-results');
             resultsBox.innerHTML = '';
             if (query.length < 3) {
@@ -653,32 +543,16 @@ function submitChangePassword() {
             }
         }
 
-
-
-
-
-function submitResetPassword() {
-            if (!rpSelectedKey || !allParticipants[rpSelectedKey]) {
-                const typedName = document.getElementById('rp-search-name').value.trim().toLowerCase();
-                for (let key in allParticipants) {
-                    if (allParticipants[key].name && allParticipants[key].name.toLowerCase() === typedName) {
-                        rpSelectedKey = key;
-                        break;
-                    }
-                }
-            }
-
+        function submitResetPassword() {
             if (!rpSelectedKey || !allParticipants[rpSelectedKey]) {
                 showCustomAlert("Please search and select a valid participant.");
                 return;
             }
-
             let payload = {
                 password: "123456",
                 fieldupdated: "password",
                 lastsyntimestamp: new Date().toLocaleString()
             };
-
             db.ref('control_tower/participants/' + rpSelectedKey).update(payload).then(() => {
                 showCustomAlert("Password reset to 123456");
                 allParticipants[rpSelectedKey].password = "123456";
@@ -687,29 +561,19 @@ function submitResetPassword() {
                 showCustomAlert("Failed to reset password: " + err);
             });
         }
-
-
-
-
-
-
             
-
-        
         function maskMobile(mob) {
             if (!mob) return "***";
             let s = mob.toString().trim();
             if (s.length <= 4) return "****";
             return s.substring(0, 2) + "****" + s.substring(s.length - 2);
         }
-
+        
         function maskEmail(email) {
             if (!email || !email.includes("@")) return "***@***.com";
             let parts = email.toString().trim().split("@");
-            let name = parts[0];
-            let domain = parts[1];
-            let maskedName = name.length > 2 ? name.substring(0, 2) + "***" : "***";
-            return maskedName + "@" + domain;
+            let maskedName = parts[0].length > 2 ? parts[0].substring(0, 2) + "***" : "***";
+            return maskedName + "@" + parts[1];
         }
         
         function showLoginScreen() {
@@ -735,61 +599,23 @@ function submitResetPassword() {
             clearForms();
         }
 
-
-function logout() {
+        function logout() {
             currentActiveUser = null;
             selectedParticipantKey = null;
-            
-            // Ensure profile screen is hidden if left open
             let profileScreen = document.getElementById('update-profile-screen');
             if (profileScreen) profileScreen.classList.add('hidden');
-            
             showLoginScreen();
         }
-
-
-
-
-
         
- //       function logout() {
- //           currentActiveUser = null;
-  //          selectedParticipantKey = null;
-  //          showLoginScreen();
-  //      }
-
-
-
         function clearForms() {
-            let loginInput = document.getElementById('search-name');
-            let passInput = document.getElementById('login-password');
-            let selectedDisplay = document.getElementById('selected-participant-display');
+            ['search-name', 'login-password', 'selected-participant-display', 'cp-search-name', 'cp-selected-display', 'cp-current-password', 'cp-new-password', 'cp-confirm-password', 'rp-search-name', 'rp-selected-display'].forEach(id => {
+                let el = document.getElementById(id);
+                if (el) el.value = '';
+            });
             let selectedContainer = document.getElementById('selected-participant-container');
-            
-            if (loginInput) loginInput.value = '';
-            if (passInput) passInput.value = '';
-            if (selectedDisplay) selectedDisplay.value = '';
             if (selectedContainer) selectedContainer.classList.add('hidden');
             selectedParticipantKey = null;
-
-            let cpSearch = document.getElementById('cp-search-name');
-            let cpDisplay = document.getElementById('cp-selected-display');
-            let cpCurrent = document.getElementById('cp-current-password');
-            let cpNew = document.getElementById('cp-new-password');
-            let cpConfirm = document.getElementById('cp-confirm-password');
-            
-            if (cpSearch) cpSearch.value = '';
-            if (cpDisplay) cpDisplay.value = '';
-            if (cpCurrent) cpCurrent.value = '';
-            if (cpNew) cpNew.value = '';
-            if (cpConfirm) cpConfirm.value = '';
             cpSelectedKey = null;
-
-            let rpSearch = document.getElementById('rp-search-name');
-            let rpDisplay = document.getElementById('rp-selected-display');
-            
-            if (rpSearch) rpSearch.value = '';
-            if (rpDisplay) rpDisplay.value = '';
             rpSelectedKey = null;
         }
         
@@ -801,11 +627,8 @@ function logout() {
         function closeCustomAlert() {
             document.getElementById('custom-alert-modal').classList.add('hidden');
         }
-
-
-
         
-function openUpdateProfileModal() {
+        function openUpdateProfileModal() {
             if (!currentActiveUser) return;
             
             document.getElementById('update-profile-name').value = currentActiveUser.ps_name || "";
@@ -815,41 +638,17 @@ function openUpdateProfileModal() {
             document.getElementById('update-profile-centre').value = currentActiveUser.ps_centre || "";
             document.getElementById('update-profile-state').value = currentActiveUser.ps_state || "";
             
-            // Ensure the state input has the autocomplete handler attached
             document.getElementById('update-profile-state').setAttribute('oninput', 'handleStateInput(this.value)');
-            
             document.getElementById('dashboard-screen').classList.add('hidden');
             document.getElementById('update-profile-screen').classList.remove('hidden');
         }
-
-
-function openUpdateProfileModal() {
-            if (!currentActiveUser) return;
-            
-            document.getElementById('update-profile-name').value = currentActiveUser.ps_name || "";
-            document.getElementById('update-profile-id').value = currentActiveUser.ps_id || "";
-            document.getElementById('update-profile-mob').value = currentActiveUser.ps_mob || "";
-            document.getElementById('update-profile-email').value = currentActiveUser.ps_email || "";
-            document.getElementById('update-profile-centre').value = currentActiveUser.ps_centre || "";
-            document.getElementById('update-profile-state').value = currentActiveUser.ps_state || "";
-            
-            // Ensure the state input has the autocomplete handler attached
-            document.getElementById('update-profile-state').setAttribute('oninput', 'handleStateInput(this.value)');
-            
-            document.getElementById('dashboard-screen').classList.add('hidden');
-            document.getElementById('update-profile-screen').classList.remove('hidden');
-        }
-
         
-
         function closeUpdateProfileModal() {
             document.getElementById('update-profile-screen').classList.add('hidden');
             document.getElementById('dashboard-screen').classList.remove('hidden');
         }
 
-
-
-function saveProfileChanges() {
+        function saveProfileChanges() {
             if (!currentActiveUser) return;
             
             let emailInput = document.getElementById('update-profile-email');
@@ -870,42 +669,27 @@ function saveProfileChanges() {
             let newCentre = document.getElementById('update-profile-centre').value.trim();
             let newState = document.getElementById('update-profile-state').value.trim();
             
-            // Build payload dynamically by comparing with currentActiveUser to track exact changes
             let payload = {};
             let updatedFieldsList = [];
-
-            if (newMob !== (currentActiveUser.ps_mob || "")) {
-                payload.ps_mob = newMob;
-                updatedFieldsList.push("ps_mob");
-            }
-            if (newEmail !== (currentActiveUser.ps_email || "")) {
-                payload.ps_email = newEmail;
-                updatedFieldsList.push("ps_email");
-            }
-            if (newCentre !== (currentActiveUser.ps_centre || "")) {
-                payload.ps_centre = newCentre;
-                updatedFieldsList.push("ps_centre");
-            }
-            if (newState !== (currentActiveUser.ps_state || "")) {
-                payload.ps_state = newState;
-                updatedFieldsList.push("ps_state");
-            }
-
+            if (newMob !== (currentActiveUser.ps_mob || "")) { payload.ps_mob = newMob; updatedFieldsList.push("ps_mob"); }
+            if (newEmail !== (currentActiveUser.ps_email || "")) { payload.ps_email = newEmail; updatedFieldsList.push("ps_email"); }
+            if (newCentre !== (currentActiveUser.ps_centre || "")) { payload.ps_centre = newCentre; updatedFieldsList.push("ps_centre"); }
+            if (newState !== (currentActiveUser.ps_state || "")) { payload.ps_state = newState; updatedFieldsList.push("ps_state"); }
+            
             if (Object.keys(payload).length === 0) {
                 showCustomAlert("No changes detected to save.");
                 return;
             }
-
-            // Include fieldupdated in the payload so it syncs correctly to Firebase and Sheet
+            
             payload.fieldupdated = updatedFieldsList.join(", ");
             payload.lastsyntimestamp = new Date().toLocaleString();
-
+            
             let statusDiv = document.getElementById('profile-update-status');
             if (statusDiv) {
                 statusDiv.innerText = "Your Profile is being updated.... Please wait.....";
                 statusDiv.classList.remove('hidden');
             }
-
+            
             db.ref('control_tower/participants/' + participantKey).update(payload).then(() => {
                 currentActiveUser.ps_mob = newMob;
                 currentActiveUser.ps_email = newEmail;
@@ -916,111 +700,92 @@ function saveProfileChanges() {
                 showCustomAlert("Profile updated successfully!");
                 closeUpdateProfileModal();
                 renderDashboard();
-
             }).catch(err => {
                 if (statusDiv) statusDiv.classList.add('hidden');
                 showCustomAlert("Firebase update error: " + err);
             });
         }
-
-
         
-
-
-function enableField(fieldType) {
-    let inputElem = document.getElementById('update-profile-' + fieldType);
-    let btnElem = document.getElementById('btn-' + fieldType);
-    if (!inputElem || !btnElem) return;
-    
-    let isLocked = inputElem.disabled;
-    
-    if (isLocked) {
-        // Unlock for editing
-        inputElem.disabled = false;
-        inputElem.classList.remove('bg-gray-100', 'cursor-not-allowed');
-        inputElem.classList.add('bg-white', 'ring-2', 'ring-indigo-500');
-        inputElem.focus();
-        
-        btnElem.textContent = "Done";
-        btnElem.classList.remove('bg-indigo-600', 'hover:bg-indigo-700', 'text-white');
-        btnElem.classList.add('bg-green-600', 'hover:bg-green-700', 'text-white');
-        
-        let saveBtn = document.getElementById('save-profile-btn');
-        if (saveBtn) {
-            saveBtn.disabled = true;
-            saveBtn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700', 'text-white', 'cursor-pointer');
-            saveBtn.classList.add('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
-        }
-    } else {
-        // Clicked "Done"
-        let val = inputElem.value.trim();
-        
-        if (fieldType === 'email') {
-            if (!validateEmailFormat(val)) {
-                showCustomAlert("Please check the email entered by you. It does not have a proper format (missing '@' or domain).");
+        function enableField(fieldType) {
+            let inputElem = document.getElementById('update-profile-' + fieldType);
+            let btnElem = document.getElementById('btn-' + fieldType);
+            if (!inputElem || !btnElem) return;
+            
+            let isLocked = inputElem.disabled;
+            
+            if (isLocked) {
+                inputElem.disabled = false;
+                inputElem.classList.remove('bg-gray-100', 'cursor-not-allowed');
+                inputElem.classList.add('bg-white', 'ring-2', 'ring-indigo-500');
                 inputElem.focus();
-                return; // Keep open until valid format is provided
-            }
-            
-            // Lock field back down visually
-            inputElem.disabled = true;
-            inputElem.classList.add('bg-gray-100', 'cursor-not-allowed');
-            inputElem.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
-            
-            btnElem.textContent = "Edit";
-            btnElem.classList.remove('bg-green-600', 'hover:bg-green-700', 'text-white');
-            btnElem.classList.add('bg-indigo-600', 'hover:bg-indigo-700', 'text-white');
-            
-            // Trigger email verification dispatch safely with the validated value
-            triggerEmailVerification(val);
-            
-        } else if (fieldType === 'mob') {
-            // Validate Indian mobile number (e.g., 10 digits starting with 6-9, or optional +91 prefix)
-            const mobileRegex = /^(\+91[\-\s]?)?[6-9]\d{9}$/;
-            if (!mobileRegex.test(val)) {
-                showCustomAlert("Please enter a valid 10-digit Indian mobile number starting with digits 6 through 9.");
-                inputElem.focus();
-                return; // Keep open until valid format is provided
-            }
-            
-            // Lock field back down visually
-            inputElem.disabled = true;
-            inputElem.classList.add('bg-gray-100', 'cursor-not-allowed');
-            inputElem.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
-            
-            btnElem.textContent = "Edit";
-            btnElem.classList.remove('bg-green-600', 'hover:bg-green-700', 'text-white');
-            btnElem.classList.add('bg-indigo-600', 'hover:bg-indigo-700', 'text-white');
-            
-            let saveBtn = document.getElementById('save-profile-btn');
-            if (saveBtn) {
-                saveBtn.disabled = false;
-                saveBtn.classList.remove('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
-                saveBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700', 'text-white', 'cursor-pointer');
-            }
-            
-        } else {
-            // For Centre, State or other fields
-            inputElem.disabled = true;
-            inputElem.classList.add('bg-gray-100', 'cursor-not-allowed');
-            inputElem.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
-            
-            btnElem.textContent = "Edit";
-            btnElem.classList.remove('bg-green-600', 'hover:bg-green-700', 'text-white');
-            btnElem.classList.add('bg-indigo-600', 'hover:bg-indigo-700', 'text-white');
-            
-            let saveBtn = document.getElementById('save-profile-btn');
-            if (saveBtn) {
-                saveBtn.disabled = false;
-                saveBtn.classList.remove('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
-                saveBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700', 'text-white', 'cursor-pointer');
+                
+                btnElem.textContent = "Done";
+                btnElem.classList.remove('bg-indigo-600', 'hover:bg-indigo-700', 'text-white');
+                btnElem.classList.add('bg-green-600', 'hover:bg-green-700', 'text-white');
+                
+                let saveBtn = document.getElementById('save-profile-btn');
+                if (saveBtn) {
+                    saveBtn.disabled = true;
+                    saveBtn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700', 'text-white', 'cursor-pointer');
+                    saveBtn.classList.add('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+                }
+            } else {
+                let val = inputElem.value.trim();
+                
+                if (fieldType === 'email') {
+                    if (!validateEmailFormat(val)) {
+                        showCustomAlert("Please check the email entered by you. It does not have a proper format.");
+                        inputElem.focus();
+                        return;
+                    }
+                    inputElem.disabled = true;
+                    inputElem.classList.add('bg-gray-100', 'cursor-not-allowed');
+                    inputElem.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
+                    
+                    btnElem.textContent = "Edit";
+                    btnElem.classList.remove('bg-green-600', 'hover:bg-green-700', 'text-white');
+                    btnElem.classList.add('bg-indigo-600', 'hover:bg-indigo-700', 'text-white');
+                    
+                    triggerEmailVerification(val);
+                } else if (fieldType === 'mob') {
+                    const mobileRegex = /^(\+91[\-\s]?)?[6-9]\d{9}$/;
+                    if (!mobileRegex.test(val)) {
+                        showCustomAlert("Please enter a valid 10-digit Indian mobile number starting with digits 6 through 9.");
+                        inputElem.focus();
+                        return;
+                    }
+                    inputElem.disabled = true;
+                    inputElem.classList.add('bg-gray-100', 'cursor-not-allowed');
+                    inputElem.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
+                    
+                    btnElem.textContent = "Edit";
+                    btnElem.classList.remove('bg-green-600', 'hover:bg-green-700', 'text-white');
+                    btnElem.classList.add('bg-indigo-600', 'hover:bg-indigo-700', 'text-white');
+                    
+                    let saveBtn = document.getElementById('save-profile-btn');
+                    if (saveBtn) {
+                        saveBtn.disabled = false;
+                        saveBtn.classList.remove('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+                        saveBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700', 'text-white', 'cursor-pointer');
+                    }
+                } else {
+                    inputElem.disabled = true;
+                    inputElem.classList.add('bg-gray-100', 'cursor-not-allowed');
+                    inputElem.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
+                    
+                    btnElem.textContent = "Edit";
+                    btnElem.classList.remove('bg-green-600', 'hover:bg-green-700', 'text-white');
+                    btnElem.classList.add('bg-indigo-600', 'hover:bg-indigo-700', 'text-white');
+                    
+                    let saveBtn = document.getElementById('save-profile-btn');
+                    if (saveBtn) {
+                        saveBtn.disabled = false;
+                        saveBtn.classList.remove('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+                        saveBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700', 'text-white', 'cursor-pointer');
+                    }
+                }
             }
         }
-    }
-}
-
-
-
         
         function triggerEmailVerification(emailVal) {
             let statusElem = document.getElementById('profile-update-status');
@@ -1038,15 +803,10 @@ function enableField(fieldType) {
                     statusElem.textContent = "Verification code sent successfully! Please check your inbox.";
                     statusElem.classList.remove('text-blue-600');
                     statusElem.classList.add('text-green-600');
-                    
-                    setTimeout(() => {
-                        openVerificationPopup(emailVal);
-                    }, 600);
+                    setTimeout(() => { openVerificationPopup(emailVal); }, 600);
                 } else {
                     statusElem.classList.add('hidden');
                     showCustomAlert("Error: " + result.message);
-                    
-                    // Re-enable email field if backend dispatch failed
                     let emailInput = document.getElementById('update-profile-email');
                     if (emailInput) emailInput.disabled = false;
                 }
@@ -1054,93 +814,43 @@ function enableField(fieldType) {
             .catch(error => {
                 statusElem.classList.add('hidden');
                 showCustomAlert("Network error while sending code: " + error.toString());
-                
                 let emailInput = document.getElementById('update-profile-email');
                 if (emailInput) emailInput.disabled = false;
             });
         }
 
-
-
-
-
-
-
-function validateEmailFormat(email) {
-    if (!email) return false;
-    
-    // 1. Basic structural check (@ and single dot in domain)
-    let re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!re.test(email)) return false;
-    
-    // 2. Prevent consecutive dots (e.g., test..email@gmail.com)
-    if (email.includes('..')) return false;
-    
-    // 3. Split into local part and domain
-    let parts = email.split('@');
-    if (parts.length !== 2) return false;
-    let localPart = parts[0];
-    let domain = parts[1];
-    
-    // 4. Local part or domain cannot start or end with a dot
-    if (localPart.startsWith('.') || localPart.endsWith('.') || domain.startsWith('.') || domain.endsWith('.')) {
-        return false;
-    }
-    
-    // 5. Ensure domain has at least one valid top-level domain (TLD) of at least 2 characters, 
-    // and prevent bizarre multi-level gibberish extensions like .comfdfdf.in.fdsf
-    let domainParts = domain.split('.');
-    let tld = domainParts[domainParts.length - 1];
-    if (tld.length < 2) return false;
-    
-    // Optional: restrict maximum TLD length to avoid absurd entries (e.g. max 6-7 chars for standard TLDs)
-    if (tld.length > 10) return false;
-
-    return true;
-}
-
+        function validateEmailFormat(email) {
+            if (!email) return false;
+            let re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!re.test(email) || email.includes('..')) return false;
+            let parts = email.split('@');
+            if (parts.length !== 2) return false;
+            let domainParts = parts[1].split('.');
+            let tld = domainParts[domainParts.length - 1];
+            return tld.length >= 2 && tld.length <= 10;
+        }
          
-
-
-
-            let currentVerificationEmail = ""; // Temporary variable to hold the email being verified
-
         function openVerificationPopup(email) {
-            currentVerificationEmail = email; // Store the email globally for the modal submit button to use
-            
-            // Update the message text inside your custom modal
+            currentVerificationEmail = email;
             document.getElementById("modalMessage").innerText = `A 6-digit verification code has been sent to ${email}.\nIt is valid for 5 minutes.`;
-            
-            // Clear any old input
             document.getElementById("verificationInput").value = "";
-            
-            // Show your custom modal
             document.getElementById("customVerificationModal").classList.remove("hidden");
         }
 
         function closeVerificationModal() {
-            // Hide the modal if the user cancels
             document.getElementById("customVerificationModal").classList.add("hidden");
         }
 
         function handleVerifyCodeClick() {
             let enteredCode = document.getElementById("verificationInput").value;
-            
             if (!enteredCode || enteredCode.trim() === "") {
                 alert("Please enter the verification code.");
                 return;
             }
-
-            // Hide the modal
             document.getElementById("customVerificationModal").classList.add("hidden");
-            
-            // Pass both the stored email and the trimmed code to your existing verification function
             verifyCodeWithBackend(currentVerificationEmail, enteredCode.trim());
         }
-
-   
       
-
         function verifyCodeWithBackend(email, code) {
             let statusElem = document.getElementById('profile-update-status');
             statusElem.textContent = "Verifying code...";
@@ -1155,7 +865,6 @@ function validateEmailFormat(email) {
                 statusElem.classList.add('hidden');
                 if (result.status === "Success") {
                     showCustomAlert("Email verified successfully! You can now click 'Save Changes'.");
-                    
                     let emailInput = document.getElementById('update-profile-email');
                     emailInput.disabled = true;
                     emailInput.classList.add('bg-gray-100', 'cursor-not-allowed');
@@ -1176,90 +885,65 @@ function validateEmailFormat(email) {
                 showCustomAlert("Network error during code verification: " + error.toString());
             });
         }
-
-
-
-
-
      
+        function loadStatesData(statesNode) {
+            availableStates = [];
+            if (!statesNode) return;
+            if (Array.isArray(statesNode)) {
+                availableStates = statesNode.filter(Boolean).map(st => st.toString().trim());
+            } else {
+                for (let key in statesNode) {
+                    let item = statesNode[key];
+                    if (typeof item === 'string') availableStates.push(item.trim());
+                    else if (item && item.state) availableStates.push(item.state.toString().trim());
+                    else if (item && item.name) availableStates.push(item.name.toString().trim());
+                }
+            }
+            console.log("Loaded availableStates for autocomplete:", availableStates);
+        }
+        
+        function handleStateInput(query) {
+            const suggestionBox = document.getElementById('state-suggestions');
+            if (!suggestionBox) return;
+            query = query.trim();
+            
+            if (query.length < 3) {
+                suggestionBox.innerHTML = '';
+                suggestionBox.classList.add('hidden');
+                return;
+            }
+            const matches = availableStates.filter(st => st.toLowerCase().includes(query.toLowerCase()));
+            if (matches.length === 0) {
+                suggestionBox.innerHTML = '<div class="p-2 text-gray-500 text-sm">No matching state found</div>';
+                suggestionBox.classList.remove('hidden');
+                return;
+            }
+            let html = '';
+            matches.forEach(st => {
+                let safeSt = st.replace(/'/g, "\\'");
+                html += `<div class="p-2 hover:bg-gray-100 cursor-pointer text-sm" onclick="selectState('${safeSt}')">${st}</div>`;
+            });
+            suggestionBox.innerHTML = html;
+            suggestionBox.classList.remove('hidden');
+        }
 
-// Call this when loading your initial Firebase data to populate the array
-// Global array to store states loaded from Firebase during startup/sync
-let availableStates = [];
-
-function loadStatesData(statesNode) {
-    availableStates = [];
-    if (!statesNode) return;
-
-    if (Array.isArray(statesNode)) {
-        availableStates = statesNode.filter(Boolean).map(st => st.toString().trim());
-    } else {
-        for (let key in statesNode) {
-            let item = statesNode[key];
-            if (typeof item === 'string') {
-                availableStates.push(item.trim());
-            } else if (item && item.state) {
-                availableStates.push(item.state.toString().trim());
-            } else if (item && item.name) {
-                availableStates.push(item.name.toString().trim());
+        function selectState(selectedState) {
+            const inputField = document.getElementById('update-profile-state');
+            const suggestionBox = document.getElementById('state-suggestions');
+            if (inputField) inputField.value = selectedState;
+            if (suggestionBox) {
+                suggestionBox.innerHTML = '';
+                suggestionBox.classList.add('hidden');
             }
         }
-    }
-    console.log("Loaded availableStates for autocomplete:", availableStates);
-}
 
-        
-
-function handleStateInput(query) {
-    const suggestionBox = document.getElementById('state-suggestions');
-    if (!suggestionBox) return;
-
-    query = query.trim();
-    
-    if (query.length < 3) {
-        suggestionBox.innerHTML = '';
-        suggestionBox.classList.add('hidden');
-        return;
-    }
-
-    const matches = availableStates.filter(st => st.toLowerCase().includes(query.toLowerCase()));
-
-    if (matches.length === 0) {
-        suggestionBox.innerHTML = '<div class="p-2 text-gray-500 text-sm">No matching state found</div>';
-        suggestionBox.classList.remove('hidden');
-        return;
-    }
-
-    let html = '';
-    matches.forEach(st => {
-        let safeSt = st.replace(/'/g, "\\'");
-        html += `<div class="p-2 hover:bg-gray-100 cursor-pointer text-sm" onclick="selectState('${safeSt}')">${st}</div>`;
-    });
-
-    suggestionBox.innerHTML = html;
-    suggestionBox.classList.remove('hidden');
-}
-
-function selectState(selectedState) {
-    const inputField = document.getElementById('update-profile-state');
-    const suggestionBox = document.getElementById('state-suggestions');
-    
-    if (inputField) inputField.value = selectedState;
-    if (suggestionBox) {
-        suggestionBox.innerHTML = '';
-        suggestionBox.classList.add('hidden');
-    }
-}
-
-document.addEventListener('click', function(e) {
-    const suggestionBox = document.getElementById('state-suggestions');
-    const stateInput = document.getElementById('update-profile-state');
-    if (suggestionBox && stateInput && !stateInput.contains(e.target) && !suggestionBox.contains(e.target)) {
-        suggestionBox.classList.add('hidden');
-    }
-});
-
-             
+        document.addEventListener('click', function(e) {
+            const suggestionBox = document.getElementById('state-suggestions');
+            const stateInput = document.getElementById('update-profile-state');
+            if (suggestionBox && stateInput && !stateInput.contains(e.target) && !suggestionBox.contains(e.target)) {
+                suggestionBox.classList.add('hidden');
+            }
+        });
     </script>
 </body>
 </html>
