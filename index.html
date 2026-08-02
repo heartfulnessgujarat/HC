@@ -219,15 +219,23 @@
                     </div>
                 </div>
 
-                <!-- State Field -->
-                <div>
+
+
+                <!-- State Field with Autocomplete Support -->
+                <div class="relative">
                     <label class="block text-gray-700 text-sm font-bold mb-1">State</label>
                     <div class="flex items-center space-x-2">
-                        <input type="text" id="update-profile-state" autocomplete="off" disabled class="w-full bg-gray-100 border rounded-lg px-3 py-2 text-gray-600 cursor-not-allowed">
+                        <input type="text" id="update-profile-state" autocomplete="off" disabled class="w-full bg-gray-100 border rounded-lg px-3 py-2 text-gray-600 cursor-not-allowed" oninput="handleStateInput(this.value)">
                         <button type="button" id="btn-state" onclick="enableField('state')" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2.5 px-4 rounded-lg transition flex-shrink-0">Edit</button>
                     </div>
-                </div>
+                    <!-- Suggestions Dropdown Box -->
+                    <div id="state-suggestions" class="absolute z-50 left-0 right-0 bg-white border border-gray-300 rounded-lg shadow-lg mt-1 max-h-40 overflow-y-auto hidden"></div>
+                </div>    
+
+               
             </div>
+
+
             
             <!-- Loading status text -->
             <p id="profile-update-status" class="text-sm text-blue-600 font-medium hidden my-3 text-center"></p>
