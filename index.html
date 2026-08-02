@@ -794,18 +794,21 @@ function logout() {
             document.getElementById('custom-alert-modal').classList.add('hidden');
         }
 
-
-
-        
-        function openUpdateProfileModal() {
+function openUpdateProfileModal() {
             if (!currentActiveUser) return;
+            
+            // Fetch fresh state and zone master list from Firebase and populate dropdowns
+            fetchZoneStateMaster();
             
             document.getElementById('update-profile-name').value = currentActiveUser.ps_name || "";
             document.getElementById('update-profile-id').value = currentActiveUser.ps_id || "";
             document.getElementById('update-profile-mob').value = currentActiveUser.ps_mob || "";
             document.getElementById('update-profile-email').value = currentActiveUser.ps_email || "";
             document.getElementById('update-profile-centre').value = currentActiveUser.ps_centre || "";
-            document.getElementById('update-profile-zone').value = currentActiveUser.ps_zone || ""; // Added Zone
+            
+            // Note: After fetchZoneStateMaster completes, the dropdown values 
+            // for zone and state will automatically match currentActiveUser
+            document.getElementById('update-profile-zone').value = currentActiveUser.ps_zone || ""; 
             document.getElementById('update-profile-state').value = currentActiveUser.ps_state || "";
             
             document.getElementById('dashboard-screen').classList.add('hidden');
@@ -817,6 +820,7 @@ function logout() {
             document.getElementById('dashboard-screen').classList.remove('hidden');
         }
 
+     
 // Global variable to hold the zone-state master mapping
 let zoneStateMapping = {};
 
