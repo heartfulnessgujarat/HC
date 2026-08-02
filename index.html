@@ -1133,47 +1133,6 @@ function validateEmailFormat(email) {
             });
         }
 
-function verifyEmailCode(data) {
-    try {
-        let email = data.email;
-        let code = data.code;
-        
-        if (!email || !code) {
-            return ContentService.createTextOutput(JSON.stringify({ status: "Error", message: "Email and code are required." }))
-                .setMimeType(ContentService.MimeType.JSON);
-        }
-        
-        let storedDataString = PropertiesService.getScriptProperties().getProperty("VERIFY_" + email);
-        if (!storedDataString) {
-            return ContentService.createTextOutput(JSON.stringify({ status: "Error", message: "Verification code expired or not found. Please request a new one." }))
-                .setMimeType(ContentService.MimeType.JSON);
-        }
-        
-        let storedData = JSON.parse(storedDataString);
-        let currentTime = new Date().getTime();
-        
-        if (currentTime > storedData.expiry) {
-            PropertiesService.getScriptProperties().deleteProperty("VERIFY_" + email);
-            return ContentService.createTextOutput(JSON.stringify({ status: "Error", message: "Verification code has expired. Please request a new one." }))
-                .setMimeType(ContentService.MimeType.JSON);
-        }
-        
-        if (storedData.code.toString().trim() !== code.toString().trim()) {
-            return ContentService.createTextOutput(JSON.stringify({ status: "Error", message: "Invalid verification code. Please try again." }))
-                .setMimeType(ContentService.MimeType.JSON);
-        }
-        
-        // Code is valid! Clean it up so it can't be reused
-        PropertiesService.getScriptProperties().deleteProperty("VERIFY_" + email);
-        
-        return ContentService.createTextOutput(JSON.stringify({ status: "Success", message: "Email verified successfully." }))
-            .setMimeType(ContentService.MimeType.JSON);
-            
-    } catch (err) {
-        return ContentService.createTextOutput(JSON.stringify({ status: "Error", message: err.toString() }))
-            .setMimeType(ContentService.MimeType.JSON);
-    }
-}
 
 
 
