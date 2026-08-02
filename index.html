@@ -64,7 +64,7 @@
                 <div class="relative">
                     <input type="password" id="login-password" placeholder="Enter password" class="w-full px-3 py-1.5 text-sm pr-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
                     <button type="button" onclick="togglePasswordVisibility('login-password', 'login-eye-icon')" class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-500 hover:text-gray-700 focus:outline-none">
-                        <svg id="login-eye-icon" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg id="login-eye-icon" class="h-4 w-4" fill="none" Box="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                         </svg>
@@ -219,6 +219,17 @@
                     </div>
                 </div>
 
+
+                <!-- Zone Field -->
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-1">Zone</label>
+                    <div class="flex items-center space-x-2">
+                        <input type="text" id="update-profile-zone" autocomplete="off" disabled class="w-full bg-gray-100 border rounded-lg px-3 py-2 text-gray-600 cursor-not-allowed">
+                        <button type="button" id="btn-zone" onclick="enableField('zone')" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2.5 px-4 rounded-lg transition flex-shrink-0">Edit</button>
+                    </div>
+                </div>
+             
+
                 <!-- State Field -->
                 <div>
                     <label class="block text-gray-700 text-sm font-bold mb-1">State</label>
@@ -257,6 +268,7 @@
             </button>
         </div>
     </div>
+
 
 
 <!-- Custom Verification Modal -->
@@ -790,6 +802,7 @@ function logout() {
             document.getElementById('update-profile-mob').value = currentActiveUser.ps_mob || "";
             document.getElementById('update-profile-email').value = currentActiveUser.ps_email || "";
             document.getElementById('update-profile-centre').value = currentActiveUser.ps_centre || "";
+            document.getElementById('update-profile-zone').value = currentActiveUser.ps_zone || ""; // Added Zone
             document.getElementById('update-profile-state').value = currentActiveUser.ps_state || "";
             
             document.getElementById('dashboard-screen').classList.add('hidden');
@@ -837,8 +850,13 @@ function saveProfileChanges() {
             }
             if (newCentre !== (currentActiveUser.ps_centre || "")) {
                 payload.ps_centre = newCentre;
-                updatedFieldsList.push("ps_centre");
+                updatedFieldsList.push("ps_centre");                
             }
+    if (newZone !== (currentActiveUser.ps_zone || "")) { // Added Zone check
+        payload.ps_zone = newZone;
+        updatedFieldsList.push("ps_zone");
+    }
+    
             if (newState !== (currentActiveUser.ps_state || "")) {
                 payload.ps_state = newState;
                 updatedFieldsList.push("ps_state");
@@ -863,6 +881,7 @@ function saveProfileChanges() {
                 currentActiveUser.ps_mob = newMob;
                 currentActiveUser.ps_email = newEmail;
                 currentActiveUser.ps_centre = newCentre;
+                currentActiveUser.ps_zone = newZone; // Updated local zone
                 currentActiveUser.ps_state = newState;
                 
                 if (statusDiv) statusDiv.classList.add('hidden');
