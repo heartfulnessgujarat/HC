@@ -395,73 +395,66 @@ const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwZwp6CgVUqLM9LUWob
             document.getElementById('workshop-title-display').innerText = workshopName;
             const resourcesContainer = document.getElementById('resources-container');
             resourcesContainer.innerHTML = '';
-            const resourceLinks = [
+
+
+            const resourceItems = [
                 { 
-                    eng: "Personalized zoom link to join the workshop", 
-                    hin: "वर्कशॉप में शामिल होने के लिए पर्सनलाइज़्ड ज़ूम लिंक", 
-                    btnText: "Join Zoom (जूम ज्वाइन करें)", 
+                    engText: "Click here to join the workshop", 
+                    hinText: "(वर्कशॉप में शामिल होने के लिए यहाँ क्लिक करें।)", 
                     link: currentActiveUser.personal_zoom_link 
                 },
                 { 
-                    eng: "Participant WhatsApp Group Joining Link", 
-                    hin: "प्रतिभागी व्हाट्सएप ग्रुप ज्वाइन करने का लिंक", 
-                    btnText: "Join Group (ग्रुप ज्वाइन करें)", 
+                    engText: "Click here to join the Participant WhatsApp Group", 
+                    hinText: "(प्रतिभागी व्हाट्सएप ग्रुप ज्वाइन करने के लिए यहाँ क्लिक करें।)", 
                     link: workshop.participant_wg_link 
                 },
                 { 
-                    eng: "Workshop Schedule Link", 
-                    hin: "वर्कशॉप शेड्यूल लिंक", 
-                    btnText: "View Schedule (शेड्यूल देखें)", 
+                    engText: "Click here to view Workshop Schedule", 
+                    hinText: "(वर्कशॉप का शेड्यूल देखने के लिए यहाँ क्लिक करें।)", 
                     link: workshop.workshop_shedule_link 
                 },
                 { 
-                    eng: "Material/Handbook Link", 
-                    hin: "सामग्री / हैंडबुक लिंक", 
-                    btnText: "Read Material (सामग्री देखें)", 
+                    engText: "Click here to view/download Handbook", 
+                    hinText: "(हैंडबुक देखने/डाउनलोड करने के लिए यहाँ क्लिक करें।)", 
                     link: workshop.material_link 
                 },
                 { 
-                    eng: "Participant Feedback Link", 
-                    hin: "प्रतिभागी फीडबैक लिंक", 
-                    btnText: "Give Feedback (फीडबैक दें)", 
+                    engText: "Click here to submit your feedback", 
+                    hinText: "(अपना फ़ीडबैक सबमिट करने के लिए यहाँ क्लिक करें।)", 
                     link: workshop.participant_feedback_link 
                 }
             ];
 
-
-
-
-            resourceLinks.forEach((res, index) => {
+            resourceItems.forEach((item, index) => {
                 let row = document.createElement('div');
-                // Adds a clean bottom border between items, omitting it for the last item
-                row.className = `py-2.5 flex flex-col sm:flex-row justify-between items-start sm:items-center ${index !== resourceLinks.length - 1 ? 'border-b border-gray-100' : ''}`;
+                row.className = `py-3 ${index !== resourceItems.length - 1 ? 'border-b border-gray-100' : ''}`;
                 
-                let linkVal = res.link ? res.link.toString().trim() : "";
+                let linkVal = item.link ? item.link.toString().trim() : "";
                 let isLinkValid = linkVal.startsWith('http://') || linkVal.startsWith('https://');
                 
-                let textContainer = document.createElement('div');
-                textContainer.className = "mb-2 sm:mb-0 sm:mr-3 pr-2";
-                textContainer.innerHTML = `
-                    <div class="text-gray-900 font-semibold text-xs sm:text-sm">${index + 1}. ${res.eng}</div>
-                    <div class="text-gray-500 font-normal text-xs mt-0.5">${res.hin}</div>
-                `;
-                row.appendChild(textContainer);
-                
                 if (isLinkValid) {
-                    let a = document.createElement('a');
-                    a.href = linkVal;
-                    a.target = "_blank";
-                    a.className = "bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold py-1.5 px-3 rounded transition shadow flex-shrink-0 text-center";
-                    a.innerText = res.btnText;
-                    row.appendChild(a);
+                    row.innerHTML = `
+                        <div class="text-gray-900 font-medium text-xs sm:text-sm">
+                            ${index + 1}. <a href="${linkVal}" target="_blank" class="text-indigo-600 hover:underline font-semibold">${item.engText}</a>
+                        </div>
+                        <div class="text-gray-500 font-normal text-xs mt-0.5 pl-4">
+                            <a href="${linkVal}" target="_blank" class="hover:underline">${item.hinText}</a>
+                        </div>
+                    `;
                 } else {
-                    let span = document.createElement('span');
-                    span.className = "text-gray-400 text-xs italic flex-shrink-0";
-                    span.innerText = "Not Available";
-                    row.appendChild(span);
+                    row.innerHTML = `
+                        <div class="text-gray-400 font-medium text-xs sm:text-sm">
+                            ${index + 1}. ${item.engText} <span class="italic text-[10px]">(Not Available)</span>
+                        </div>
+                        <div class="text-gray-400 font-normal text-xs mt-0.5 pl-4">${item.hinText}</div>
+                    `;
                 }
                 resourcesContainer.appendChild(row);
             });
+
+
+
+            
 
 
 
