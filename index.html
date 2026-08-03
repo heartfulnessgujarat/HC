@@ -1393,7 +1393,7 @@ function showWorkshopError(message) {
                 <h2 class="text-xl font-bold text-gray-900 mb-2">Workshop Not Found</h2>
                 <p class="text-gray-600 text-sm mb-4">${message}</p>
                 <p class="text-xs text-gray-400 mb-6">Redirecting in <span id="countdown" class="font-bold text-indigo-600">${secondsLeft}</span> seconds...</p>
-                <button onclick="window.location.hash = ''; window.location.href = window.location.pathname;" class="inline-block bg-indigo-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-indigo-700 transition">
+                <button onclick="window.location.replace(window.location.origin + window.location.pathname);" ...> class="inline-block bg-indigo-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-indigo-700 transition">
                     Return Now
                 </button>
             </div>
@@ -1410,11 +1410,14 @@ function showWorkshopError(message) {
     }, 1000);
 
     // Guaranteed hard redirect after exactly 10 seconds
-    setTimeout(() => {
+
+	setTimeout(() => {
         clearInterval(countdownInterval);
-        window.location.hash = '';
-        window.location.href = window.location.pathname;
+        window.location.replace(window.location.origin + window.location.pathname);
     }, 10000);
+
+
+	
 }
 
 // You can use this exact same function for inactive workshops too by changing the title/icon if you want, or just point both errors here!
@@ -1430,7 +1433,7 @@ function showWorkshopInactiveError(message) {
                 <h2 class="text-xl font-bold text-gray-900 mb-2">Workshop Closed</h2>
                 <p class="text-gray-600 text-sm mb-4">${message}</p>
                 <p class="text-xs text-gray-400 mb-6">Clearing session in <span id="countdown" class="font-bold text-indigo-600">${secondsLeft}</span> seconds...</p>
-                <button onclick="window.location.hash = ''; window.location.href = window.location.pathname;" class="inline-block bg-indigo-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-indigo-700 transition">
+                <button onclick="window.location.replace(window.location.origin + window.location.pathname);" ...> class="inline-block bg-indigo-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-indigo-700 transition">
                     Exit Now
                 </button>
             </div>
@@ -1447,11 +1450,14 @@ function showWorkshopInactiveError(message) {
     }, 1000);
 
     // Guaranteed hard redirect after exactly 10 seconds
-    setTimeout(() => {
+
+
+	setTimeout(() => {
         clearInterval(countdownInterval);
-        window.location.hash = '';
-        window.location.href = window.location.pathname;
+        window.location.replace(window.location.origin + window.location.pathname);
     }, 10000);
+
+	
 }
 
 
