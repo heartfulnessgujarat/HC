@@ -1381,41 +1381,6 @@ function validateWorkshopAndInitialize() {
 		
 // Dedicated error screen for inactive batches so the user knows why it's blocked
 
-
-function showWorkshopInactiveError(message) {
-    let secondsLeft = 10;
-    
-    document.body.innerHTML = `
-        <div class="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-            <div class="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center border border-amber-100">
-                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-100 text-amber-600 mb-4 text-2xl">
-                    🔒
-                </div>
-                <h2 class="text-xl font-bold text-gray-900 mb-2">Workshop Closed</h2>
-                <p class="text-gray-600 text-sm mb-4">${message}</p>
-                <p class="text-xs text-gray-400 mb-6">Clearing session in <span id="countdown" class="font-bold text-indigo-600">${secondsLeft}</span> seconds...</p>
-                <button onclick="window.location.hash = ''; window.location.reload();" class="inline-block bg-indigo-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-indigo-700 transition">
-                    Exit Now
-                </button>
-            </div>
-        </div>
-    `;
-
-    // Countdown timer that clears the hash and reloads safely
-    const timer = setInterval(() => {
-        secondsLeft--;
-        const counterEl = document.getElementById('countdown');
-        if (counterEl) counterEl.innerText = secondsLeft;
-        
-        if (secondsLeft <= 0) {
-            clearInterval(timer);
-            window.location.hash = ''; // Clear the batch hash
-            window.location.reload();    // Refresh back to clean state
-        }
-    }, 1000);
-}
-
-
 function showWorkshopError(message) {
     let secondsLeft = 10;
 
@@ -1427,27 +1392,70 @@ function showWorkshopError(message) {
                 </div>
                 <h2 class="text-xl font-bold text-gray-900 mb-2">Workshop Not Found</h2>
                 <p class="text-gray-600 text-sm mb-4">${message}</p>
-                <p class="text-xs text-gray-400 mb-6">Redirecting in <span id="error-countdown" class="font-bold text-indigo-600">${secondsLeft}</span> seconds...</p>
-                <button onclick="window.location.hash = ''; window.location.reload();" class="inline-block bg-indigo-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-indigo-700 transition">
+                <p class="text-xs text-gray-400 mb-6">Redirecting in <span id="countdown" class="font-bold text-indigo-600">${secondsLeft}</span> seconds...</p>
+                <button onclick="window.location.hash = ''; window.location.href = window.location.pathname;" class="inline-block bg-indigo-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-indigo-700 transition">
                     Return Now
                 </button>
             </div>
         </div>
     `;
 
-    const timer = setInterval(() => {
+    // Visual countdown ticker every 1 second
+    const countdownInterval = setInterval(() => {
         secondsLeft--;
-        const counterEl = document.getElementById('error-countdown');
-        if (counterEl) counterEl.innerText = secondsLeft;
-        
-        if (secondsLeft <= 0) {
-            clearInterval(timer);
-            window.location.hash = '';
-            window.location.reload();
+        const counterEl = document.getElementById('countdown');
+        if (counterEl) {
+            counterEl.innerText = secondsLeft;
         }
     }, 1000);
+
+    // Guaranteed hard redirect after exactly 10 seconds
+    setTimeout(() => {
+        clearInterval(countdownInterval);
+        window.location.hash = '';
+        window.location.href = window.location.pathname;
+    }, 10000);
 }
 
+// You can use this exact same function for inactive workshops too by changing the title/icon if you want, or just point both errors here!
+function showWorkshopInactiveError(message) {
+    let secondsLeft = 10;
+
+    document.body.innerHTML = `
+        <div class="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+            <div class="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center border border-amber-100">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-100 text-amber-600 mb-4 text-2xl">
+                    🔒
+                </div>
+                <h2 class="text-xl font-bold text-gray-900 mb-2">Workshop Closed</h2>
+                <p class="text-gray-600 text-sm mb-4">${message}</p>
+                <p class="text-xs text-gray-400 mb-6">Clearing session in <span id="countdown" class="font-bold text-indigo-600">${secondsLeft}</span> seconds...</p>
+                <button onclick="window.location.hash = ''; window.location.href = window.location.pathname;" class="inline-block bg-indigo-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-indigo-700 transition">
+                    Exit Now
+                </button>
+            </div>
+        </div>
+    `;
+
+    // Visual countdown ticker every 1 second
+    const countdownInterval = setInterval(() => {
+        secondsLeft--;
+        const counterEl = document.getElementById('countdown');
+        if (counterEl) {
+            counterEl.innerText = secondsLeft;
+        }
+    }, 1000);
+
+    // Guaranteed hard redirect after exactly 10 seconds
+    setTimeout(() => {
+        clearInterval(countdownInterval);
+        window.location.hash = '';
+        window.location.href = window.location.pathname;
+    }, 10000);
+}
+
+
+		
 
 
 		
