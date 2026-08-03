@@ -1390,7 +1390,27 @@ function showWorkshopError(message) {
     `;
 }
 
+function navToChangePassword(event) {
+    event.preventDefault(); // Stops the # from clearing the URL hash
+    const currentHash = window.location.hash; // Captures #FT3H, #FT4H, etc.
+    showChangePasswordScreen();
+    if (currentHash) {
+        window.location.hash = currentHash; // Restores the batch suffix
+    }
+}
 
+function navToResetPassword(event) {
+    event.preventDefault(); // Stops the # from clearing the URL hash
+    const currentHash = window.location.hash; // Captures #FT3H, #FT4H, etc.
+    showResetPasswordScreen();
+    if (currentHash) {
+        window.location.hash = currentHash; // Restores the batch suffix
+    }
+}
+
+
+
+		
 
 
 
