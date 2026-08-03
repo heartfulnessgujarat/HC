@@ -1,10 +1,13 @@
 
 <!DOCTYPE html>
 <html lang="en">
+
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Heartful Communication - Facilitator Training Workshop (FT3H) | Participant Portal</title>
+    <!-- Base title without hardcoded ID -->
+    <title id="page-title">Heartful Communication | Participant Portal</title>
     
     <!-- Tailwind CSS for modern responsive design -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -12,6 +15,9 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 </head>
+
+
+	
 <body class="bg-gray-50 min-h-screen flex flex-col justify-between text-xs sm:text-sm">
     
     <!-- Persistent Global Header Logo (Full-width box fit) -->
@@ -299,14 +305,21 @@
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwZwp6CgVUqLM9LUWob9FvgiioA3S5sACYHlkOD7RiopRucNaHzP8IsAcKMEARKbunH3A/exec";
 
 
-
-        // === DYNAMIC WORKSHOP ID EXTRACTION ===
+// === DYNAMIC WORKSHOP ID EXTRACTION ===
         const pathSegments = window.location.pathname.split('/').filter(Boolean);
-        const activeWorkshopId = pathSegments[pathSegments.length - 1] || "FT3H";
+        const activeWorkshopId = pathSegments[pathSegments.length - 1];
+        
+        if (!activeWorkshopId) {
+            console.error("No active workshop ID detected in URL path!");
+        }
+        
         console.log("Active Workshop ID detected from URL:", activeWorkshopId);
         // ======================================
 
-
+        // Immediately update the page title using the dynamic ID
+        if (activeWorkshopId) {
+            document.getElementById('page-title').innerText = `Heartful Communication - Facilitator Training Workshop (${activeWorkshopId}) | Participant Portal`;
+        }
         
         const firebaseConfig = {
             apiKey: "AIzaSyAt_HbqtG_kMn41NC1wPy5KDFNsDp5HTb8",
