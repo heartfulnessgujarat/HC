@@ -305,58 +305,63 @@
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwZwp6CgVUqLM9LUWob9FvgiioA3S5sACYHlkOD7RiopRucNaHzP8IsAcKMEARKbunH3A/exec";
 
 
-// === DYNAMIC WORKSHOP ID EXTRACTION (QUERY-BASED) ===
-        const queryString = window.location.search; // e.g., "?FT4H"
-        const urlParams = new URLSearchParams(queryString);
+
+// === STRICT DYNAMIC WORKSHOP ID EXTRACTION (HASH-BASED, NO FALLBACKS) ===
+        const activeWorkshopId = window.location.hash.replace('#', '').trim();
         
-        // Grabs from ?id=... or directly from shorthand like ?FT4H
-        let activeWorkshopId = urlParams.get('id') || queryString.replace('?', '').trim();
-        
-        // Fallback to FT3H if no workshop query parameter was provided in the URL
+        // If no workshop ID is provided after the #, throw an error immediately
         if (!activeWorkshopId) {
-            activeWorkshopId = "FT3H";
-            console.warn("No workshop ID specified in URL query. Defaulting to: FT3H");
+            console.error("No workshop ID provided in the URL hash.");
+            showWorkshopNotFoundError("No workshop ID specified. Please use a valid workshop link.");
+            throw new Error("Missing Workshop ID");
         }
         
-        console.log("Active Workshop ID detected from Query:", activeWorkshopId);
-        // ===================================================
+        console.log("Active Workshop ID detected from Hash:", activeWorkshopId);
+        // ======================================================================
 
         // Immediately update the page title using the dynamic ID
-        if (activeWorkshopId) {
-            document.getElementById('page-title').innerText = `Heartful Communication - Facilitator Training Workshop (${activeWorkshopId}) | Participant Portal`;
-        }
+        document.getElementById('page-title').innerText = `Heartful Communication - Facilitator Training Workshop (${activeWorkshopId}) | Participant Portal`;
 
-        // === WORKSHOP EXISTENCE VALIDATION FUNCTION ===
-        // Call this function right after your Firebase data fetch completes.
-        // Pass the fetched workshop data object/snapshot into it.
+        // === STRICT DATABASE VALIDATION FUNCTION ===
         function validateWorkshopExists(workshopData) {
             if (!workshopData || (typeof workshopData === 'object' && Object.keys(workshopData).length === 0)) {
                 console.error(`Workshop ID "${activeWorkshopId}" does not exist in the database.`);
                 
-                // Hide main app elements if they exist
-                const mainContainer = document.getElementById('main-container') || document.body;
-                if(document.getElementById('main-container')) {
-                    document.getElementById('main-container').style.display = 'none';
+                const mainContainer = document.getElementById('main-container');
+                if (mainContainer) {
+                    mainContainer.style.display = 'none';
                 }
 
-                // Render a clean error message overlay on screen
-                const errorDiv = document.createElement('div');
-                errorDiv.className = "fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-75 z-50";
-                errorDiv.innerHTML = `
-                    <div class="bg-white p-8 rounded-xl shadow-2xl max-w-md text-center mx-4">
-                        <div class="text-red-500 text-5xl mb-4">⚠️</div>
-                        <h2 class="text-2xl font-bold text-gray-800 mb-2">Workshop Not Found</h2>
-                        <p class="text-gray-600 mb-6">The workshop ID <span class="font-semibold text-red-600">"${activeWorkshopId}"</span> does not exist or is inactive.</p>
-                        <a href="?FT3H" class="inline-block bg-indigo-600 text-white font-medium px-6 py-2.5 rounded-lg hover:bg-indigo-700 transition">Go to Valid Workshop</a>
-                    </div>
-                `;
-                document.body.appendChild(errorDiv);
+                showWorkshopNotFoundError(`The workshop ID <span class="font-semibold text-red-600">"${activeWorkshopId}"</span> does not exist or is inactive.`);
                 return false;
             }
             return true;
         }
 
+        // Helper function to render the error screen cleanly
+        function showWorkshopNotFoundError(message) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = "fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-90 z-50";
+            errorDiv.innerHTML = `
+                <div class="bg-white p-8 rounded-xl shadow-2xl max-w-md text-center mx-4">
+                    <div class="text-red-500 text-5xl mb-4">⚠️</div>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-2">Workshop Not Found</h2>
+                    <p class="text-gray-600 mb-6">${message}</p>
+                    <p class="text-xs text-gray-400">Please check your link and try again.</p>
+                </div>
+            `;
+            document.body.appendChild(errorDiv);
+        }
 
+
+
+
+
+
+
+
+
+		
 
 		
         const firebaseConfig = {
