@@ -338,21 +338,24 @@ const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwZwp6CgVUqLM9LUWob
                 }
             }).catch(err => console.error("Error fetching data from Firebase:", err));
     
-            // Fetch and display persistent global header logo based on Firebase control config
-            db.ref('control_tower/config/logo_config').on('value', (snapshot) => {
-                const config = snapshot.val();
-                console.log("Logo Config fetched:", config);
-                
-                const logoContainer = document.getElementById('global-header');
-                const logoElement = document.getElementById('app-logo');
-                
-                if (config && config.status === "ON" && config.image) {
-                    logoElement.src = config.image;
-                    logoContainer.classList.remove('hidden'); // Show logo box
-                } else {
-                    logoContainer.classList.add('hidden');    // Hide completely if OFF or empty
-                }
-            });
+          // Fetch and display persistent global header logo based on master workshops data
+        db.ref('control_tower/workshops/FT3H').on('value', (snapshot) => {
+            const workshop = snapshot.val();
+            console.log("Workshop Data fetched for logo:", workshop);
+            
+            const logoContainer = document.getElementById('global-header');
+            const logoElement = document.getElementById('app-logo');
+            
+            // Check logo_status and logo_url fields directly from the workshop node
+            if (workshop && workshop.logo_status === "ON" && workshop.logo_url) {
+                logoElement.src = workshop.logo_url;
+                logoContainer.classList.remove('hidden'); // Show logo box
+            } else {
+                logoContainer.classList.add('hidden');    // Hide completely if OFF or empty
+            }
+        });
+
+            
         }
         window.onload = loadFirebaseData;
 
