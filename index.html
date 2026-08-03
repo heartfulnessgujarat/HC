@@ -421,19 +421,18 @@ const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwZwp6CgVUqLM9LUWob
         }
         window.onload = loadFirebaseData;
 
-        function updateLoginWorkshopBadge() {
-            let workshopKeys = Object.keys(allWorkshops);
-            console.log("Workshop Keys available:", workshopKeys);
-            if (workshopKeys.length > 0) {
-                let firstWorkshop = allWorkshops[workshopKeys[0]];
-                console.log("First Workshop Object:", firstWorkshop);
-                if (firstWorkshop && firstWorkshop.workshop_name) {
-                    document.getElementById('login-workshop-name').innerText = firstWorkshop.workshop_name;
-                    document.getElementById('login-workshop-badge').classList.remove('hidden');
-                }
-            }
-        }
-
+       function updateLoginWorkshopBadge() {
+    console.log("Active Workshop ID:", activeWorkshopId);
+    let currentWorkshop = allWorkshops[activeWorkshopId];
+    
+    if (currentWorkshop && currentWorkshop.workshop_name) {
+        document.getElementById('login-workshop-name').innerText = currentWorkshop.workshop_name;
+        document.getElementById('login-workshop-badge').classList.remove('hidden');
+    } else {
+        console.warn(`Workshop ID "${activeWorkshopId}" not found in workshops list.`);
+        // Optional: Trigger your workshop not found error if needed
+    }
+}
 
 function renderDashboard() {
     document.getElementById('login-screen').classList.add('hidden');
@@ -541,22 +540,33 @@ function renderDashboard() {
             }
         }
 
-        function filterParticipants() {
+
+
+		function filterParticipants() {
             const query = document.getElementById('search-name').value.toLowerCase();
             const resultsBox = document.getElementById('search-results');
             resultsBox.innerHTML = '';
+            
             if (query.length < 3) {
                 resultsBox.classList.add('hidden');
                 return;
             }
+            
             let matches = [];
             for (let key in allParticipants) {
                 let p = allParticipants[key];
+                
+                // STRICT CHECK: Ensure the participant belongs to the active workshop batch from the URL hash
+                if (p.workshop_id && p.workshop_id.toString().trim() !== activeWorkshopId) {
+                    continue;
+                }
+                
                 let pName = (p.ps_name || "").toLowerCase();
                 if (pName.includes(query)) {
                     matches.push({ key: key, data: p });
                 }
             }
+            
             if (matches.length > 0) {
                 resultsBox.classList.remove('hidden');
                 matches.forEach(m => {
