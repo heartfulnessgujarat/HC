@@ -1348,13 +1348,9 @@ function validateEmailFormat(email) {
 
 
 
-
-		function validateWorkshopAndInitialize() {
+function validateWorkshopAndInitialize() {
     // 1. Get workshop ID from the URL hash
     const activeWorkshopId = window.location.hash.replace('#', '').trim();
-    
-    // 2. Reference to your main login/app container and an error message container
-    const loginContainer = document.getElementById('login-container'); // or whatever your main wrapper ID is
     
     // Check if the hash is completely missing
     if (!activeWorkshopId) {
@@ -1362,16 +1358,47 @@ function validateEmailFormat(email) {
         return;
     }
 
-    // Check if workshops data has loaded and if the ID exists in Firebase
+    // 2. Check if workshops data has loaded and if the ID exists in Firebase
     if (allWorkshops && !allWorkshops[activeWorkshopId]) {
         showWorkshopError(`Workshop ID "${activeWorkshopId}" does not exist in our records. Please verify the URL link.`);
         return;
     }
 
-    // If it exists, proceed normally
-    console.log(`Workshop "${activeWorkshopId}" validated successfully.`);
+    // 3. Check if the workshop status is explicitly Inactive or Closed
+    const workshopData = allWorkshops[activeWorkshopId];
+    const workshopStatus = workshopData.status ? workshopData.status.trim().toLowerCase() : 'active';
+    
+    if (workshopStatus === 'inactive' || workshopStatus === 'closed') {
+        showWorkshopInactiveError(`Workshop ID "${activeWorkshopId}" has concluded or is currently inactive. Access is closed.`);
+        return;
+    }
+
+    // If it exists and is active, proceed normally
+    console.log(`Workshop "${activeWorkshopId}" validated and active successfully.`);
 }
 
+// Dedicated error screen for inactive batches so the user knows why it's blocked
+function showWorkshopInactiveError(message) {
+    document.body.innerHTML = `
+        <div class="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+            <div class="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center border border-amber-100">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-100 text-amber-600 mb-4 text-2xl">
+                    🔒
+                </div>
+                <h2 class="text-xl font-bold text-gray-900 mb-2">Workshop Closed</h2>
+                <p class="text-gray-600 text-sm mb-6">${message}</p>
+                <a href="../" class="inline-block bg-indigo-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-indigo-700 transition">
+                    Return Home
+                </a>
+            </div>
+        </div>
+    `;
+}
+
+
+
+
+		
 function showWorkshopError(message) {
     // Hide the login screen or entire body content and show a nice error card
     document.body.innerHTML = `
