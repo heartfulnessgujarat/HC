@@ -373,9 +373,7 @@ const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwZwp6CgVUqLM9LUWob
         }
 
 
-
-
-        function renderDashboard() {
+function renderDashboard() {
     document.getElementById('login-screen').classList.add('hidden');
     document.getElementById('change-password-screen').classList.add('hidden');
     document.getElementById('reset-password-screen').classList.add('hidden');
@@ -409,7 +407,7 @@ const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwZwp6CgVUqLM9LUWob
     const resourcesContainer = document.getElementById('resources-container');
     resourcesContainer.innerHTML = '';
 
-    // Determine whether to use common zoom link or personal zoom link based on workshop toggle
+    // Corrected logic: YES = Common Zoom URL from workshops, NO = Personalized Zoom Link from participant
     let workshopZoomYn = workshop.common_zoom_url_yn ? workshop.common_zoom_url_yn.toString().trim().toUpperCase() : "NO";
     let activeZoomLink = (workshopZoomYn === "YES") ? workshop.common_zoom_url : currentActiveUser.personal_zoom_link;
 
@@ -467,8 +465,7 @@ const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwZwp6CgVUqLM9LUWob
         }
         resourcesContainer.appendChild(row);
     });
-}
-            
+}            
         
         function togglePasswordVisibility(inputId, iconId) {
             const input = document.getElementById(inputId);
