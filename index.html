@@ -356,13 +356,6 @@ const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwZwp6CgVUqLM9LUWob
 
 
 
-
-
-
-
-
-		
-
 		
         const firebaseConfig = {
             apiKey: "AIzaSyAt_HbqtG_kMn41NC1wPy5KDFNsDp5HTb8",
@@ -385,7 +378,7 @@ const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwZwp6CgVUqLM9LUWob
         let cpSelectedKey = null;
         let rpSelectedKey = null;
         
-       function loadFirebaseData() {
+function loadFirebaseData() {
             db.ref('control_tower').once('value').then(snapshot => {
                 const data = snapshot.val();
                 console.log("Firebase Raw Data Loaded for control_tower:", data);
@@ -396,9 +389,14 @@ const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwZwp6CgVUqLM9LUWob
                     console.log("Parsed allParticipants:", allParticipants);
                     console.log("Parsed allWorkshops:", allWorkshops);
                     
+                    // ---> PUT THE VALIDATION CALL RIGHT HERE <---
+                    validateWorkshopAndInitialize();
+                    
                     updateLoginWorkshopBadge();
                 } else {
                     console.warn("Firebase returned empty data for control_tower.");
+                    // Optional: also show error if control_tower is completely empty
+                    showWorkshopError("No control tower records found in the database.");
                 }
             }).catch(err => console.error("Error fetching data from Firebase:", err));
 	
@@ -421,6 +419,7 @@ const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwZwp6CgVUqLM9LUWob
         }
         window.onload = loadFirebaseData;
 
+		
        function updateLoginWorkshopBadge() {
     console.log("Active Workshop ID:", activeWorkshopId);
     let currentWorkshop = allWorkshops[activeWorkshopId];
