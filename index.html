@@ -1138,53 +1138,54 @@ function enableField(fieldType) {
 }
 
 
+
+
+		
 function triggerEmailVerification(emailVal) {
-            let statusElem = document.getElementById('profile-update-status');
-            statusElem.textContent = "Sending verification code to " + emailVal + "... Please wait.";
-            statusElem.classList.remove('hidden', 'text-red-600', 'text-green-600');
-            statusElem.classList.add('text-blue-600');
+    let statusElem = document.getElementById('profile-update-status');
+    statusElem.textContent = "Sending verification code to " + emailVal + "... Please wait.";
+    statusElem.classList.remove('hidden', 'text-red-600', 'text-green-600');
+    statusElem.classList.add('text-blue-600');
+    
+    // Directly pull the name from your application's active participant state/object
+    // (Replace 'currentParticipant' with whatever global variable stores the logged-in user's profile info)
+    let psName = (typeof currentParticipant !== 'undefined' && currentParticipant.ps_name) ? currentParticipant.ps_name : "Participant";
+
+    fetch(WEB_APP_URL, {
+        method: "POST",
+        body: JSON.stringify({ 
+            action: "sendEmailVerificationCode", 
+            email: emailVal,
+            workshopId: activeWorkshopId,
+            ps_name: psName // Passes the correct name to Apps Script
+        })
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.status === "Success") {
+            statusElem.textContent = "Verification code sent successfully! Please check your inbox.";
+            statusElem.classList.remove('text-blue-600');
+            statusElem.classList.add('text-green-600');
             
-            // Fetch the participant name from your form input or global state variable
-            // (Adjust 'update-profile-name' to match your actual input ID or variable)
-            let participantNameElement = document.getElementById('update-profile-name');
-            let psName = participantNameElement ? participantNameElement.value : "Participant";
-
-            fetch(WEB_APP_URL, {
-                method: "POST",
-                body: JSON.stringify({ 
-                    action: "sendEmailVerificationCode", 
-                    email: emailVal,
-                    workshopId: activeWorkshopId, // Passes the dynamic workshop ID
-                    ps_name: psName // Passes the participant's name for the email greeting
-                })
-            })
-            .then(response => response.json())
-            .then(result => {
-                if (result.status === "Success") {
-                    statusElem.textContent = "Verification code sent successfully! Please check your inbox.";
-                    statusElem.classList.remove('text-blue-600');
-                    statusElem.classList.add('text-green-600');
-                    
-                    setTimeout(() => {
-                        openVerificationPopup(emailVal);
-                    }, 600);
-                } else {
-                    statusElem.classList.add('hidden');
-                    showCustomAlert("Error: " + result.message);
-                    
-                    let emailInput = document.getElementById('update-profile-email');
-                    if (emailInput) emailInput.disabled = false;
-                }
-            })
-            .catch(error => {
-                statusElem.classList.add('hidden');
-                showCustomAlert("Network error while sending code: " + error.toString());
-                
-                let emailInput = document.getElementById('update-profile-email');
-                if (emailInput) emailInput.disabled = false;
-            });
+            setTimeout(() => {
+                openVerificationPopup(emailVal);
+            }, 600);
+        } else {
+            statusElem.classList.add('hidden');
+            showCustomAlert("Error: " + result.message);
+            
+            let emailInput = document.getElementById('update-profile-email');
+            if (emailInput) emailInput.disabled = false;
         }
-
+    })
+    .catch(error => {
+        statusElem.classList.add('hidden');
+        showCustomAlert("Network error while sending code: " + error.toString());
+        
+        let emailInput = document.getElementById('update-profile-email');
+        if (emailInput) emailInput.disabled = false;
+    });
+}
 		
    
 
