@@ -807,29 +807,20 @@ function renderDashboard() {
             clearForms();
         }
 
-
 function logout() {
-            currentActiveUser = null;
-            selectedParticipantKey = null;
-            
-            // Ensure profile screen is hidden if left open
-            let profileScreen = document.getElementById('update-profile-screen');
-            if (profileScreen) profileScreen.classList.add('hidden');
-            
-            showLoginScreen();
-        }
-
-
-
-
-
-        
- //       function logout() {
- //           currentActiveUser = null;
-  //          selectedParticipantKey = null;
-  //          showLoginScreen();
-  //      }
-
+    currentActiveUser = null;
+    selectedParticipantKey = null;
+    
+    let profileScreen = document.getElementById('update-profile-screen');
+    if (profileScreen) profileScreen.classList.add('hidden');
+    
+    // Preserve the active workshop hash (e.g., #FT3H) instead of dropping it
+    const currentHash = window.location.hash || "#FT3H";
+    
+    // If you want to fully reload or reset state to the hash page:
+    window.location.hash = currentHash;
+    showLoginScreen();
+}
 
 
         function clearForms() {
