@@ -299,6 +299,14 @@
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwZwp6CgVUqLM9LUWob9FvgiioA3S5sACYHlkOD7RiopRucNaHzP8IsAcKMEARKbunH3A/exec";
 
 
+
+        // === DYNAMIC WORKSHOP ID EXTRACTION ===
+        const pathSegments = window.location.pathname.split('/').filter(Boolean);
+        const activeWorkshopId = pathSegments[pathSegments.length - 1] || "FT3H";
+        console.log("Active Workshop ID detected from URL:", activeWorkshopId);
+        // ======================================
+
+
         
         const firebaseConfig = {
             apiKey: "AIzaSyAt_HbqtG_kMn41NC1wPy5KDFNsDp5HTb8",
@@ -321,7 +329,7 @@ const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwZwp6CgVUqLM9LUWob
         let cpSelectedKey = null;
         let rpSelectedKey = null;
         
-        function loadFirebaseData() {
+       function loadFirebaseData() {
             db.ref('control_tower').once('value').then(snapshot => {
                 const data = snapshot.val();
                 console.log("Firebase Raw Data Loaded for control_tower:", data);
@@ -337,25 +345,23 @@ const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwZwp6CgVUqLM9LUWob
                     console.warn("Firebase returned empty data for control_tower.");
                 }
             }).catch(err => console.error("Error fetching data from Firebase:", err));
-    
-          // Fetch and display persistent global header logo based on master workshops data
-        db.ref('control_tower/workshops/FT3H').on('value', (snapshot) => {
-            const workshop = snapshot.val();
-            console.log("Workshop Data fetched for logo:", workshop);
-            
-            const logoContainer = document.getElementById('global-header');
-            const logoElement = document.getElementById('app-logo');
-            
-            // Check logo_status and logo_url fields directly from the workshop node
-            if (workshop && workshop.logo_status === "ON" && workshop.logo_url) {
-                logoElement.src = workshop.logo_url;
-                logoContainer.classList.remove('hidden'); // Show logo box
-            } else {
-                logoContainer.classList.add('hidden');    // Hide completely if OFF or empty
-            }
-        });
-
-            
+	
+            // Fetch and display persistent global header logo dynamically using activeWorkshopId
+            db.ref('control_tower/workshops/' + activeWorkshopId).on('value', (snapshot) => {
+                const workshop = snapshot.val();
+                console.log("Workshop Data fetched for logo (" + activeWorkshopId + "):", workshop);
+                
+                const logoContainer = document.getElementById('global-header');
+                const logoElement = document.getElementById('app-logo');
+                
+                // Check logo_status and logo_url fields directly from the workshop node
+                if (workshop && workshop.logo_status === "ON" && workshop.logo_url) {
+                    logoElement.src = workshop.logo_url;
+                    logoContainer.classList.remove('hidden'); // Show logo box
+                } else {
+                    logoContainer.classList.add('hidden');    // Hide completely if OFF or empty
+                }
+            });
         }
         window.onload = loadFirebaseData;
 
