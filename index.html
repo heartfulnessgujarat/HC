@@ -403,8 +403,7 @@ const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwZwp6CgVUqLM9LUWob
             const resourcesContainer = document.getElementById('resources-container');
             resourcesContainer.innerHTML = '';
 
-
-            const resourceItems = [
+const resourceItems = [
                 { 
                     engText: "Click here to join the workshop", 
                     hinText: "(वर्कशॉप में शामिल होने के लिए यहाँ क्लिक करें।)", 
@@ -413,27 +412,24 @@ const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwZwp6CgVUqLM9LUWob
                 { 
                     engText: "Click here to join the Participant WhatsApp Group", 
                     hinText: "(प्रतिभागी व्हाट्सएप ग्रुप ज्वाइन करने के लिए यहाँ क्लिक करें।)", 
-                    link: workshop.participant_wg_link 
+                    link: workshop.participant_wg_url 
                 },
                 { 
                     engText: "Click here to view Workshop Schedule", 
                     hinText: "(वर्कशॉप का शेड्यूल देखने के लिए यहाँ क्लिक करें।)", 
-                    link: workshop.workshop_shedule_link 
+                    link: workshop.workshop_shedule_url 
                 },
                 { 
                     engText: "Click here to view/download Handbook", 
                     hinText: "(हैंडबुक देखने/डाउनलोड करने के लिए यहाँ क्लिक करें।)", 
-                    link: workshop.material_link 
+                    link: workshop.material_url 
                 },
                 { 
                     engText: "Click here to submit your feedback", 
-                    hinText: "(अपना फ़ीडबैक सबमिट करने के लिए यहाँ क्लिक करें।)", 
-                    link: workshop.participant_feedback_link 
+                    hinText: "(अपना फ़ीडबैक सबमिट करने के लिए यहाँ क्लिक करें।)", 
+                    link: workshop.participant_feedback_url 
                 }
             ];
-
-
-
 
 resourceItems.forEach((item, index) => {
                 let row = document.createElement('div');
