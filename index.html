@@ -1416,9 +1416,9 @@ function showWorkshopInactiveError(message) {
 }
 
 
-		
 function showWorkshopError(message) {
-    // Hide the login screen or entire body content and show a nice error card
+    let secondsLeft = 10;
+
     document.body.innerHTML = `
         <div class="min-h-screen flex items-center justify-center bg-gray-50 px-4">
             <div class="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center border border-red-100">
@@ -1426,15 +1426,31 @@ function showWorkshopError(message) {
                     ⚠️
                 </div>
                 <h2 class="text-xl font-bold text-gray-900 mb-2">Workshop Not Found</h2>
-                <p class="text-gray-600 text-sm mb-6">${message}</p>
-                <a href="#" onclick="window.location.reload();" class="inline-block bg-indigo-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-indigo-700 transition">
-                    Retry Connection
-                </a>
+                <p class="text-gray-600 text-sm mb-4">${message}</p>
+                <p class="text-xs text-gray-400 mb-6">Redirecting in <span id="error-countdown" class="font-bold text-indigo-600">${secondsLeft}</span> seconds...</p>
+                <button onclick="window.location.hash = ''; window.location.reload();" class="inline-block bg-indigo-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-indigo-700 transition">
+                    Return Now
+                </button>
             </div>
         </div>
     `;
+
+    const timer = setInterval(() => {
+        secondsLeft--;
+        const counterEl = document.getElementById('error-countdown');
+        if (counterEl) counterEl.innerText = secondsLeft;
+        
+        if (secondsLeft <= 0) {
+            clearInterval(timer);
+            window.location.hash = '';
+            window.location.reload();
+        }
+    }, 1000);
 }
 
+
+
+		
 function navToChangePassword(event) {
     event.preventDefault(); // Stops the # from clearing the URL hash
     const currentHash = window.location.hash; // Captures #FT3H, #FT4H, etc.
