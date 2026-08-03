@@ -305,6 +305,10 @@
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwZwp6CgVUqLM9LUWob9FvgiioA3S5sACYHlkOD7RiopRucNaHzP8IsAcKMEARKbunH3A/exec";
 
 
+
+
+
+
 // === DYNAMIC WORKSHOP ID EXTRACTION (QUERY-BASED) ===
         const queryString = window.location.search; // e.g., "?FT4H"
         const urlParams = new URLSearchParams(queryString);
@@ -312,8 +316,10 @@ const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwZwp6CgVUqLM9LUWob
         // Grabs from ?id=... or directly from shorthand like ?FT4H
         let activeWorkshopId = urlParams.get('id') || queryString.replace('?', '').trim();
         
+        // Fallback to FT3H if no workshop query parameter was provided in the URL
         if (!activeWorkshopId) {
-            console.error("No active workshop ID detected in URL query!");
+            activeWorkshopId = "FT3H";
+            console.warn("No workshop ID specified in URL query. Defaulting to: FT3H");
         }
         
         console.log("Active Workshop ID detected from Query:", activeWorkshopId);
@@ -323,9 +329,6 @@ const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwZwp6CgVUqLM9LUWob
         if (activeWorkshopId) {
             document.getElementById('page-title').innerText = `Heartful Communication - Facilitator Training Workshop (${activeWorkshopId}) | Participant Portal`;
         }
-
-
-
 		
 
 
