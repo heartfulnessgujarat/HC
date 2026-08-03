@@ -1048,7 +1048,6 @@ function saveProfileChanges() {
 }
         
 
-
 function enableField(fieldType) {
     let inputElem = document.getElementById('update-profile-' + fieldType);
     let btnElem = document.getElementById('btn-' + fieldType);
@@ -1093,8 +1092,18 @@ function enableField(fieldType) {
             btnElem.classList.remove('bg-green-600', 'hover:bg-green-700', 'text-white');
             btnElem.classList.add('bg-indigo-600', 'hover:bg-indigo-700', 'text-white');
             
-            // Trigger email verification dispatch safely with the validated value
-            triggerEmailVerification(val);
+            // Grab the participant's name dynamically from the name input field or display element
+            let nameInput = document.getElementById('update-profile-name') || document.getElementById('profile-name-input');
+            let psName = nameInput ? nameInput.value.trim() : "";
+            
+            // Fallback: If name isn't an input field, try reading it from the profile text heading
+            if (!psName) {
+                let nameDisplay = document.body.innerText.match(/Name:\s*([^\n]+)/);
+                psName = (nameDisplay && nameDisplay[1]) ? nameDisplay[1].trim() : "Participant";
+            }
+
+            // Trigger email verification dispatch safely with both the email and the resolved name
+            triggerEmailVerification(val, psName);
             
         } else if (fieldType === 'mob') {
             // Validate Indian mobile number (e.g., 10 digits starting with 6-9, or optional +91 prefix)
@@ -1140,9 +1149,6 @@ function enableField(fieldType) {
         }
     }
 }
-
-
-
 
 		
 function triggerEmailVerification(emailVal) {
