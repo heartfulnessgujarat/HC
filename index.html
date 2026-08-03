@@ -795,30 +795,56 @@ function renderDashboard() {
             let maskedName = name.length > 2 ? name.substring(0, 2) + "***" : "***";
             return maskedName + "@" + domain;
         }
-        
-        function showLoginScreen() {
-            document.getElementById('login-screen').classList.remove('hidden');
-            document.getElementById('change-password-screen').classList.add('hidden');
-            document.getElementById('reset-password-screen').classList.add('hidden');
-            document.getElementById('dashboard-screen').classList.add('hidden');
-            document.getElementById('app-header').classList.add('hidden');
-            clearForms();
-        }
 
-        function showChangePasswordScreen() {
-            document.getElementById('login-screen').classList.add('hidden');
-            document.getElementById('change-password-screen').classList.remove('hidden');
-            document.getElementById('reset-password-screen').classList.add('hidden');
-            clearForms();
-        }
 
-        function showResetPasswordScreen() {
-            document.getElementById('login-screen').classList.add('hidden');
-            document.getElementById('change-password-screen').classList.add('hidden');
-            document.getElementById('reset-password-screen').classList.remove('hidden');
-            clearForms();
-        }
 
+
+
+
+
+function showChangePasswordScreen() {
+    document.getElementById('login-screen').classList.add('hidden');
+    document.getElementById('change-password-screen').classList.remove('hidden');
+    document.getElementById('reset-password-screen').classList.add('hidden');
+    
+    // Preserve active hash in URL
+    if (window.location.hash) {
+        history.replaceState(null, null, window.location.hash);
+    }
+    clearForms();
+}
+
+function showResetPasswordScreen() {
+    document.getElementById('login-screen').classList.add('hidden');
+    document.getElementById('change-password-screen').classList.add('hidden');
+    document.getElementById('reset-password-screen').classList.remove('hidden');
+    
+    // Preserve active hash in URL
+    if (window.location.hash) {
+        history.replaceState(null, null, window.location.hash);
+    }
+    clearForms();
+}
+
+function showLoginScreen() {
+    document.getElementById('login-screen').classList.remove('hidden');
+    document.getElementById('change-password-screen').classList.add('hidden');
+    document.getElementById('reset-password-screen').classList.add('hidden');
+    document.getElementById('dashboard-screen').classList.add('hidden');
+    document.getElementById('app-header').classList.add('hidden');
+    
+    // Preserve active hash in URL when going back to login
+    if (window.location.hash) {
+        history.replaceState(null, null, window.location.hash);
+    }
+    clearForms();
+}
+
+
+
+
+
+			
 function logout() {
     currentActiveUser = null;
     selectedParticipantKey = null;
