@@ -88,12 +88,19 @@
             <button onclick="handleLogin()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1.5 px-3 text-xs rounded-md transition mb-2">
                 Login
             </button>
-            
-            <div class="flex justify-between items-center text-[11px] px-0.5">
-                <a href="#" onclick="showChangePasswordScreen()" class="text-indigo-600 hover:underline font-medium">Change Password</a>
-                <a href="#" onclick="showResetPasswordScreen()" class="text-indigo-600 hover:underline font-medium">Reset Password</a>
+
+
+
+			<div class="flex justify-between items-center text-[11px] px-0.5">
+                <a href="#" onclick="navToChangePassword(event)" class="text-indigo-600 hover:underline font-medium">Change Password</a>
+                <a href="#" onclick="navToResetPassword(event)" class="text-indigo-600 hover:underline font-medium">Reset Password</a>
             </div>
         </div>
+
+
+
+
+			
         
   <!-- SCREEN 2: DASHBOARD VIEW -->
         <div id="dashboard-screen" class="hidden space-y-1 mt-1">
