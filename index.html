@@ -382,48 +382,58 @@ const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwZwp6CgVUqLM9LUWob
         
         let cpSelectedKey = null;
         let rpSelectedKey = null;
-        
-function loadFirebaseData() {
-            db.ref('control_tower').once('value').then(snapshot => {
-                const data = snapshot.val();
-                console.log("Firebase Raw Data Loaded for control_tower:", data);
-                if (data) {
-                    allParticipants = data.participants || {};
-                    allWorkshops = data.workshops || {};
-                    
-                    console.log("Parsed allParticipants:", allParticipants);
-                    console.log("Parsed allWorkshops:", allWorkshops);
-                    
-                    // ---> PUT THE VALIDATION CALL RIGHT HERE <---
-                    validateWorkshopAndInitialize();
-                    
-                    updateLoginWorkshopBadge();
-                } else {
-                    console.warn("Firebase returned empty data for control_tower.");
-                    // Optional: also show error if control_tower is completely empty
-                    showWorkshopError("No control tower records found in the database.");
-                }
-            }).catch(err => console.error("Error fetching data from Firebase:", err));
-	
-            // Fetch and display persistent global header logo dynamically using activeWorkshopId
-            db.ref('control_tower/workshops/' + activeWorkshopId).on('value', (snapshot) => {
-                const workshop = snapshot.val();
-                console.log("Workshop Data fetched for logo (" + activeWorkshopId + "):", workshop);
-                
-                const logoContainer = document.getElementById('global-header');
-                const logoElement = document.getElementById('app-logo');
-                
-                // Check logo_status and logo_url fields directly from the workshop node
-                if (workshop && workshop.logo_status === "ON" && workshop.logo_url) {
-                    logoElement.src = workshop.logo_url;
-                    logoContainer.classList.remove('hidden'); // Show logo box
-                } else {
-                    logoContainer.classList.add('hidden');    // Hide completely if OFF or empty
-                }
-            });
-        }
-        window.onload = loadFirebaseData;
 
+
+
+
+		function loadFirebaseData() {
+    db.ref('control_tower').once('value').then(snapshot => {
+        const data = snapshot.val();
+        console.log("Firebase Raw Data Loaded for control_tower:", data);
+        if (data) {
+            allParticipants = data.participants || {};
+            allWorkshops = data.workshops || {};
+            
+            console.log("Parsed allParticipants:", allParticipants);
+            console.log("Parsed allWorkshops:", allWorkshops);
+            
+            // ---> VALIDATE THE SPECIFIC WORKSHOP ID HERE <---
+            const targetWorkshop = allWorkshops[activeWorkshopId];
+            if (!validateWorkshopExists(targetWorkshop)) {
+                return; // Stops loading if workshop ID doesn't exist!
+            }
+            
+            updateLoginWorkshopBadge();
+        } else {
+            console.warn("Firebase returned empty data for control_tower.");
+            showWorkshopNotFoundError("No control tower records found in the database.");
+        }
+    }).catch(err => console.error("Error fetching data from Firebase:", err));
+
+    // Fetch and display persistent global header logo dynamically using activeWorkshopId
+    db.ref('control_tower/workshops/' + activeWorkshopId).on('value', (snapshot) => {
+        const workshop = snapshot.val();
+        console.log("Workshop Data fetched for logo (" + activeWorkshopId + "):", workshop);
+        
+        const logoContainer = document.getElementById('global-header');
+        const logoElement = document.getElementById('app-logo');
+        
+        // Check logo_status and logo_url fields directly from the workshop node
+        if (workshop && workshop.logo_status === "ON" && workshop.logo_url) {
+            logoElement.src = workshop.logo_url;
+            logoContainer.classList.remove('hidden'); // Show logo box
+        } else {
+            logoContainer.classList.add('hidden');    // Hide completely if OFF or empty
+        }
+    });
+}
+window.onload = loadFirebaseData;
+
+
+
+
+
+		
 		
        function updateLoginWorkshopBadge() {
     console.log("Active Workshop ID:", activeWorkshopId);
