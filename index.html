@@ -361,9 +361,6 @@ const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwZwp6CgVUqLM9LUWob
             return true;
         }
 
-
-
-
 		
         const firebaseConfig = {
             apiKey: "AIzaSyAt_HbqtG_kMn41NC1wPy5KDFNsDp5HTb8",
@@ -1381,28 +1378,9 @@ function navToResetPassword(event) {
     }
 }
 
-function showWorkshopInactiveError(message) {
-    document.body.innerHTML = `
-        <div class="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-            <div class="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center border border-amber-100">
-                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-100 text-amber-600 mb-4 text-2xl">
-                    🔒
-                </div>
-                <h2 class="text-xl font-bold text-gray-900 mb-2">Workshop Closed</h2>
-                <p class="text-gray-600 text-sm mb-4">${message}</p>
-                <p class="text-xs text-gray-400">Redirecting to main website in 10 seconds...</p>
-            </div>
-        </div>
-    `;
 
-    // After 10 seconds, send them completely away to your main website
-    setTimeout(() => {
-        window.location.href = "https://www.heartfulness.org"; // Replace with any URL you want!
-    }, 10000);
-}
 
-// Do the exact same for showWorkshopError:
-function showWorkshopError(message) {
+		function showWorkshopNotFoundError(message) {
     document.body.innerHTML = `
         <div class="min-h-screen flex items-center justify-center bg-gray-50 px-4">
             <div class="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center border border-red-100">
@@ -1417,10 +1395,28 @@ function showWorkshopError(message) {
     `;
 
     setTimeout(() => {
-        window.location.href = "https://www.heartfulness.org"; // Replace with any URL you want!
+        window.location.href = "https://www.heartfulness.org"; // Change to your preferred destination URL
     }, 10000);
-}		
+}
 
+function showWorkshopInactiveError(message) {
+    document.body.innerHTML = `
+        <div class="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+            <div class="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center border border-amber-100">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-100 text-amber-600 mb-4 text-2xl">
+                    🔒
+                </div>
+                <h2 class="text-xl font-bold text-gray-900 mb-2">Workshop Closed</h2>
+                <p class="text-gray-600 text-sm mb-4">${message}</p>
+                <p class="text-xs text-gray-400">Redirecting to main website in 10 seconds...</p>
+            </div>
+        </div>
+    `;
+
+    setTimeout(() => {
+        window.location.href = "https://www.heartfulness.org"; // Change to your preferred destination URL
+    }, 10000);
+}
         
     </script>
 </body>
