@@ -452,7 +452,6 @@ window.onload = loadFirebaseData;
 
 
 
-		
 function renderDashboard() {
     document.getElementById('login-screen').classList.add('hidden');
     document.getElementById('change-password-screen').classList.add('hidden');
@@ -487,6 +486,10 @@ function renderDashboard() {
     const resourcesContainer = document.getElementById('resources-container');
     resourcesContainer.innerHTML = '';
 
+    // Determine active Zoom link based on common_zoom_url_yn rule
+    let workshopZoomYn = workshop.common_zoom_url_yn ? workshop.common_zoom_url_yn.toString().trim().toUpperCase() : "NO";
+    let activeZoomLink = (workshopZoomYn === "YES") ? workshop.common_zoom_url : currentActiveUser.personal_zoom_link;
+
     // Dynamically detect how many participant resource labels exist in the Firebase workshop node
     let resourceCount = 0;
     Object.keys(workshop).forEach(key => {
@@ -499,8 +502,6 @@ function renderDashboard() {
         }
     });
 
-    console.log(`Dynamically detected ${resourceCount} resource rows for workshop ${wId}`);
-
     // Loop dynamically up to the highest detected resource count
     for (let i = 1; i <= resourceCount; i++) {
         let label = workshop[`p_resource_label${i}`];
@@ -511,7 +512,14 @@ function renderDashboard() {
             continue;
         }
 
-        let linkVal = url ? url.toString().trim() : "";
+        // If this is the first resource item (Index 1), apply the dynamic common vs personal Zoom rule!
+        let linkVal = "";
+        if (i === 1) {
+            linkVal = activeZoomLink ? activeZoomLink.toString().trim() : "";
+        } else {
+            linkVal = url ? url.toString().trim() : "";
+        }
+
         let isLinkValid = linkVal.startsWith('http://') || linkVal.startsWith('https://');
 
         let row = document.createElement('div');
@@ -534,7 +542,7 @@ function renderDashboard() {
     }
 }
 
-
+		
 
 		
         
