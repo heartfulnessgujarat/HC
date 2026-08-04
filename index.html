@@ -458,94 +458,36 @@ window.onload = loadFirebaseData;
 
 
 
-function renderDashboard() {
-    document.getElementById('login-screen').classList.add('hidden');
-    document.getElementById('change-password-screen').classList.add('hidden');
-    document.getElementById('reset-password-screen').classList.add('hidden');
-    document.getElementById('dashboard-screen').classList.remove('hidden');
-    document.getElementById('app-header').classList.remove('hidden');
 
-    let pName = currentActiveUser.ps_name || "Participant";
-    let pId = currentActiveUser.ps_id || "N/A";
-    let pMob = maskMobile(currentActiveUser.ps_mob);
-    let pEmail = maskEmail(currentActiveUser.ps_email);
-    let pCentre = currentActiveUser.ps_centre || "N/A";
-    let pZone = currentActiveUser.ps_zone || "N/A";
-    let pState = currentActiveUser.ps_state || "N/A";
-    const headerInfo = document.getElementById('header-user-info');
-    headerInfo.innerHTML = `
-        <div class="grid grid-cols-1 gap-y-1 text-xs sm:text-sm">
-            <div><strong>Name:</strong> ${pName}</div>
-            <div><strong>Unique ID Number:</strong> ${pId}</div>
-            <div><strong>Mobile Number:</strong> ${pMob}</div>
-            <div><strong>Email Address:</strong> ${pEmail}</div>
-            <div><strong>Centre:</strong> ${pCentre}</div>
-            <div><strong>Zone:</strong> ${pZone}</div>
-            <div><strong>State:</strong> ${pState}</div>
-        </div>
-    `;
+		function renderDashboard() {
+    if (!currentActiveUser) return;
 
-    let wId = currentActiveUser.workshop_id;
-    let workshop = allWorkshops[wId] || {};
-    let workshopName = workshop.workshop_name || "Workshop Name Not Available";
-    document.getElementById('workshop-title-display').innerText = workshopName;
-    const resourcesContainer = document.getElementById('resources-container');
-    resourcesContainer.innerHTML = '';
+    let role = (currentActiveUser.role || "").toString().trim().toLowerCase();
+    let subRole = (currentActiveUser.sub_role || "").toString().trim().toLowerCase();
 
-    // Determine active Zoom link based on common_zoom_url_yn rule
-    let workshopZoomYn = workshop.common_zoom_url_yn ? workshop.common_zoom_url_yn.toString().trim().toUpperCase() : "NO";
-    let activeZoomLink = (workshopZoomYn === "YES") ? workshop.common_zoom_url : currentActiveUser.personal_zoom_link;
+    // Fetch active workshop data based on URL hash (e.g., #FT3H)
+    let workshopId = window.location.hash.replace("#", "") || "FT3H";
 
-    // Dynamically detect how many participant resource labels exist in the Firebase workshop node
-    let resourceCount = 0;
-    Object.keys(workshop).forEach(key => {
-        if (key.startsWith('p_resource_label')) {
-            let indexStr = key.replace('p_resource_label', '');
-            let index = parseInt(indexStr, 10);
-            if (!isNaN(index) && index > resourceCount) {
-                resourceCount = index;
+    db.ref('control_tower/workshops/' + workshopId).once('value').then(snapshot => {
+        let workshop = snapshot.val();
+        let accessRules = evaluateWorkshopAccess(workshop);
+
+        if (role === "participant") {
+            // Participants depend on date/time toggle for resources
+            if (accessRules.resourcesUnlocked) {
+                showResourcesSection(); // ON
+            } else {
+                hideResourcesSection(); // OFF (Locked until Day 1 session ends)
             }
+            enableProfileEditing(true); // Profile editing always active
+        } 
+        else if (role === "facilitator") {
+            // Facilitators bypass blackout restrictions completely
+            showResourcesSection(); // Always ON
+            displaySubRoleBadge(subRole); // Display Presenter, Support, Tech, etc.
+            enableProfileEditing(true);
         }
     });
-
-    // Loop dynamically up to the highest detected resource count
-    for (let i = 1; i <= resourceCount; i++) {
-        let label = workshop[`p_resource_label${i}`];
-        let url = workshop[`p_resource_url${i}`];
-
-        // Skip rendering if the label is missing, empty, or a placeholder
-        if (!label || label.toString().trim() === "" || label.toString().trim() === "**") {
-            continue;
-        }
-
-        // If this is the first resource item (Index 1), apply the dynamic common vs personal Zoom rule!
-        let linkVal = "";
-        if (i === 1) {
-            linkVal = activeZoomLink ? activeZoomLink.toString().trim() : "";
-        } else {
-            linkVal = url ? url.toString().trim() : "";
-        }
-
-        let isLinkValid = linkVal.startsWith('http://') || linkVal.startsWith('https://');
-
-        let row = document.createElement('div');
-        row.className = "py-1.5 border-b border-gray-100";
-
-        if (isLinkValid) {
-            row.innerHTML = `
-                <div class="text-gray-900 font-medium text-xs sm:text-sm leading-tight">
-                    <a href="${linkVal}" target="_blank" class="text-indigo-600 hover:underline font-semibold">${label}</a>
-                </div>
-            `;
-        } else {
-            row.innerHTML = `
-                <div class="text-gray-400 font-medium text-xs sm:text-sm leading-tight">
-                    ${label} <span class="italic text-[10px]">(Not Available)</span>
-                </div>
-            `;
-        }
-        resourcesContainer.appendChild(row);
-    }
 }
 
 		
@@ -1463,9 +1405,48 @@ function showWorkshopInactiveError(message) {
     }, 1000);
 }
 		
+// Example helper to fetch regional formatting rules and format workshop dates
+function applyRegionalDateFormat(workshopData) {
+    let region = workshopData.workshop_region || "India";
 
+    // Database reference to regional configuration if stored, or hardcoded fallback rule
+    db.ref('control_tower/Master_List_Regions/' + region).once('value').then(snapshot => {
+        let regionConfig = snapshot.val();
+        // Apply strict "DD-MMM-YYYY HR:MM" formatting for India
+        if (region === "India") {
+            console.log("Applying Indian standard date-time format: DD-MMM-YYYY HR:MM");
+        }
+    });
+}
 
+function evaluateWorkshopAccess(workshop) {
+    let now = new Date(); // Current timestamp
 
+    // Parse start and end dates stored in "DD-MMM-YYYY HR:MM" format
+    let startDate = parseCustomDateString(workshop.from_date); 
+    let endDate = parseCustomDateString(workshop.to_date);
+
+    // 24-hour post-workshop grace period calculation
+    let gracePeriodEnd = new Date(endDate.getTime() + (24 * 60 * 60 * 1000));
+
+    let accessStatus = {
+        resourcesUnlocked: false,
+        workshopActive: true
+    };
+
+    // 1. Check if current time is past start date (Resources ON condition)
+    if (now >= startDate) {
+        accessStatus.resourcesUnlocked = true;
+    }
+
+    // 2. Check if current time has passed the end date + 24 hours (Switch to InActive)
+    if (now > gracePeriodEnd) {
+        accessStatus.workshopActive = false;
+        accessStatus.resourcesUnlocked = false; // Locked out post-grace period
+    }
+
+    return accessStatus;
+}
 
 
 		
