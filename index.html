@@ -502,24 +502,29 @@ function renderDashboard() {
     // Populate Workshop Title and Subtitle container elements correctly
     document.getElementById('workshop-title-display').innerText = workshopName;
 
-  
+
+
 	
 let subtitleDisplay = document.getElementById('workshop-subtitle-display');
     if (isFacilitator) {
         subtitleDisplay.innerHTML = `
             <div class="text-left px-2">
-                <div class="font-bold text-xs sm:text-sm text-white mb-0.5">Facilitator Resources</div>
-                <div class="text-xs text-indigo-200">Role Assigned ${subRole}</div>
+                <div class="text-xs text-indigo-200 font-medium mb-0.5">Role Assigned :</div>
+                <div class="text-sm font-semibold text-white mb-1">${subRole}</div>
+                <div class="text-xs font-semibold text-indigo-200">Facilitator Resources</div>
             </div>
         `;
     } else {
         subtitleDisplay.innerHTML = `
             <div class="text-left px-2">
-                <div class="font-bold text-xs sm:text-sm text-white">Participant Resources</div>
+                <div class="text-xs font-semibold text-indigo-200">Participant Resources</div>
             </div>
         `;
     }
 
+
+
+	
 	
 
     const resourcesContainer = document.getElementById('resources-container');
