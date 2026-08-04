@@ -495,16 +495,79 @@ window.onload = loadFirebaseData;
     let workshop = allWorkshops[wId] || {};
     let workshopName = workshop.workshop_name || "Workshop Name Not Available";
 
-    // Role & Sub-Role Handling
-    let role = (currentActiveUser.role || "").toString().trim().toLowerCase();
+// Role & Sub-Role Handling (Strict Explicit Logic Flow)
+    let role = (currentActiveUser.role || "").toString().trim().toUpperCase();
     let subRole = (currentActiveUser.sub_role || currentActiveUser.subrole || "").toString().trim();
-    let isFacilitator = (role === "facilitators" || role === "facilitator");
 
     // Populate Workshop Title and Subtitle container elements correctly
     document.getElementById('workshop-title-display').innerText = workshopName;
 
     let subtitleDisplay = document.getElementById('workshop-subtitle-display');
-    if (isFacilitator) {
+    const resourcesContainer = document.getElementById('resources-container');
+    resourcesContainer.innerHTML = '';
+
+    // 1. IF IT IS A PARTICIPANT
+    if (role === "PARTICIPANT" || role === "") {
+        subtitleDisplay.innerHTML = `
+            <div class="text-center">
+                <div class="text-sm font-bold text-white">Participant Resources</div>
+            </div>
+        `;
+
+        let workshopZoomYn = workshop.common_zoom_url_yn ? workshop.common_zoom_url_yn.toString().trim().toUpperCase() : "NO";
+        let activeZoomLink = (workshopZoomYn === "YES") ? workshop.common_zoom_url : currentActiveUser.personal_zoom_link;
+
+        let accessRules = typeof evaluateWorkshopAccess === 'function' ? evaluateWorkshopAccess(workshop) : { resourcesUnlocked: true };
+        if (!accessRules.resourcesUnlocked) {
+            resourcesContainer.innerHTML = `<div class="text-amber-600 text-xs sm:text-sm italic p-2 bg-amber-50 rounded">Resources will unlock automatically after the first day's session concludes. Please feel free to check or update your profile details shown above.</div>`;
+            return; 
+        }
+
+        let prefix = "p_resource_";
+        let resourceCount = 0;
+        Object.keys(workshop).forEach(key => {
+            if (key.startsWith(prefix + 'label')) {
+                let indexStr = key.replace(prefix + 'label', '');
+                let index = parseInt(indexStr, 10);
+                if (!isNaN(index) && index > resourceCount) {
+                    resourceCount = index;
+                }
+            }
+        });
+
+        for (let i = 1; i <= resourceCount; i++) {
+            let label = workshop[`${prefix}label${i}`];
+            let url = workshop[`${prefix}url${i}`];
+
+            if (!label || label.toString().trim() === "" || label.toString().trim() === "**") {
+                continue;
+            }
+
+            let linkVal = (i === 1) ? (activeZoomLink ? activeZoomLink.toString().trim() : "") : (url ? url.toString().trim() : "");
+            let isLinkValid = linkVal.startsWith('http://') || linkVal.startsWith('https://');
+
+            let row = document.createElement('div');
+            row.className = "py-1.5 border-b border-gray-100";
+
+            if (isLinkValid) {
+                row.innerHTML = `
+                   <div class="text-gray-900 font-medium text-xs sm:text-sm leading-tight">
+                       <a href="${linkVal}" target="_blank" class="text-indigo-600 hover:underline font-semibold">${label}</a>
+                   </div>
+                `;
+            } else {
+                row.innerHTML = `
+                   <div class="text-gray-400 font-medium text-xs sm:text-sm leading-tight">
+                       ${label} <span class="italic text-[10px]">(Not Available)</span>
+                   </div>
+                `;
+            }
+            resourcesContainer.appendChild(row);
+        }
+    }
+    
+    // 2. IF IT IS A FACILITATOR
+    else if (role === "FACILITATOR" || role === "FACILITATORS") {
         subtitleDisplay.innerHTML = `
             <div>
                 <div class="text-center text-sm font-bold text-indigo-200 mb-0.5">Role Assigned</div>
@@ -512,77 +575,71 @@ window.onload = loadFirebaseData;
                 <div class="text-center px-2 text-sm font-bold text-white">Facilitator Resources</div>
             </div>
         `;
-    } else {
+
+        let prefix = "f_resource_";
+        let resourceCount = 0;
+        Object.keys(workshop).forEach(key => {
+            if (key.startsWith(prefix + 'label')) {
+                let indexStr = key.replace(prefix + 'label', '');
+                let index = parseInt(indexStr, 10);
+                if (!isNaN(index) && index > resourceCount) {
+                    resourceCount = index;
+                }
+            }
+        });
+
+        for (let i = 1; i <= resourceCount; i++) {
+            let label = workshop[`${prefix}label${i}`];
+            let url = workshop[`${prefix}url${i}`];
+
+            if (!label || label.toString().trim() === "" || label.toString().trim() === "**") {
+                continue;
+            }
+
+            let linkVal = url ? url.toString().trim() : "";
+            let isLinkValid = linkVal.startsWith('http://') || linkVal.startsWith('https://');
+
+            let row = document.createElement('div');
+            row.className = "py-1.5 border-b border-gray-100";
+
+            if (isLinkValid) {
+                row.innerHTML = `
+                   <div class="text-gray-900 font-medium text-xs sm:text-sm leading-tight">
+                       <a href="${linkVal}" target="_blank" class="text-indigo-600 hover:underline font-semibold">${label}</a>
+                   </div>
+                `;
+            } else {
+                row.innerHTML = `
+                   <div class="text-gray-400 font-medium text-xs sm:text-sm leading-tight">
+                       ${label} <span class="italic text-[10px]">(Not Available)</span>
+                   </div>
+                `;
+            }
+            resourcesContainer.appendChild(row);
+        }
+    }
+    
+    // 3. IF IT IS T&S (Training & Support)
+    else if (role === "T&S" || role === "TRUST & SAFETY") {
         subtitleDisplay.innerHTML = `
             <div class="text-center">
-                <div class="text-sm font-bold text-white">Participant Resources</div>
+                <div class="text-sm font-bold text-amber-300">T&S Control & Support Hub</div>
+            </div>
+        `;
+        
+        resourcesContainer.innerHTML = `
+            <div class="p-4 bg-gray-50 rounded text-center text-gray-800 text-sm">
+                <p class="font-semibold mb-2">T&S Management Interface Active</p>
+                <p class="text-xs text-gray-600">Exclusive controls and batch monitoring tools for this event go here.</p>
             </div>
         `;
     }
+			
 
-    const resourcesContainer = document.getElementById('resources-container');
-    resourcesContainer.innerHTML = '';
 
-    // Time-Based Resource Visibility Logic
-    let accessRules = typeof evaluateWorkshopAccess === 'function' ? evaluateWorkshopAccess(workshop) : { resourcesUnlocked: true };
-    let showResources = isFacilitator ? true : accessRules.resourcesUnlocked;
 
-    if (!showResources) {
-        resourcesContainer.innerHTML = `<div class="text-amber-600 text-xs sm:text-sm italic p-2 bg-amber-50 rounded">Resources will unlock automatically after the first day's session concludes. Please feel free to check or update your profile details shown above.</div>`;
-        return; 
-    }
-
-    let workshopZoomYn = workshop.common_zoom_url_yn ? workshop.common_zoom_url_yn.toString().trim().toUpperCase() : "NO";
-    let activeZoomLink = (workshopZoomYn === "YES") ? workshop.common_zoom_url : currentActiveUser.personal_zoom_link;
-
-    let prefix = isFacilitator ? "f_resource_" : "p_resource_";
-
-    let resourceCount = 0;
-    Object.keys(workshop).forEach(key => {
-        if (key.startsWith(prefix + 'label')) {
-            let indexStr = key.replace(prefix + 'label', '');
-            let index = parseInt(indexStr, 10);
-            if (!isNaN(index) && index > resourceCount) {
-                resourceCount = index;
-            }
-        }
-    });
-
-    for (let i = 1; i <= resourceCount; i++) {
-        let label = workshop[`${prefix}label${i}`];
-        let url = workshop[`${prefix}url${i}`];
-
-        if (!label || label.toString().trim() === "" || label.toString().trim() === "**") {
-            continue;
-        }
-
-        let linkVal = "";
-        if (!isFacilitator && i === 1) {
-            linkVal = activeZoomLink ? activeZoomLink.toString().trim() : "";
-        } else {
-            linkVal = url ? url.toString().trim() : "";
-        }
-
-        let isLinkValid = linkVal.startsWith('http://') || linkVal.startsWith('https://');
-
-        let row = document.createElement('div');
-        row.className = "py-1.5 border-b border-gray-100";
-
-        if (isLinkValid) {
-            row.innerHTML = `
-               <div class="text-gray-900 font-medium text-xs sm:text-sm leading-tight">
-                   <a href="${linkVal}" target="_blank" class="text-indigo-600 hover:underline font-semibold">${label}</a>
-               </div>
-            `;
-        } else {
-            row.innerHTML = `
-               <div class="text-gray-400 font-medium text-xs sm:text-sm leading-tight">
-                   ${label} <span class="italic text-[10px]">(Not Available)</span>
-               </div>
-            `;
-        }
-        resourcesContainer.appendChild(row);
-    }
+			
+			
 }
 		
        
