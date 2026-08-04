@@ -361,21 +361,6 @@ const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwZwp6CgVUqLM9LUWob
             return true;
         }
 
-        // Helper function to render the error screen cleanly
-        function showWorkshopNotFoundError(message) {
-            const errorDiv = document.createElement('div');
-            errorDiv.className = "fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-90 z-50";
-            errorDiv.innerHTML = `
-                <div class="bg-white p-8 rounded-xl shadow-2xl max-w-md text-center mx-4">
-                    <div class="text-red-500 text-5xl mb-4">⚠️</div>
-                    <h2 class="text-2xl font-bold text-gray-800 mb-2">Workshop Not Found</h2>
-                    <p class="text-gray-600 mb-6">${message}</p>
-                    <p class="text-xs text-gray-400">Please check your link and try again.</p>
-                </div>
-            `;
-            document.body.appendChild(errorDiv);
-        }
-
 
 
 
@@ -1377,89 +1362,7 @@ function validateWorkshopAndInitialize() {
     console.log(`Workshop "${activeWorkshopId}" validated and active successfully.`);
 }
 
-
-		
-// Dedicated error screen for inactive batches so the user knows why it's blocked
-
-function showWorkshopError(message) {
-    let secondsLeft = 10;
-
-
 	
-// Drop this inside your showWorkshopError or showWorkshopInactiveError functions
-document.body.innerHTML = `
-    <div class="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-        <div class="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center border border-amber-100">
-            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-100 text-amber-600 mb-4 text-2xl">
-                🔒
-            </div>
-            <h2 class="text-xl font-bold text-gray-900 mb-2">Workshop Closed</h2>
-            <p class="text-gray-600 text-sm mb-4">${message}</p>
-            <p class="text-xs text-gray-400 mb-6">This session has ended. You can now safely close this window or tab.</p>
-            <button onclick="window.close();" class="inline-block bg-indigo-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-indigo-700 transition">
-                Close Tab Now
-            </button>
-        </div>
-    </div>
-`;
-
-// Automatic attempt to close after the 10-second timer finishes
-setTimeout(() => {
-    window.close();
-}, 10000);
-
-
-
-
-
-	
-}
-
-// You can use this exact same function for inactive workshops too by changing the title/icon if you want, or just point both errors here!
-function showWorkshopInactiveError(message) {
-    let secondsLeft = 10;
-
-    document.body.innerHTML = `
-        <div class="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-            <div class="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center border border-amber-100">
-                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-100 text-amber-600 mb-4 text-2xl">
-                    🔒
-                </div>
-                <h2 class="text-xl font-bold text-gray-900 mb-2">Workshop Closed</h2>
-                <p class="text-gray-600 text-sm mb-4">${message}</p>
-                <p class="text-xs text-gray-400 mb-6">Clearing session in <span id="countdown" class="font-bold text-indigo-600">${secondsLeft}</span> seconds...</p>
-                <button onclick="window.location.replace(window.location.origin + window.location.pathname);" ...> class="inline-block bg-indigo-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-indigo-700 transition">
-                    Exit Now
-                </button>
-            </div>
-        </div>
-    `;
-
-    // Visual countdown ticker every 1 second
-    const countdownInterval = setInterval(() => {
-        secondsLeft--;
-        const counterEl = document.getElementById('countdown');
-        if (counterEl) {
-            counterEl.innerText = secondsLeft;
-        }
-    }, 1000);
-
-    // Guaranteed hard redirect after exactly 10 seconds
-
-
-	setTimeout(() => {
-        clearInterval(countdownInterval);
-        window.location.replace(window.location.origin + window.location.pathname);
-    }, 10000);
-
-	
-}
-
-
-		
-
-
-		
 function navToChangePassword(event) {
     event.preventDefault(); // Stops the # from clearing the URL hash
     const currentHash = window.location.hash; // Captures #FT3H, #FT4H, etc.
@@ -1478,7 +1381,44 @@ function navToResetPassword(event) {
     }
 }
 
+function showWorkshopError(message) {
+    document.body.innerHTML = `
+        <div class="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+            <div class="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center border border-red-100">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-100 text-red-600 mb-4 text-2xl">
+                    ⚠️
+                </div>
+                <h2 class="text-xl font-bold text-gray-900 mb-2">Workshop Not Found</h2>
+                <p class="text-gray-600 text-sm mb-6">${message}</p>
+                <button onclick="window.location.hash = ''; window.location.reload();" class="inline-block bg-indigo-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-indigo-700 transition">
+                    Back to Home
+                </button>
+            </div>
+        </div>
+    `;
+}
 
+function showWorkshopInactiveError(message) {
+    document.body.innerHTML = `
+        <div class="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+            <div class="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center border border-amber-100">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-100 text-amber-600 mb-4 text-2xl">
+                    🔒
+                </div>
+                <h2 class="text-xl font-bold text-gray-900 mb-2">Workshop Closed</h2>
+                <p class="text-gray-600 text-sm mb-6">${message}</p>
+                <button onclick="window.location.hash = ''; window.location.reload();" class="inline-block bg-indigo-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-indigo-700 transition">
+                    Back to Home
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+
+
+
+		
 
 		
 
