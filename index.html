@@ -1384,37 +1384,32 @@ function validateWorkshopAndInitialize() {
 function showWorkshopError(message) {
     let secondsLeft = 10;
 
-    document.body.innerHTML = `
-        <div class="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-            <div class="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center border border-red-100">
-                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-100 text-red-600 mb-4 text-2xl">
-                    ⚠️
-                </div>
-                <h2 class="text-xl font-bold text-gray-900 mb-2">Workshop Not Found</h2>
-                <p class="text-gray-600 text-sm mb-4">${message}</p>
-                <p class="text-xs text-gray-400 mb-6">Redirecting in <span id="countdown" class="font-bold text-indigo-600">${secondsLeft}</span> seconds...</p>
-                <button onclick="window.location.replace(window.location.origin + window.location.pathname);" ...> class="inline-block bg-indigo-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-indigo-700 transition">
-                    Return Now
-                </button>
+
+	
+// Drop this inside your showWorkshopError or showWorkshopInactiveError functions
+document.body.innerHTML = `
+    <div class="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+        <div class="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center border border-amber-100">
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-100 text-amber-600 mb-4 text-2xl">
+                🔒
             </div>
+            <h2 class="text-xl font-bold text-gray-900 mb-2">Workshop Closed</h2>
+            <p class="text-gray-600 text-sm mb-4">${message}</p>
+            <p class="text-xs text-gray-400 mb-6">This session has ended. You can now safely close this window or tab.</p>
+            <button onclick="window.close();" class="inline-block bg-indigo-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-indigo-700 transition">
+                Close Tab Now
+            </button>
         </div>
-    `;
+    </div>
+`;
 
-    // Visual countdown ticker every 1 second
-    const countdownInterval = setInterval(() => {
-        secondsLeft--;
-        const counterEl = document.getElementById('countdown');
-        if (counterEl) {
-            counterEl.innerText = secondsLeft;
-        }
-    }, 1000);
+// Automatic attempt to close after the 10-second timer finishes
+setTimeout(() => {
+    window.close();
+}, 10000);
 
-    // Guaranteed hard redirect after exactly 10 seconds
 
-	setTimeout(() => {
-        clearInterval(countdownInterval);
-        window.location.replace(window.location.origin + window.location.pathname);
-    }, 10000);
+
 
 
 	
