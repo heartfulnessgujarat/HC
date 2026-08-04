@@ -385,8 +385,7 @@ const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwZwp6CgVUqLM9LUWob
 
 
 
-
-		function loadFirebaseData() {
+function loadFirebaseData() {
     db.ref('control_tower').once('value').then(snapshot => {
         const data = snapshot.val();
         console.log("Firebase Raw Data Loaded for control_tower:", data);
@@ -397,10 +396,17 @@ const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwZwp6CgVUqLM9LUWob
             console.log("Parsed allParticipants:", allParticipants);
             console.log("Parsed allWorkshops:", allWorkshops);
             
-            // ---> VALIDATE THE SPECIFIC WORKSHOP ID HERE <---
+            // 1. Check if the workshop exists in the database
             const targetWorkshop = allWorkshops[activeWorkshopId];
             if (!validateWorkshopExists(targetWorkshop)) {
-                return; // Stops loading if workshop ID doesn't exist!
+                return; // Stops execution if workshop ID doesn't exist
+            }
+            
+            // 2. Check if the workshop is Inactive or Closed
+            if (targetWorkshop.status === "Inactive" || targetWorkshop.status === "Closed") {
+                console.warn(`Workshop ID "${activeWorkshopId}" is inactive/closed.`);
+                showWorkshopInactiveError(`Workshop ID "${activeWorkshopId}" has concluded or is currently inactive. Access is closed.`);
+                return; // Stops execution if workshop is inactive
             }
             
             updateLoginWorkshopBadge();
@@ -418,19 +424,15 @@ const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwZwp6CgVUqLM9LUWob
         const logoContainer = document.getElementById('global-header');
         const logoElement = document.getElementById('app-logo');
         
-        // Check logo_status and logo_url fields directly from the workshop node
         if (workshop && workshop.logo_status === "ON" && workshop.logo_url) {
             logoElement.src = workshop.logo_url;
-            logoContainer.classList.remove('hidden'); // Show logo box
+            logoContainer.classList.remove('hidden');
         } else {
-            logoContainer.classList.add('hidden');    // Hide completely if OFF or empty
+            logoContainer.classList.add('hidden');
         }
     });
 }
 window.onload = loadFirebaseData;
-
-
-
 
 
 		
