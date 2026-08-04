@@ -505,7 +505,7 @@ function renderDashboard() {
     let subtitleDisplay = document.getElementById('workshop-subtitle-display');
     if (isFacilitator) {
         subtitleDisplay.innerHTML = `
-            <div>Role Assigned : ${subRole}</div>
+            <div>Role Assigned<br>${subRole}</div>
             <div class="mt-0.5">Facilitator Resources</div>
         `;
     } else {
