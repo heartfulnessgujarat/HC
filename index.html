@@ -457,6 +457,7 @@ window.onload = loadFirebaseData;
 }
 
 
+
 function renderDashboard() {
     document.getElementById('login-screen').classList.add('hidden');
     document.getElementById('change-password-screen').classList.add('hidden');
@@ -488,48 +489,55 @@ function renderDashboard() {
     let wId = currentActiveUser.workshop_id;
     let workshop = allWorkshops[wId] || {};
     let workshopName = workshop.workshop_name || "Workshop Name Not Available";
-    document.getElementById('workshop-title-display').innerText = workshopName;
 
-    // --- NEW: Role & Sub-Role Handling ---
+    // Role & Sub-Role Handling
     let role = (currentActiveUser.role || "").toString().trim().toLowerCase();
     let subRole = (currentActiveUser.sub_role || currentActiveUser.subrole || "").toString().trim();
-    
-    // If user is a facilitator, display their assigned sub-role badge near the header info
-    if (role === "facilitators" || role === "facilitator") {
-        if (subRole) {
-            headerInfo.innerHTML += `<div class="mt-2 text-indigo-700 font-bold">Assigned Role: ${subRole}</div>`;
-        }
+    let isFacilitator = (role === "facilitators" || role === "facilitator");
+
+    // Configure the second blue box header rows accurately
+    let titleDisplay = document.getElementById('workshop-title-display');
+    if (isFacilitator) {
+        titleDisplay.innerHTML = `
+            <div>${workshopName}</div>
+            <div class="text-xs font-semibold text-indigo-200 mt-0.5">Role Assigned : ${subRole}</div>
+            <div class="text-xs font-semibold text-indigo-200 mt-0.5">Facilitator Resources</div>
+        `;
+    } else {
+        titleDisplay.innerHTML = `
+            <div>${workshopName}</div>
+            <div class="text-xs font-semibold text-indigo-200 mt-0.5">Participant Resources</div>
+        `;
     }
 
     const resourcesContainer = document.getElementById('resources-container');
     resourcesContainer.innerHTML = '';
 
-    // --- NEW: Time-Based Resource Visibility Logic ---
+    // Time-Based Resource Visibility Logic
     let accessRules = evaluateWorkshopAccess(workshop);
     let showResources = true;
 
-    if (role === "participant") {
-        // Participants must wait until start date/time conditions are met
+    if (!isFacilitator) {
         showResources = accessRules.resourcesUnlocked;
-    } else if (role === "facilitators" || role === "facilitator") {
-        // Facilitators always have resource visibility ON
+    } else {
         showResources = true;
     }
 
     if (!showResources) {
         resourcesContainer.innerHTML = `<div class="text-amber-600 text-xs sm:text-sm italic p-2 bg-amber-50 rounded">Resources will unlock automatically after the first day's session concludes. You can still view and edit your profile below.</div>`;
-        return; // Skip rendering resource rows if locked for participants
+        return; 
     }
 
-    // Determine active Zoom link based on common_zoom_url_yn rule
     let workshopZoomYn = workshop.common_zoom_url_yn ? workshop.common_zoom_url_yn.toString().trim().toUpperCase() : "NO";
     let activeZoomLink = (workshopZoomYn === "YES") ? workshop.common_zoom_url : currentActiveUser.personal_zoom_link;
 
-    // Dynamically detect how many participant resource labels exist in the Firebase workshop node
+    // Dynamic prefix selection (f_resource_ for facilitators, p_resource_ for participants)
+    let prefix = isFacilitator ? "f_resource_" : "p_resource_";
+
     let resourceCount = 0;
     Object.keys(workshop).forEach(key => {
-        if (key.startsWith('p_resource_label')) {
-            let indexStr = key.replace('p_resource_label', '');
+        if (key.startsWith(prefix + 'label')) {
+            let indexStr = key.replace(prefix + 'label', '');
             let index = parseInt(indexStr, 10);
             if (!isNaN(index) && index > resourceCount) {
                 resourceCount = index;
@@ -537,19 +545,16 @@ function renderDashboard() {
         }
     });
 
-    // Loop dynamically up to the highest detected resource count
     for (let i = 1; i <= resourceCount; i++) {
-        let label = workshop[`p_resource_label${i}`];
-        let url = workshop[`p_resource_url${i}`];
+        let label = workshop[`${prefix}label${i}`];
+        let url = workshop[`${prefix}url${i}`];
 
-        // Skip rendering if the label is missing, empty, or a placeholder
         if (!label || label.toString().trim() === "" || label.toString().trim() === "**") {
             continue;
         }
 
-        // If this is the first resource item (Index 1), apply the dynamic common vs personal Zoom rule!
         let linkVal = "";
-        if (i === 1) {
+        if (!isFacilitator && i === 1) {
             linkVal = activeZoomLink ? activeZoomLink.toString().trim() : "";
         } else {
             linkVal = url ? url.toString().trim() : "";
@@ -575,7 +580,13 @@ function renderDashboard() {
         }
         resourcesContainer.appendChild(row);
     }
-}		
+}
+
+
+		
+
+
+		
 
 		function renderDashboard() {
     document.getElementById('login-screen').classList.add('hidden');
