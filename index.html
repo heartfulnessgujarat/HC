@@ -786,13 +786,13 @@ function renderTshHub(workshop) {
 }
 
 
-// --- 4. NEW: renderTSPlanWorkshopModule ---
+// --- 4. UPDATED: renderTSPlanWorkshopModule ---
 function renderTSPlanWorkshopModule() {
     const container = document.getElementById('resources-container');
     container.innerHTML = `
         <div class="p-4 bg-white rounded-lg shadow border border-gray-200 text-xs">
             <h3 class="text-sm font-bold text-gray-800 mb-2">Plan New Workshop Batch</h3>
-            <p class="text-gray-500 mb-3">Select a template from the Master List, define your custom Batch ID, and schedule dates.</p>
+            <p class="text-gray-500 mb-3">Select a template from the Master List, define your custom Batch ID, and schedule dates for each session.</p>
             
             <div class="space-y-3">
                 <div>
@@ -803,31 +803,137 @@ function renderTSPlanWorkshopModule() {
                 </div>
                 <div>
                     <label class="block font-bold text-gray-700 mb-1">Custom Batch ID (workshop_id):</label>
-                    <input type="text" id="plan-batch-id-input" placeholder="e.g. FT3H_B2" class="w-full p-2 border rounded-md uppercase">
+                    <input type="text" id="plan-batch-id-input" placeholder="e.g. FT4H" class="w-full p-2 border rounded-md uppercase">
                     <span class="text-[10px] text-gray-400 italic">Must be unique to prevent duplication.</span>
+                </div>
+                
+                <!-- Dynamic Sessions & Dates Container -->
+                <div id="plan-sessions-container" class="space-y-2 mt-3 hidden">
+                    <label class="block font-bold text-gray-700 uppercase tracking-wide">Schedule Session Dates:</label>
+                    <div id="plan-sessions-list" class="space-y-2"></div>
                 </div>
             </div>
 
             <div class="flex justify-end gap-2 pt-4 mt-4 border-t border-gray-100">
                 <button onclick="renderTshHub(currentActiveUser)" class="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded">Back to Hub</button>
-                <button onclick="showCustomAlert('Workshop planning logic integration coming up next!')" class="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded shadow">Save & Proceed to Launch</button>
+                <button id="btn-save-launch-workshop" class="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded shadow">Save & Proceed to Launch</button>
             </div>
         </div>
     `;
 
-    // Populate the template dropdown from allWorkshops master list
+    // 1. Populate dropdown from Master_List_Workshops node in Firebase
     const templateSelect = document.getElementById('plan-template-select');
-    if (typeof allWorkshops === 'object' && allWorkshops !== null) {
-        Object.keys(allWorkshops).forEach(wKey => {
-            let workshopObj = allWorkshops[wKey];
+    let masterWorkshopsData = {};
+    
+    // Fetch master templates from Firebase reference
+    firebase.database().ref('Master_List_Workshops').once('value').then(snapshot => {
+        masterWorkshopsData = snapshot.val() || {};
+        templateSelect.innerHTML = '<option value="">-- Select Master Workshop Template --</option>';
+        
+        Object.keys(masterWorkshopsData).forEach(wKey => {
+            let workshopObj = masterWorkshopsData[wKey];
             let opt = document.createElement('option');
             opt.value = wKey;
-            opt.innerText = `${wKey} - ${workshopObj.workshop_name || 'Unnamed Workshop'}`;
+            opt.innerText = `${workshopObj.workshop_name || wKey} (${workshopObj.workshop_language || 'N/A'})`;
             templateSelect.appendChild(opt);
         });
-    }
+    });
+
+    // 2. Handle Template Selection change to dynamically generate session date fields
+    templateSelect.addEventListener('change', (e) => {
+        let selectedKey = e.target.value;
+        const sessionsContainer = document.getElementById('plan-sessions-container');
+        const sessionsList = document.getElementById('plan-sessions-list');
+        sessionsList.innerHTML = '';
+
+        if (!selectedKey || !masterWorkshopsData[selectedKey]) {
+            sessionsContainer.classList.add('hidden');
+            return;
+        }
+
+        sessionsContainer.classList.remove('hidden');
+        let template = masterWorkshopsData[selectedKey];
+
+        // Loop to find all session titles dynamically (checking up to 14 sessions or more)
+        for (let i = 1; i <= 14; i++) {
+            let titleKey = `session_${i}_title`;
+            if (template[titleKey]) {
+                let sessionTitle = template[titleKey];
+                let row = document.createElement('div');
+                row.className = "flex items-center justify-between p-2 bg-gray-50 rounded border border-gray-100 gap-2";
+                row.innerHTML = `
+                    <span class="font-medium text-gray-800 w-1/2 truncate" title="${sessionTitle}">${i}. ${sessionTitle}</span>
+                    <input type="date" id="plan_session_date_${i}" class="w-1/2 p-1 border rounded bg-white text-xs">
+                `;
+                sessionsList.appendChild(row);
+            }
+        }
+    });
+
+    // 3. Save & Proceed to Launch Click Logic with Duplicate Check & Custom Confirmation
+    document.getElementById('btn-save-launch-workshop').addEventListener('click', () => {
+        let selectedTemplateKey = templateSelect.value;
+        let customBatchId = document.getElementById('plan-batch-id-input').value.trim().toUpperCase();
+
+        if (!selectedTemplateKey) {
+            showCustomAlert("Please select a Master Workshop Template.");
+            return;
+        }
+        if (!customBatchId) {
+            showCustomAlert("Please enter a custom Batch ID (workshop_id).");
+            return;
+        }
+
+        // Check duplication in Launched_Workshops
+        firebase.database().ref('Launched_Workshops/' + customBatchId).once('value').then(snapshot => {
+            if (snapshot.exists()) {
+                showCustomAlert(`Error: The Batch ID "${customBatchId}" already exists in Launched Workshops. Please choose a unique ID.`);
+                return;
+            }
+
+            // Trigger Custom Confirmation Box before writing to database
+            showCustomConfirmation(
+                `Are you sure you want to plan and launch the new workshop batch "${customBatchId}"?`,
+                () => {
+                    // Confirmation YES Action: Build payload from template + user inputs
+                    let template = masterWorkshopsData[selectedTemplateKey];
+                    let newBatchData = {
+                        workshop_id: customBatchId,
+                        workshop_name: template.workshop_name || "",
+                        workshop_type: template.workshop_type || "",
+                        workshop_region: template.workshop_region || "",
+                        workshop_language: template.workshop_language || "",
+                        form_status: "Active"
+                    };
+
+                    // Collect dynamic session titles and dates
+                    for (let i = 1; i <= 14; i++) {
+                        if (template[`session_${i}_title`]) {
+                            newBatchData[`session_${i}_title`] = template[`session_${i}_title`];
+                            let dateVal = document.getElementById(`plan_session_date_${i}`).value;
+                            newBatchData[`session_${i}_date`] = dateVal || "";
+                        }
+                    }
+
+                    // Push to Firebase under Launched_Workshops
+                    firebase.database().ref('Launched_Workshops/' + customBatchId).set(newBatchData)
+                        .then(() => {
+                            showCustomAlert(`Workshop batch "${customBatchId}" successfully created and launched!`);
+                            renderTshHub(currentActiveUser);
+                        })
+                        .catch(error => {
+                            showCustomAlert("Failed to save workshop: " + error.message);
+                        });
+                },
+                () => {
+                    // Confirmation NO Action: Do nothing
+                }
+            );
+        });
+    });
 }
 
+		
 // --- 5. NEW: renderTSLaunchForm ---
 function renderTSLaunchForm(workshop) {
     const container = document.getElementById('resources-container');
