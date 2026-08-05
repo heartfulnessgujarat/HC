@@ -556,10 +556,36 @@ function renderDashboard() {
            <div><strong>State:</strong> ${pState}</div>
         </div>
     `;
+
+
+let wId = (currentActiveUser.workshop_id || "").toString().trim().toUpperCase();
+    let workshop = {};
+    let role = (currentActiveUser.role || "").toString().trim().toUpperCase();
+    let subRole = (currentActiveUser.sub_role || currentActiveUser.subrole || "").toString().trim();
     
-    let wId = currentActiveUser.workshop_id;
-    let workshop = allWorkshops[wId] || {};
+    if (role === "T&S" || role === "TRUST & SAFETY") {
+        if (wId === "ALL") {
+            workshop = {
+                workshop_id: "ALL",
+                workshop_name: "Global T&S Administration",
+                workshop_type: "Global / Cross-Batch",
+                workshop_region: "All Regions"
+            };
+        } else {
+            workshop = allWorkshops[wId] || {};
+        }
+    } else {
+        workshop = allWorkshops[wId] || {};
+    }
+
     let workshopName = workshop.workshop_name || "Workshop Name Not Available";
+
+
+	
+    
+
+
+	
 
     let role = (currentActiveUser.role || "").toString().trim().toUpperCase();
     let subRole = (currentActiveUser.sub_role || currentActiveUser.subrole || "").toString().trim();
