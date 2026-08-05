@@ -462,8 +462,31 @@ window.onload = loadFirebaseData;
 }
 
 
-		// Updated Dashboard & T&S Strategic Hub Flow (Supports workshop_type and workshop_region)
+// --- 1. NEW: INACTIVITY AUTO-LOGOUT (10 MINS) ---
+let inactivityTimer;
+
+function resetInactivityTimer() {
+    clearTimeout(inactivityTimer);
+    // 10 minutes = 600,000 milliseconds[cite: 1]
+    inactivityTimer = setTimeout(() => {
+        if (typeof logoutUser === 'function') {
+            logoutUser();
+        } else {
+            location.reload(); 
+        }
+    }, 600000);
+}
+
+// Bind activity listeners to reset timer on interaction[cite: 1]
+['mousemove', 'keydown', 'click', 'scroll', 'touchstart'].forEach(eventType => {
+    window.addEventListener(eventType, resetInactivityTimer, true);
+});
+
+
+// --- 2. REPLACED: renderDashboard ---
 function renderDashboard() {
+    resetInactivityTimer(); // Initialize timer on dashboard load[cite: 1]
+    
     document.getElementById('login-screen').classList.add('hidden');
     document.getElementById('change-password-screen').classList.add('hidden');
     document.getElementById('reset-password-screen').classList.add('hidden');
@@ -616,7 +639,7 @@ function renderDashboard() {
         }
     }
     
-    // 3. IF IT IS T&S (Training & Support)
+    // 3. IF IT IS T&S (Training & Support) - RENDER TWO-TIER HUB DIRECTLY UPON LOGIN
     else if (role === "T&S" || role === "TRUST & SAFETY") {
         subtitleDisplay.innerHTML = `
             <div class="text-center">
@@ -627,24 +650,25 @@ function renderDashboard() {
     }
 }
 
-// Function to render the T&S Hub layout with Strategic & Operational Split
+
+// --- 3. REPLACED / UPDATED: renderTshHub ---
 function renderTshHub(workshop) {
     const resourcesContainer = document.getElementById('resources-container');
     
     resourcesContainer.innerHTML = `
-        <div class="p-4 bg-white rounded-lg shadow border border-gray-200 space-y-4">
+        <div class="p-4 bg-white rounded-lg shadow border border-gray-200 space-y-4 text-xs">
             
-            <!-- SECTION A: STRATEGIC / MANAGEMENT CONTROLS -->
+            <!-- SECTION A: STRATEGIC / MANAGEMENT CONTROLS (TOP LEVEL) -->
             <div>
-                <h3 class="text-xs font-bold text-indigo-700 uppercase tracking-wide mb-2">Strategic Planning & Management</h3>
+                <h3 class="font-bold text-indigo-700 uppercase tracking-wide mb-2">Strategic Planning & Management</h3>
                 <div class="space-y-2">
-                    <button id="btn-plan-workshop" class="w-full py-2 px-3 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded shadow transition text-left flex justify-between items-center">
+                    <button id="btn-plan-workshop" class="w-full py-2.5 px-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded shadow transition text-left flex justify-between items-center">
                         <span>1. Plan Workshop / Schedule Setup</span>
-                        <span>→</span>
+                        <span class="text-sm">→</span>
                     </button>
-                    <button id="btn-report" class="w-full py-2 px-3 bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-semibold rounded transition text-left flex justify-between items-center">
+                    <button id="btn-report" class="w-full py-2.5 px-3 bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold rounded transition text-left flex justify-between items-center">
                         <span>2. Report (Facilitator Involvement)</span>
-                        <span>→</span>
+                        <span class="text-sm">→</span>
                     </button>
                 </div>
             </div>
@@ -653,17 +677,20 @@ function renderTshHub(workshop) {
 
             <!-- SECTION B: ACTIVE BATCH OPERATIONAL CONTROLS -->
             <div>
-                <h3 class="text-xs font-bold text-gray-700 uppercase tracking-wide mb-2">Active Batch Operations (${workshop.workshop_id || 'Select Workshop'})</h3>
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="font-bold text-gray-700 uppercase tracking-wide">Active Batch Operational Controls</h3>
+                    <span class="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded font-medium">Active Batch: ${workshop.workshop_id || 'None Selected'}</span>
+                </div>
                 <div class="space-y-2">
-                    <button id="btn-launch-form" class="w-full py-2 px-3 bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-semibold rounded transition text-left flex justify-between items-center">
+                    <button id="btn-launch-form" class="w-full py-2 px-3 bg-gray-50 hover:bg-gray-100 text-gray-800 font-medium rounded border border-gray-200 transition text-left flex justify-between items-center">
                         <span>3. Launch a Facilitator Sign-up Form</span>
                         <span>→</span>
                     </button>
-                    <button id="btn-view-responses" class="w-full py-2 px-3 bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-semibold rounded transition text-left flex justify-between items-center">
+                    <button id="btn-view-responses" class="w-full py-2 px-3 bg-gray-50 hover:bg-gray-100 text-gray-800 font-medium rounded border border-gray-200 transition text-left flex justify-between items-center">
                         <span>4. View Facilitator Sign-up Form Responses</span>
                         <span>→</span>
                     </button>
-                    <button id="btn-alloc-role" class="w-full py-2 px-3 bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-semibold rounded transition text-left flex justify-between items-center">
+                    <button id="btn-alloc-role" class="w-full py-2 px-3 bg-gray-50 hover:bg-gray-100 text-gray-800 font-medium rounded border border-gray-200 transition text-left flex justify-between items-center">
                         <span>5. Allocation of Role (Subrole Assignment)</span>
                         <span>→</span>
                     </button>
@@ -689,6 +716,101 @@ function renderTshHub(workshop) {
         showCustomAlert("Role allocation module coming up next!");
     });
 }
+
+
+// --- 4. NEW: renderTSPlanWorkshopModule ---
+function renderTSPlanWorkshopModule() {
+    const container = document.getElementById('resources-container');
+    container.innerHTML = `
+        <div class="p-4 bg-white rounded-lg shadow border border-gray-200 text-xs">
+            <h3 class="text-sm font-bold text-gray-800 mb-2">Plan New Workshop Batch</h3>
+            <p class="text-gray-500 mb-3">Select a template from the Master List, define your custom Batch ID, and schedule dates.</p>
+            
+            <div class="space-y-3">
+                <div>
+                    <label class="block font-bold text-gray-700 mb-1">Select Workshop Template (Master List):</label>
+                    <select id="plan-template-select" class="w-full p-2 border rounded-md">
+                        <option value="">-- Select Master Workshop Template --</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-bold text-gray-700 mb-1">Custom Batch ID (workshop_id):</label>
+                    <input type="text" id="plan-batch-id-input" placeholder="e.g. FT3H_B2" class="w-full p-2 border rounded-md uppercase">
+                    <span class="text-[10px] text-gray-400 italic">Must be unique to prevent duplication.</span>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-4 mt-4 border-t border-gray-100">
+                <button onclick="renderTshHub(currentActiveUser)" class="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded">Back to Hub</button>
+                <button onclick="showCustomAlert('Workshop planning logic integration coming up next!')" class="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded shadow">Save & Proceed to Launch</button>
+            </div>
+        </div>
+    `;
+}
+
+
+// --- 5. NEW: renderTSLaunchForm ---
+function renderTSLaunchForm(workshop) {
+    const container = document.getElementById('resources-container');
+    
+    container.innerHTML = `
+        <div class="p-4 bg-white rounded-lg shadow border border-gray-200 text-xs">
+            <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-200">
+                <div>
+                    <h3 class="text-sm font-bold text-gray-800">Facilitator Sign-up Form Setup</h3>
+                    <p class="text-xs text-gray-500">Review sessions, dates, workshop type, and region settings.</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="font-semibold text-gray-700">Form Status:</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="signup-form-toggle" checked class="sr-only peer">
+                        <div class="w-9 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
+                    </label>
+                    <span id="form-status-label" class="font-bold text-indigo-600">Active</span>
+                </div>
+            </div>
+
+            <!-- Display Workshop Type & Region Preview -->
+            <div class="grid grid-cols-2 gap-2 mb-4 bg-gray-50 p-2.5 rounded border border-gray-100">
+                <div><strong>Workshop Type:</strong> <span class="text-indigo-600">${workshop.workshop_type || 'N/A'}</span></div>
+                <div><strong>Workshop Region:</strong> <span class="text-indigo-600">${workshop.workshop_region || 'N/A'}</span></div>
+            </div>
+
+            <div class="mb-4">
+                <label class="block font-bold text-gray-700 mb-2 uppercase tracking-wide">Included Sessions & Dates Preview:</label>
+                <div id="ts-sessions-checklist" class="space-y-2"></div>
+            </div>
+            <div class="flex justify-end gap-2 pt-3 border-t border-gray-100">
+                <button onclick="renderTshHub(currentActiveUser)" class="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded transition">Back to Hub</button>
+                <button onclick="showCustomAlert('Sign-up form configuration saved and published successfully for facilitators!')" class="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded shadow transition">Save & Publish Form</button>
+            </div>
+        </div>
+    `;
+    
+    const checklistContainer = document.getElementById('ts-sessions-checklist');
+    for (let i = 1; i <= 4; i++) {
+        let titleKey = `session_${i}_title`;
+        let dateKey = `session_${i}_date`;
+        let titleVal = workshop[titleKey] || `Session ${i}`;
+        let dateVal = workshop[dateKey] ? new Date(workshop[dateKey]).toLocaleDateString() : "Date TBA";
+        let rowDiv = document.createElement('div');
+        rowDiv.className = "flex items-center justify-between p-2 bg-gray-50 rounded border border-gray-100";
+        
+        rowDiv.innerHTML = `
+            <div class="flex items-center gap-2">
+                <input type="checkbox" checked id="include_session_${i}" class="rounded text-indigo-600 focus:ring-indigo-500">
+                <span class="font-medium text-gray-800">${titleVal}</span>
+            </div>
+            <span class="text-gray-500 italic bg-white px-2 py-0.5 rounded border border-gray-200">${dateVal}</span>
+        `;
+        checklistContainer.appendChild(rowDiv);
+    }
+}
+```[cite: 1]
+
+
+
+		
 
 // Placeholder for the Planning Module screen where T&S creates/schedules a batch
 function renderTSPlanWorkshopModule() {
