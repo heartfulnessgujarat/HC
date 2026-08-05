@@ -484,44 +484,45 @@ function resetInactivityTimer() {
 
 
 
-// Function to handle name suggestions/search on the login screen
-function filterParticipants(query) {
-    let q = query.trim().toLowerCase();
-    let resultsContainer = document.getElementById('name-suggestions-container');
-    if (!resultsContainer) return;
+
+function filterParticipants() {
+    const query = document.getElementById('search-name').value.toLowerCase();
+    const resultsBox = document.getElementById('search-results');
+    resultsBox.innerHTML = '';
     
-    if (q.length < 3) {
-        resultsContainer.innerHTML = '';
-        resultsContainer.classList.add('hidden');
+    if (query.length < 3) {
+        resultsBox.classList.add('hidden');
         return;
     }
     
-    // Filters users/participants based on input query
-    let matches = Object.values(allUsers || {}).filter(user => {
-        let name = (user.ps_name || "").toLowerCase();
-        return name.includes(q);
-    });
-    
-    if (matches.length === 0) {
-        resultsContainer.innerHTML = '<div class="p-2 text-gray-500 text-xs">No matching names found</div>';
-        resultsContainer.classList.remove('hidden');
-        return;
+    let matches = [];
+    for (let key in allParticipants) {
+        let p = allParticipants[key];
+        
+        // STRICT CHECK: Ensure the participant belongs to the active workshop batch from the URL hash
+        if (p.workshop_id && p.workshop_id.toString().trim() !== activeWorkshopId) {
+            continue;
+        }
+        
+        let pName = (p.ps_name || "").toLowerCase();
+        if (pName.includes(query)) {
+            matches.push({ key: key, data: p });
+        }
     }
     
-    let html = '';
-    matches.slice(0, 10).forEach(user => {
-        html += `<div onclick="selectParticipantLogin('${user.ps_id}')" class="p-2 hover:bg-indigo-50 cursor-pointer text-xs border-b border-gray-100 flex justify-between">
-            <span class="font-semibold text-gray-800">${user.ps_name}</span>
-            <span class="text-gray-500">${user.ps_id}</span>
-        </div>`;
-    });
-    
-    resultsContainer.innerHTML = html;
-    resultsContainer.classList.remove('hidden');
+    if (matches.length > 0) {
+        resultsBox.classList.remove('hidden');
+        matches.forEach(m => {
+            let div = document.createElement('div');
+            div.className = "px-4 py-2 hover:bg-indigo-50 cursor-pointer text-sm border-b bg-white";
+            div.innerText = m.data.ps_name;
+            div.onclick = () => selectParticipant(m.key, m.data);
+            resultsBox.appendChild(div);
+        });
+    } else {
+        resultsBox.classList.add('hidden');
+    }
 }
-
-
-
 
 
 
