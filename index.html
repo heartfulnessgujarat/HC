@@ -797,7 +797,7 @@ function renderTSPlanWorkshopModule() {
             <div class="space-y-3">
                 <div>
                     <label class="block font-bold text-gray-700 mb-1">Select Workshop Template (Master List):</label>
-                    <select id="plan-template-select" class="w-full p-2 border rounded-md">
+                    <select id="plan-template-select" class="w-full p-2 border rounded-md bg-white">
                         <option value="">-- Select Master Workshop Template --</option>
                     </select>
                 </div>
@@ -814,8 +814,19 @@ function renderTSPlanWorkshopModule() {
             </div>
         </div>
     `;
-}
 
+    // Populate the template dropdown from allWorkshops master list
+    const templateSelect = document.getElementById('plan-template-select');
+    if (typeof allWorkshops === 'object' && allWorkshops !== null) {
+        Object.keys(allWorkshops).forEach(wKey => {
+            let workshopObj = allWorkshops[wKey];
+            let opt = document.createElement('option');
+            opt.value = wKey;
+            opt.innerText = `${wKey} - ${workshopObj.workshop_name || 'Unnamed Workshop'}`;
+            templateSelect.appendChild(opt);
+        });
+    }
+}
 
 // --- 5. NEW: renderTSLaunchForm ---
 function renderTSLaunchForm(workshop) {
