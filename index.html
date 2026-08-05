@@ -525,10 +525,9 @@ function filterParticipants() {
 }
 
 
-
 // --- 2. REPLACED: renderDashboard ---
 function renderDashboard() {
-    resetInactivityTimer(); // Initialize timer on dashboard load[cite: 1]
+    resetInactivityTimer(); // Initialize timer on dashboard load
     
     document.getElementById('login-screen').classList.add('hidden');
     document.getElementById('change-password-screen').classList.add('hidden');
@@ -557,8 +556,8 @@ function renderDashboard() {
         </div>
     `;
 
-
-let wId = (currentActiveUser.workshop_id || "").toString().trim().toUpperCase();
+    // --- "ALL" Correction & Unified Declarations ---
+    let wId = (currentActiveUser.workshop_id || "").toString().trim().toUpperCase();
     let workshop = {};
     let role = (currentActiveUser.role || "").toString().trim().toUpperCase();
     let subRole = (currentActiveUser.sub_role || currentActiveUser.subrole || "").toString().trim();
@@ -580,16 +579,6 @@ let wId = (currentActiveUser.workshop_id || "").toString().trim().toUpperCase();
 
     let workshopName = workshop.workshop_name || "Workshop Name Not Available";
 
-
-	
-    
-
-
-	
-
-    let role = (currentActiveUser.role || "").toString().trim().toUpperCase();
-    let subRole = (currentActiveUser.sub_role || currentActiveUser.subrole || "").toString().trim();
-    
     let subtitleDisplay = document.getElementById('workshop-subtitle-display');
     const resourcesContainer = document.getElementById('resources-container');
     resourcesContainer.innerHTML = '';
@@ -711,7 +700,6 @@ let wId = (currentActiveUser.workshop_id || "").toString().trim().toUpperCase();
     
     // 3. IF IT IS T&S (Training & Support) - RENDER TWO-TIER HUB DIRECTLY UPON LOGIN
     else if (role === "T&S" || role === "TRUST & SAFETY") {
-        // Omitting workshop title banner for T&S users as requested
         document.getElementById('workshop-title-display').innerText = "";
         subtitleDisplay.innerHTML = `
             <div class="text-center">
@@ -723,6 +711,9 @@ let wId = (currentActiveUser.workshop_id || "").toString().trim().toUpperCase();
 }
 
 
+
+
+		
 // --- 3. REPLACED / UPDATED: renderTshHub ---
 function renderTshHub(workshop) {
     const resourcesContainer = document.getElementById('resources-container');
