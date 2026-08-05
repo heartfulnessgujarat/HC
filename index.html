@@ -786,7 +786,11 @@ function renderTshHub(workshop) {
 }
 
 
-// --- 4. UPDATED: renderTSPlanWorkshopModule ---
+
+
+
+
+// --- 4. UPDATED: renderTSPlanWorkshopModule with DD-MMM-YYYY Date Formatting ---
 function renderTSPlanWorkshopModule() {
     const container = document.getElementById('resources-container');
     container.innerHTML = `
@@ -823,6 +827,26 @@ function renderTSPlanWorkshopModule() {
 
     const templateSelect = document.getElementById('plan-template-select');
     let masterWorkshopsData = {};
+
+    // Get today's date in YYYY-MM-DD format for min attribute validation
+    const todayObj = new Date();
+    const year = todayObj.getFullYear();
+    const month = String(todayObj.getMonth() + 1).padStart(2, '0');
+    const day = String(todayObj.getDate()).padStart(2, '0');
+    const todayFormatted = `${year}-${month}-${day}`;
+
+    // Helper function to convert YYYY-MM-DD to DD-MMM-YYYY format
+    const formatDateToDDMMMYYYY = (dateString) => {
+        if (!dateString) return "";
+        const parts = dateString.split("-");
+        if (parts.length !== 3) return dateString;
+        const y = parts[0];
+        const m = parseInt(parts[1], 10);
+        const d = parts[2];
+        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const monthStr = months[m - 1] || "Jan";
+        return `${d}-${monthStr}-${y}`;
+    };
 
     const populateDropdown = (data) => {
         masterWorkshopsData = data || {};
@@ -868,14 +892,14 @@ function renderTSPlanWorkshopModule() {
                 row.className = "flex items-center justify-between p-2 bg-gray-50 rounded border border-gray-100 gap-2";
                 row.innerHTML = `
                     <span class="font-medium text-gray-800 w-1/2 truncate" title="${sessionTitle}">${i}. ${sessionTitle}</span>
-                    <input type="date" id="plan_session_date_${i}" class="w-1/2 p-1 border rounded bg-white text-xs session-date-input" data-session-num="${i}">
+                    <input type="date" id="plan_session_date_${i}" min="${todayFormatted}" class="w-1/2 p-1 border rounded bg-white text-xs session-date-input" data-session-num="${i}">
                 `;
                 sessionsList.appendChild(row);
             }
         }
     });
 
-    // 3. Save & Proceed to Launch Click Handler with Validation Interlocks
+    // 3. Save & Proceed to Launch Click Handler with Validation & DD-MMM-YYYY formatting
     document.getElementById('btn-save-launch-workshop').addEventListener('click', () => {
         let selectedTemplateKey = templateSelect.value;
         let customBatchId = document.getElementById('plan-batch-id-input').value.trim().toUpperCase();
@@ -889,7 +913,7 @@ function renderTSPlanWorkshopModule() {
             return;
         }
 
-        // Validate Sequential Session Dates Interlock
+        // Validate Past Dates & Sequential Session Dates Interlock
         let activeSessionInputs = document.querySelectorAll('.session-date-input');
         let previousDateVal = "";
         let previousSessionNum = 0;
@@ -903,6 +927,13 @@ function renderTSPlanWorkshopModule() {
                 return;
             }
 
+            // Past Date Interlock
+            if (currentDateVal < todayFormatted) {
+                showCustomAlert(`Date Interlock Error:\nSession ${currentNum} date cannot be in the past.`);
+                return;
+            }
+
+            // Sequential Order Interlock
             if (previousDateVal && currentDateVal < previousDateVal) {
                 showCustomAlert(`Date Interlock Error:\nSession ${currentNum} date cannot be earlier than Session ${previousSessionNum} date.`);
                 return;
@@ -935,7 +966,9 @@ function renderTSPlanWorkshopModule() {
                 if (template[`session_${i}_title`]) {
                     newBatchData[`session_${i}_title`] = template[`session_${i}_title`];
                     let dateInput = document.getElementById(`plan_session_date_${i}`);
-                    newBatchData[`session_${i}_date`] = dateInput ? dateInput.value : "";
+                    // Format output as DD-MMM-YYYY before writing to Firebase
+                    let rawDate = dateInput ? dateInput.value : "";
+                    newBatchData[`session_${i}_date`] = formatDateToDDMMMYYYY(rawDate);
                 }
             }
 
@@ -951,6 +984,14 @@ function renderTSPlanWorkshopModule() {
         });
     });
 }
+
+
+
+
+
+
+
+
 
 		
 		
