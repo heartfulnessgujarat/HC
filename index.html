@@ -786,7 +786,11 @@ function renderTshHub(workshop) {
 }
 
 
-// --- 4. UPDATED: renderTSPlanWorkshopModule ---
+
+
+
+
+		// --- 4. UPDATED: renderTSPlanWorkshopModule ---
 function renderTSPlanWorkshopModule() {
     const container = document.getElementById('resources-container');
     container.innerHTML = `
@@ -821,13 +825,12 @@ function renderTSPlanWorkshopModule() {
         </div>
     `;
 
-    // 1. Populate dropdown from Master_List_Workshops node in Firebase
     const templateSelect = document.getElementById('plan-template-select');
     let masterWorkshopsData = {};
-    
-    // Fetch master templates from Firebase reference
-    firebase.database().ref('Master_List_Workshops').once('value').then(snapshot => {
-        masterWorkshopsData = snapshot.val() || {};
+
+    // Populate dropdown helper
+    const populateDropdown = (data) => {
+        masterWorkshopsData = data || {};
         templateSelect.innerHTML = '<option value="">-- Select Master Workshop Template --</option>';
         
         Object.keys(masterWorkshopsData).forEach(wKey => {
@@ -837,6 +840,14 @@ function renderTSPlanWorkshopModule() {
             opt.innerText = `${workshopObj.workshop_name || wKey} (${workshopObj.workshop_language || 'N/A'})`;
             templateSelect.appendChild(opt);
         });
+    };
+
+    // 1. Fetch directly from the correct Firebase path: control_tower/Master_List_Workshops
+    firebase.database().ref('control_tower/Master_List_Workshops').once('value').then(snapshot => {
+        populateDropdown(snapshot.val());
+    }).catch(err => {
+        console.error("Error loading master workshops from control_tower:", err);
+        showCustomAlert("Could not load Master Workshop templates from database.");
     });
 
     // 2. Handle Template Selection change to dynamically generate session date fields
@@ -854,7 +865,7 @@ function renderTSPlanWorkshopModule() {
         sessionsContainer.classList.remove('hidden');
         let template = masterWorkshopsData[selectedKey];
 
-        // Loop to find all session titles dynamically (checking up to 14 sessions or more)
+        // Loop to find all session titles dynamically (checking up to 14 sessions)
         for (let i = 1; i <= 14; i++) {
             let titleKey = `session_${i}_title`;
             if (template[titleKey]) {
@@ -884,8 +895,8 @@ function renderTSPlanWorkshopModule() {
             return;
         }
 
-        // Check duplication in Launched_Workshops
-        firebase.database().ref('Launched_Workshops/' + customBatchId).once('value').then(snapshot => {
+        // Check duplication under control_tower/Launched_Workshops
+        firebase.database().ref('control_tower/Launched_Workshops/' + customBatchId).once('value').then(snapshot => {
             if (snapshot.exists()) {
                 showCustomAlert(`Error: The Batch ID "${customBatchId}" already exists in Launched Workshops. Please choose a unique ID.`);
                 return;
@@ -895,7 +906,6 @@ function renderTSPlanWorkshopModule() {
             showCustomConfirmation(
                 `Are you sure you want to plan and launch the new workshop batch "${customBatchId}"?`,
                 () => {
-                    // Confirmation YES Action: Build payload from template + user inputs
                     let template = masterWorkshopsData[selectedTemplateKey];
                     let newBatchData = {
                         workshop_id: customBatchId,
@@ -910,13 +920,13 @@ function renderTSPlanWorkshopModule() {
                     for (let i = 1; i <= 14; i++) {
                         if (template[`session_${i}_title`]) {
                             newBatchData[`session_${i}_title`] = template[`session_${i}_title`];
-                            let dateVal = document.getElementById(`plan_session_date_${i}`).value;
-                            newBatchData[`session_${i}_date`] = dateVal || "";
+                            let dateInput = document.getElementById(`plan_session_date_${i}`);
+                            newBatchData[`session_${i}_date`] = dateInput ? dateInput.value : "";
                         }
                     }
 
-                    // Push to Firebase under Launched_Workshops
-                    firebase.database().ref('Launched_Workshops/' + customBatchId).set(newBatchData)
+                    // Push to Firebase under control_tower/Launched_Workshops
+                    firebase.database().ref('control_tower/Launched_Workshops/' + customBatchId).set(newBatchData)
                         .then(() => {
                             showCustomAlert(`Workshop batch "${customBatchId}" successfully created and launched!`);
                             renderTshHub(currentActiveUser);
@@ -926,13 +936,23 @@ function renderTSPlanWorkshopModule() {
                         });
                 },
                 () => {
-                    // Confirmation NO Action: Do nothing
+                    // Do nothing on cancel
                 }
             );
         });
     });
 }
 
+
+
+
+
+
+
+
+
+
+		
 		
 // --- 5. NEW: renderTSLaunchForm ---
 function renderTSLaunchForm(workshop) {
