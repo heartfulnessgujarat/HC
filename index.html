@@ -526,8 +526,6 @@ function filterParticipants() {
 
 
 
-		
-
 // --- 2. REPLACED: renderDashboard ---
 function renderDashboard() {
     resetInactivityTimer(); // Initialize timer on dashboard load[cite: 1]
@@ -566,13 +564,13 @@ function renderDashboard() {
     let role = (currentActiveUser.role || "").toString().trim().toUpperCase();
     let subRole = (currentActiveUser.sub_role || currentActiveUser.subrole || "").toString().trim();
     
-    document.getElementById('workshop-title-display').innerText = workshopName;
     let subtitleDisplay = document.getElementById('workshop-subtitle-display');
     const resourcesContainer = document.getElementById('resources-container');
     resourcesContainer.innerHTML = '';
 
     // 1. IF IT IS A PARTICIPANT
     if (role === "PARTICIPANT" || role === "") {
+        document.getElementById('workshop-title-display').innerText = workshopName;
         subtitleDisplay.innerHTML = `
             <div class="text-center">
                 <div class="text-sm font-bold text-white">Participant Resources</div>
@@ -633,6 +631,7 @@ function renderDashboard() {
     
     // 2. IF IT IS A FACILITATOR
     else if (role === "FACILITATOR" || role === "FACILITATORS") {
+        document.getElementById('workshop-title-display').innerText = workshopName;
         subtitleDisplay.innerHTML = `
             <div>
                 <div class="text-center text-sm font-bold text-indigo-200 mb-0.5">Role Assigned</div>
@@ -686,6 +685,8 @@ function renderDashboard() {
     
     // 3. IF IT IS T&S (Training & Support) - RENDER TWO-TIER HUB DIRECTLY UPON LOGIN
     else if (role === "T&S" || role === "TRUST & SAFETY") {
+        // Omitting workshop title banner for T&S users as requested
+        document.getElementById('workshop-title-display').innerText = "";
         subtitleDisplay.innerHTML = `
             <div class="text-center">
                 <div class="text-sm font-bold text-amber-300">T&S Control & Support Hub</div>
@@ -697,10 +698,6 @@ function renderDashboard() {
 
 
 // --- 3. REPLACED / UPDATED: renderTshHub ---
-
-		// Function to render the main T&S Hub action buttons
-
-		
 function renderTshHub(workshop) {
     const resourcesContainer = document.getElementById('resources-container');
     
@@ -712,11 +709,11 @@ function renderTshHub(workshop) {
                 <h3 class="font-bold text-indigo-700 uppercase tracking-wide mb-2">Strategic Planning & Management</h3>
                 <div class="space-y-2">
                     <button id="btn-plan-workshop" class="w-full py-2.5 px-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded shadow transition text-left flex justify-between items-center">
-                        <span>1. Plan Workshop / Schedule Setup</span>
+                        <span>Plan Workshop / Schedule Setup</span>
                         <span class="text-sm">→</span>
                     </button>
                     <button id="btn-report" class="w-full py-2.5 px-3 bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold rounded transition text-left flex justify-between items-center">
-                        <span>2. Report (Facilitator Involvement)</span>
+                        <span>Report (Facilitator Involvement)</span>
                         <span class="text-sm">→</span>
                     </button>
                 </div>
@@ -728,19 +725,19 @@ function renderTshHub(workshop) {
             <div>
                 <div class="flex justify-between items-center mb-2">
                     <h3 class="font-bold text-gray-700 uppercase tracking-wide">Active Batch Operational Controls</h3>
-                    <span class="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded font-medium">Active Batch: ${workshop.workshop_id || 'None Selected'}</span>
+                    <span class="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded font-medium">Active Batch: ${workshop.workshop_id || 'ALL'}</span>
                 </div>
                 <div class="space-y-2">
                     <button id="btn-launch-form" class="w-full py-2 px-3 bg-gray-50 hover:bg-gray-100 text-gray-800 font-medium rounded border border-gray-200 transition text-left flex justify-between items-center">
-                        <span>3. Launch a Facilitator Sign-up Form</span>
+                        <span>Launch a Facilitator Sign-up Form</span>
                         <span>→</span>
                     </button>
                     <button id="btn-view-responses" class="w-full py-2 px-3 bg-gray-50 hover:bg-gray-100 text-gray-800 font-medium rounded border border-gray-200 transition text-left flex justify-between items-center">
-                        <span>4. View Facilitator Sign-up Form Responses</span>
+                        <span>View Facilitator Sign-up Form Responses</span>
                         <span>→</span>
                     </button>
                     <button id="btn-alloc-role" class="w-full py-2 px-3 bg-gray-50 hover:bg-gray-100 text-gray-800 font-medium rounded border border-gray-200 transition text-left flex justify-between items-center">
-                        <span>5. Allocation of Role (Subrole Assignment)</span>
+                        <span>Allocation of Role (Subrole Assignment)</span>
                         <span>→</span>
                     </button>
                 </div>
@@ -768,10 +765,6 @@ function renderTshHub(workshop) {
 
 
 // --- 4. NEW: renderTSPlanWorkshopModule ---
-
-		// Placeholder for the Planning Module screen where T&S creates/schedules a batch
-
-		
 function renderTSPlanWorkshopModule() {
     const container = document.getElementById('resources-container');
     container.innerHTML = `
@@ -803,12 +796,6 @@ function renderTSPlanWorkshopModule() {
 
 
 // --- 5. NEW: renderTSLaunchForm ---
-
-				
-// Function to render the Sign-up Form configuration screen (Button 1 with 4 Sessions & Dates)
-
-
-		
 function renderTSLaunchForm(workshop) {
     const container = document.getElementById('resources-container');
     
@@ -867,6 +854,20 @@ function renderTSLaunchForm(workshop) {
 }
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+		
 		
 
 		
