@@ -483,8 +483,6 @@ function resetInactivityTimer() {
 });
 
 
-
-
 function filterParticipants() {
     const query = document.getElementById('search-name').value.toLowerCase();
     const resultsBox = document.getElementById('search-results');
@@ -499,8 +497,13 @@ function filterParticipants() {
     for (let key in allParticipants) {
         let p = allParticipants[key];
         
-        // STRICT CHECK: Ensure the participant belongs to the active workshop batch from the URL hash
-        if (p.workshop_id && p.workshop_id.toString().trim() !== activeWorkshopId) {
+        // CHECK: Allow if workshop matches OR if the user has global "ALL" access (T&S admins)
+        let pWorkshopId = p.workshop_id ? p.workshop_id.toString().trim().toUpperCase() : "";
+        let pRole = p.role ? p.role.toString().trim().toUpperCase() : "";
+        
+        let isGlobalAdmin = (pWorkshopId === "ALL" || pRole === "T&S" || pRole === "TRUST & SAFETY");
+        
+        if (!isGlobalAdmin && pWorkshopId !== activeWorkshopId) {
             continue;
         }
         
@@ -523,6 +526,8 @@ function filterParticipants() {
         resultsBox.classList.add('hidden');
     }
 }
+
+		
 
 
 // --- 2. REPLACED: renderDashboard ---
