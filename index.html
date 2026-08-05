@@ -790,7 +790,7 @@ function renderTshHub(workshop) {
 
 
 
-		// --- 4. UPDATED: renderTSPlanWorkshopModule ---
+// --- 4. UPDATED: renderTSPlanWorkshopModule ---
 function renderTSPlanWorkshopModule() {
     const container = document.getElementById('resources-container');
     container.innerHTML = `
@@ -842,11 +842,11 @@ function renderTSPlanWorkshopModule() {
         });
     };
 
-    // 1. Fetch directly from the correct Firebase path: control_tower/Master_List_Workshops
+    // 1. Fetch template list from Firebase
     firebase.database().ref('control_tower/Master_List_Workshops').once('value').then(snapshot => {
         populateDropdown(snapshot.val());
     }).catch(err => {
-        console.error("Error loading master workshops from control_tower:", err);
+        console.error("Error loading master workshops:", err);
         showCustomAlert("Could not load Master Workshop templates from database.");
     });
 
@@ -865,7 +865,7 @@ function renderTSPlanWorkshopModule() {
         sessionsContainer.classList.remove('hidden');
         let template = masterWorkshopsData[selectedKey];
 
-        // Loop to find all session titles dynamically (checking up to 14 sessions)
+        // Loop to find all session titles dynamically (up to 14 sessions)
         for (let i = 1; i <= 14; i++) {
             let titleKey = `session_${i}_title`;
             if (template[titleKey]) {
@@ -881,7 +881,7 @@ function renderTSPlanWorkshopModule() {
         }
     });
 
-    // 3. Save & Proceed to Launch Click Logic with Duplicate Check & Custom Confirmation
+    // 3. Save & Proceed to Launch Click Handler
     document.getElementById('btn-save-launch-workshop').addEventListener('click', () => {
         let selectedTemplateKey = templateSelect.value;
         let customBatchId = document.getElementById('plan-batch-id-input').value.trim().toUpperCase();
@@ -895,28 +895,30 @@ function renderTSPlanWorkshopModule() {
             return;
         }
 
-        // Check duplication under control_tower/Launched_Workshops
+        // Check for duplicate batch ID under control_tower/Launched_Workshops
         firebase.database().ref('control_tower/Launched_Workshops/' + customBatchId).once('value').then(snapshot => {
             if (snapshot.exists()) {
                 showCustomAlert(`Error: The Batch ID "${customBatchId}" already exists in Launched Workshops. Please choose a unique ID.`);
                 return;
             }
 
-            // Trigger Custom Confirmation Box before writing to database
+            // Custom Confirmation dialog before writing
             showCustomConfirmation(
-                `Are you sure you want to plan and launch the new workshop batch "${customBatchId}"?`,
+                `Are you sure you want to plan and launch workshop batch "${customBatchId}"?`,
                 () => {
                     let template = masterWorkshopsData[selectedTemplateKey];
+                    let workshopName = template.workshop_name || "";
+                    
                     let newBatchData = {
                         workshop_id: customBatchId,
-                        workshop_name: template.workshop_name || "",
+                        workshop_name: workshopName,
                         workshop_type: template.workshop_type || "",
                         workshop_region: template.workshop_region || "",
                         workshop_language: template.workshop_language || "",
                         form_status: "Active"
                     };
 
-                    // Collect dynamic session titles and dates
+                    // Collect session titles and corresponding scheduled dates
                     for (let i = 1; i <= 14; i++) {
                         if (template[`session_${i}_title`]) {
                             newBatchData[`session_${i}_title`] = template[`session_${i}_title`];
@@ -925,10 +927,11 @@ function renderTSPlanWorkshopModule() {
                         }
                     }
 
-                    // Push to Firebase under control_tower/Launched_Workshops
+                    // Save directly to Firebase under control_tower/Launched_Workshops
                     firebase.database().ref('control_tower/Launched_Workshops/' + customBatchId).set(newBatchData)
                         .then(() => {
-                            showCustomAlert(`Workshop batch "${customBatchId}" successfully created and launched!`);
+                            // Clean custom success message popup
+                            showCustomAlert(`🎉 Success!\n\nWorkshop "${workshopName}" has been successfully launched with Batch ID: ${customBatchId}.`);
                             renderTshHub(currentActiveUser);
                         })
                         .catch(error => {
@@ -942,11 +945,6 @@ function renderTSPlanWorkshopModule() {
         });
     });
 }
-
-
-
-
-
 
 
 
