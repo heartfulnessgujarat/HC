@@ -787,9 +787,6 @@ function renderTshHub(workshop) {
 
 
 
-
-
-
 // --- 4. UPDATED: renderTSPlanWorkshopModule ---
 function renderTSPlanWorkshopModule() {
     const container = document.getElementById('resources-container');
@@ -881,7 +878,7 @@ function renderTSPlanWorkshopModule() {
         }
     });
 
-    // 3. Save & Proceed to Launch Click Handler
+    // 3. Save & Proceed to Launch Click Handler (Direct save without missing confirmation dependency)
     document.getElementById('btn-save-launch-workshop').addEventListener('click', () => {
         let selectedTemplateKey = templateSelect.value;
         let customBatchId = document.getElementById('plan-batch-id-input').value.trim().toUpperCase();
@@ -902,51 +899,39 @@ function renderTSPlanWorkshopModule() {
                 return;
             }
 
-            // Custom Confirmation dialog before writing
-            showCustomConfirmation(
-                `Are you sure you want to plan and launch workshop batch "${customBatchId}"?`,
-                () => {
-                    let template = masterWorkshopsData[selectedTemplateKey];
-                    let workshopName = template.workshop_name || "";
-                    
-                    let newBatchData = {
-                        workshop_id: customBatchId,
-                        workshop_name: workshopName,
-                        workshop_type: template.workshop_type || "",
-                        workshop_region: template.workshop_region || "",
-                        workshop_language: template.workshop_language || "",
-                        form_status: "Active"
-                    };
+            let template = masterWorkshopsData[selectedTemplateKey];
+            let workshopName = template.workshop_name || "";
+            
+            let newBatchData = {
+                workshop_id: customBatchId,
+                workshop_name: workshopName,
+                workshop_type: template.workshop_type || "",
+                workshop_region: template.workshop_region || "",
+                workshop_language: template.workshop_language || "",
+                form_status: "Active"
+            };
 
-                    // Collect session titles and corresponding scheduled dates
-                    for (let i = 1; i <= 14; i++) {
-                        if (template[`session_${i}_title`]) {
-                            newBatchData[`session_${i}_title`] = template[`session_${i}_title`];
-                            let dateInput = document.getElementById(`plan_session_date_${i}`);
-                            newBatchData[`session_${i}_date`] = dateInput ? dateInput.value : "";
-                        }
-                    }
-
-                    // Save directly to Firebase under control_tower/Launched_Workshops
-                    firebase.database().ref('control_tower/Launched_Workshops/' + customBatchId).set(newBatchData)
-                        .then(() => {
-                            // Clean custom success message popup
-                            showCustomAlert(`🎉 Success!\n\nWorkshop "${workshopName}" has been successfully launched with Batch ID: ${customBatchId}.`);
-                            renderTshHub(currentActiveUser);
-                        })
-                        .catch(error => {
-                            showCustomAlert("Failed to save workshop: " + error.message);
-                        });
-                },
-                () => {
-                    // Do nothing on cancel
+            // Collect session titles and corresponding scheduled dates
+            for (let i = 1; i <= 14; i++) {
+                if (template[`session_${i}_title`]) {
+                    newBatchData[`session_${i}_title`] = template[`session_${i}_title`];
+                    let dateInput = document.getElementById(`plan_session_date_${i}`);
+                    newBatchData[`session_${i}_date`] = dateInput ? dateInput.value : "";
                 }
-            );
+            }
+
+            // Save directly to Firebase under control_tower/Launched_Workshops
+            firebase.database().ref('control_tower/Launched_Workshops/' + customBatchId).set(newBatchData)
+                .then(() => {
+                    showCustomAlert(`🎉 Success!\n\nWorkshop "${workshopName}" has been successfully launched with Batch ID: ${customBatchId}.`);
+                    renderTshHub(currentActiveUser);
+                })
+                .catch(error => {
+                    showCustomAlert("Failed to save workshop: " + error.message);
+                });
         });
     });
 }
-
-
 
 
 
