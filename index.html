@@ -483,6 +483,7 @@ function resetInactivityTimer() {
 });
 
 
+
 function filterParticipants() {
     const query = document.getElementById('search-name').value.toLowerCase();
     const resultsBox = document.getElementById('search-results');
@@ -518,7 +519,12 @@ function filterParticipants() {
         matches.forEach(m => {
             let div = document.createElement('div');
             div.className = "px-4 py-2 hover:bg-indigo-50 cursor-pointer text-sm border-b bg-white";
-            div.innerText = m.data.ps_name;
+            
+            // Added Centre display alongside Name
+            let nameStr = m.data.ps_name || "";
+            let centreStr = m.data.ps_centre ? ` (${m.data.ps_centre})` : "";
+            div.innerText = nameStr + centreStr;
+            
             div.onclick = () => selectParticipant(m.key, m.data);
             resultsBox.appendChild(div);
         });
