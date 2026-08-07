@@ -533,6 +533,10 @@ function filterParticipants() {
     }
 }
 
+
+
+
+
 		
 
 
@@ -1115,164 +1119,179 @@ function renderTSLaunchForm(workshop) {
             }
         }
 
-        function filterChangePasswordParticipants() {
-            const query = document.getElementById('cp-search-name').value.toLowerCase();
-            const resultsBox = document.getElementById('cp-search-results');
-            resultsBox.innerHTML = '';
-            if (query.length < 3) {
-                resultsBox.classList.add('hidden');
-                return;
-            }
-            let matches = [];
-            for (let key in allParticipants) {
-                let p = allParticipants[key];
-                let pName = (p.ps_name || "").toLowerCase();
-                if (pName.includes(query)) {
-                    matches.push({ key: key, data: p });
-                }
-            }
-            if (matches.length > 0) {
-                resultsBox.classList.remove('hidden');
-                matches.forEach(m => {
-                    let div = document.createElement('div');
-                    div.className = "px-4 py-2 hover:bg-indigo-50 cursor-pointer text-sm border-b bg-white";
-                    div.innerText = m.data.ps_name;
-                    div.onclick = () => {
-                        cpSelectedKey = m.key;
-                        document.getElementById('cp-search-name').value = m.data.ps_name;
-                        document.getElementById('cp-selected-display').value = m.data.ps_name;
-                        resultsBox.classList.add('hidden');
-                    };
-                    resultsBox.appendChild(div);
-                });
-            } else {
-                resultsBox.classList.add('hidden');
-            }
+
+
+
+function filterChangePasswordParticipants() {
+    const query = document.getElementById('cp-search-name').value.toLowerCase();
+    const resultsBox = document.getElementById('cp-search-results');
+    resultsBox.innerHTML = '';
+    if (query.length < 3) {
+        resultsBox.classList.add('hidden');
+        return;
+    }
+    let matches = [];
+    for (let key in allParticipants) {
+        let p = allParticipants[key];
+        let pName = (p.ps_name || "").toLowerCase();
+        if (pName.includes(query)) {
+            matches.push({ key: key, data: p });
         }
-
-
-        function submitChangePassword() {
-            if (!cpSelectedKey || !allParticipants[cpSelectedKey]) {
-                const typedName = document.getElementById('cp-search-name').value.trim().toLowerCase();
-                for (let key in allParticipants) {
-                    if (allParticipants[key].name && allParticipants[key].name.toLowerCase() === typedName) {
-                        cpSelectedKey = key;
-                        break;
-                    }
-                }
-            }
-
-            if (!cpSelectedKey || !allParticipants[cpSelectedKey]) {
-                showCustomAlert("Please search and select a valid participant.");
-                return;
-            }
-
-            const currentPass = document.getElementById('cp-current-password').value.trim();
-            const newPass = document.getElementById('cp-new-password').value.trim();
-            const confirmPass = document.getElementById('cp-confirm-password').value.trim();
+    }
+    if (matches.length > 0) {
+        resultsBox.classList.remove('hidden');
+        matches.forEach(m => {
+            let div = document.createElement('div');
+            div.className = "px-4 py-2 hover:bg-indigo-50 cursor-pointer text-sm border-b bg-white";
             
-            if (!currentPass || !newPass || !confirmPass) {
-                showCustomAlert("Please fill in all password fields.");
-                return;
-            }
-            if (newPass !== confirmPass) {
-                showCustomAlert("New password and confirm password do not match.");
-                return;
-            }
-            let user = allParticipants[cpSelectedKey];
-            let storedPass = user.password ? user.password.toString() : "123456";
-            if (currentPass !== storedPass) {
-                showCustomAlert("Current password is incorrect.");
-                return;
-            }
-
-            let payload = {
-                password: newPass,
-                fieldupdated: "password",
-                lastsyntimestamp: new Date().toLocaleString()
-            };
-
-            db.ref('control_tower/participants/' + cpSelectedKey).update(payload).then(() => {
-                showCustomAlert("Password successfully updated!");
-                allParticipants[cpSelectedKey].password = newPass;
-                showLoginScreen();
-            }).catch(err => {
-                showCustomAlert("Failed to update password: " + err);
-            });
-        }
-
-
-        
-        
-        
-        function filterResetPasswordParticipants() {
-            const query = document.getElementById('rp-search-name').value.toLowerCase();
-            const resultsBox = document.getElementById('rp-search-results');
-            resultsBox.innerHTML = '';
-            if (query.length < 3) {
+            // Added Centre display alongside Name for Change Password
+            let nameStr = m.data.ps_name || "";
+            let centreStr = m.data.ps_centre ? ` (${m.data.ps_centre})` : "";
+            div.innerText = nameStr + centreStr;
+            
+            div.onclick = () => {
+                cpSelectedKey = m.key;
+                let fullDisplayVal = nameStr + centreStr;
+                document.getElementById('cp-search-name').value = fullDisplayVal;
+                let displayElem = document.getElementById('cp-selected-display');
+                if (displayElem) displayElem.value = fullDisplayVal;
                 resultsBox.classList.add('hidden');
-                return;
-            }
-            let matches = [];
-            for (let key in allParticipants) {
-                let p = allParticipants[key];
-                let pName = (p.ps_name || "").toLowerCase();
-                if (pName.includes(query)) {
-                    matches.push({ key: key, data: p });
-                }
-            }
-            if (matches.length > 0) {
-                resultsBox.classList.remove('hidden');
-                matches.forEach(m => {
-                    let div = document.createElement('div');
-                    div.className = "px-4 py-2 hover:bg-indigo-50 cursor-pointer text-sm border-b bg-white";
-                    div.innerText = m.data.ps_name;
-                    div.onclick = () => {
-                        rpSelectedKey = m.key;
-                        document.getElementById('rp-search-name').value = m.data.ps_name;
-                        document.getElementById('rp-selected-display').value = m.data.ps_name;
-                        resultsBox.classList.add('hidden');
-                    };
-                    resultsBox.appendChild(div);
-                });
-            } else {
-                resultsBox.classList.add('hidden');
-            }
-        }
-
-
-
-
-        function submitResetPassword() {
-            if (!rpSelectedKey || !allParticipants[rpSelectedKey]) {
-                const typedName = document.getElementById('rp-search-name').value.trim().toLowerCase();
-                for (let key in allParticipants) {
-                    if (allParticipants[key].name && allParticipants[key].name.toLowerCase() === typedName) {
-                        rpSelectedKey = key;
-                        break;
-                    }
-                }
-            }
-
-            if (!rpSelectedKey || !allParticipants[rpSelectedKey]) {
-                showCustomAlert("Please search and select a valid participant.");
-                return;
-            }
-
-            let payload = {
-                password: "123456",
-                fieldupdated: "password",
-                lastsyntimestamp: new Date().toLocaleString()
             };
+            resultsBox.appendChild(div);
+        });
+    } else {
+        resultsBox.classList.add('hidden');
+    }
+}
 
-            db.ref('control_tower/participants/' + rpSelectedKey).update(payload).then(() => {
-                showCustomAlert("Password reset to 123456");
-                allParticipants[rpSelectedKey].password = "123456";
-                showLoginScreen();
-            }).catch(err => {
-                showCustomAlert("Failed to reset password: " + err);
-            });
+function submitChangePassword() {
+    if (!cpSelectedKey || !allParticipants[cpSelectedKey]) {
+        const typedName = document.getElementById('cp-search-name').value.trim().toLowerCase();
+        for (let key in allParticipants) {
+            let pName = allParticipants[key].ps_name ? allParticipants[key].ps_name.toLowerCase() : (allParticipants[key].name ? allParticipants[key].name.toLowerCase() : "");
+            if (pName && typedName.includes(pName)) {
+                cpSelectedKey = key;
+                break;
+            }
         }
+    }
+
+    if (!cpSelectedKey || !allParticipants[cpSelectedKey]) {
+        showCustomAlert("Please search and select a valid participant.");
+        return;
+    }
+
+    const currentPass = document.getElementById('cp-current-password').value.trim();
+    const newPass = document.getElementById('cp-new-password').value.trim();
+    const confirmPass = document.getElementById('cp-confirm-password').value.trim();
+    
+    if (!currentPass || !newPass || !confirmPass) {
+        showCustomAlert("Please fill in all password fields.");
+        return;
+    }
+    if (newPass !== confirmPass) {
+        showCustomAlert("New password and confirm password do not match.");
+        return;
+    }
+    let user = allParticipants[cpSelectedKey];
+    let storedPass = user.password ? user.password.toString() : "123456";
+    if (currentPass !== storedPass) {
+        showCustomAlert("Current password is incorrect.");
+        return;
+    }
+
+    let payload = {
+        password: newPass,
+        fieldupdated: "password",
+        lastsyntimestamp: new Date().toLocaleString()
+    };
+
+    db.ref('control_tower/participants/' + cpSelectedKey).update(payload).then(() => {
+        showCustomAlert("Password successfully updated!");
+        allParticipants[cpSelectedKey].password = newPass;
+        showLoginScreen();
+    }).catch(err => {
+        showCustomAlert("Failed to update password: " + err);
+    });
+}
+
+function filterResetPasswordParticipants() {
+    const query = document.getElementById('rp-search-name').value.toLowerCase();
+    const resultsBox = document.getElementById('rp-search-results');
+    resultsBox.innerHTML = '';
+    if (query.length < 3) {
+        resultsBox.classList.add('hidden');
+        return;
+    }
+    let matches = [];
+    for (let key in allParticipants) {
+        let p = allParticipants[key];
+        let pName = (p.ps_name || "").toLowerCase();
+        if (pName.includes(query)) {
+            matches.push({ key: key, data: p });
+        }
+    }
+    if (matches.length > 0) {
+        resultsBox.classList.remove('hidden');
+        matches.forEach(m => {
+            let div = document.createElement('div');
+            div.className = "px-4 py-2 hover:bg-indigo-50 cursor-pointer text-sm border-b bg-white";
+            
+            // Added Centre display alongside Name for Reset Password
+            let nameStr = m.data.ps_name || "";
+            let centreStr = m.data.ps_centre ? ` (${m.data.ps_centre})` : "";
+            div.innerText = nameStr + centreStr;
+            
+            div.onclick = () => {
+                rpSelectedKey = m.key;
+                let fullDisplayVal = nameStr + centreStr;
+                document.getElementById('rp-search-name').value = fullDisplayVal;
+                let displayElem = document.getElementById('rp-selected-display');
+                if (displayElem) displayElem.value = fullDisplayVal;
+                resultsBox.classList.add('hidden');
+            };
+            resultsBox.appendChild(div);
+        });
+    } else {
+        resultsBox.classList.add('hidden');
+    }
+}
+
+function submitResetPassword() {
+    if (!rpSelectedKey || !allParticipants[rpSelectedKey]) {
+        const typedName = document.getElementById('rp-search-name').value.trim().toLowerCase();
+        for (let key in allParticipants) {
+            let pName = allParticipants[key].ps_name ? allParticipants[key].ps_name.toLowerCase() : (allParticipants[key].name ? allParticipants[key].name.toLowerCase() : "");
+            if (pName && typedName.includes(pName)) {
+                rpSelectedKey = key;
+                break;
+            }
+        }
+    }
+
+    if (!rpSelectedKey || !allParticipants[rpSelectedKey]) {
+        showCustomAlert("Please search and select a valid participant.");
+        return;
+    }
+
+    let payload = {
+        password: "123456",
+        fieldupdated: "password",
+        lastsyntimestamp: new Date().toLocaleString()
+    };
+
+    db.ref('control_tower/participants/' + rpSelectedKey).update(payload).then(() => {
+        showCustomAlert("Password reset to 123456");
+        allParticipants[rpSelectedKey].password = "123456";
+        showLoginScreen();
+    }).catch(err => {
+        showCustomAlert("Failed to reset password: " + err);
+    });
+}
+
+
+		
+
 
         
         function maskMobile(mob) {
