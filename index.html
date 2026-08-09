@@ -2174,7 +2174,9 @@ function evaluateWorkshopAccess(workshop) {
 		// Global variable to hold the country master list
 let countryMasterList = [];
 
-// Fetch Master List Country from Firebase
+
+
+// Updated function to extract clean display names from Firebase
 function fetchCountryMaster() {
     db.ref('control_tower/Master_List_Country').once('value').then(snapshot => {
         const data = snapshot.val();
@@ -2185,20 +2187,39 @@ function fetchCountryMaster() {
         let currentVal = countryDropdown.value;
         countryDropdown.innerHTML = '<option value="">Select Country</option>';
 
+        countryMasterList = [];
+
         if (data) {
-            // If data is an object map or an array, handle it gracefully
             if (Array.isArray(data)) {
                 countryMasterList = data.filter(Boolean);
             } else {
-                countryMasterList = Object.keys(data);
+                // If stored as child nodes (e.g. Saudi_Arabia: { country: "Saudi Arabia" } or just values)
+                Object.keys(data).forEach(key => {
+                    let val = data[key];
+                    let countryName = "";
+                    
+                    if (typeof val === 'object' && val !== null) {
+                        // If it contains a property like val.country or val.name
+                        countryName = val.country || val.name || key.replace(/_/g, " ");
+                    } else if (typeof val === 'string' && val.trim() !== "") {
+                        countryName = val;
+                    } else {
+                        // Fallback to formatting the node key back into a readable string
+                        countryName = key.replace(/_/g, " ");
+                    }
+                    
+                    if (countryName) {
+                        countryMasterList.push(countryName);
+                    }
+                });
             }
 
-            // Sort alphabetically just in case
+            // Sort alphabetically
             countryMasterList.sort();
 
             countryMasterList.forEach(country => {
                 let opt = document.createElement('option');
-                opt.value = country;
+                opt.value = country; // This will now be the clean text e.g. "Saudi Arabia"
                 opt.textContent = country;
                 countryDropdown.appendChild(opt);
             });
@@ -2209,6 +2230,8 @@ function fetchCountryMaster() {
     });
 }
 
+
+		
 // Handler when user changes country selection in the dropdown
 function onCountrySelected() {
     let countryDropdown = document.getElementById('update-profile-country');
