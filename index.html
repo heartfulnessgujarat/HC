@@ -1175,16 +1175,21 @@ function renderTSLaunchForm(workshop) {
         }
 
 
-
-
 function filterChangePasswordParticipants() {
-    const query = document.getElementById('cp-search-name').value.toLowerCase();
+    const queryInput = document.getElementById('cp-search-name');
+    const query = queryInput ? queryInput.value.toLowerCase().trim() : "";
+    const rawQuery = queryInput ? queryInput.value.trim() : "";
     const resultsBox = document.getElementById('cp-search-results');
+    const msgDiv = document.getElementById('cp-name-not-found-msg');
+
+    if (msgDiv) msgDiv.classList.add('hidden');
     resultsBox.innerHTML = '';
+    
     if (query.length < 3) {
         resultsBox.classList.add('hidden');
         return;
     }
+    
     let matches = [];
     for (let key in allParticipants) {
         let p = allParticipants[key];
@@ -1193,8 +1198,11 @@ function filterChangePasswordParticipants() {
             matches.push({ key: key, data: p });
         }
     }
+    
     if (matches.length > 0) {
         resultsBox.classList.remove('hidden');
+        if (msgDiv) msgDiv.classList.add('hidden');
+        
         matches.forEach(m => {
             let div = document.createElement('div');
             div.className = "px-4 py-2 hover:bg-indigo-50 cursor-pointer text-sm border-b bg-white";
@@ -1211,13 +1219,21 @@ function filterChangePasswordParticipants() {
                 let displayElem = document.getElementById('cp-selected-display');
                 if (displayElem) displayElem.value = fullDisplayVal;
                 resultsBox.classList.add('hidden');
+                if (msgDiv) msgDiv.classList.add('hidden');
             };
             resultsBox.appendChild(div);
         });
     } else {
         resultsBox.classList.add('hidden');
+        if (query.length >= 3 && msgDiv) {
+            msgDiv.textContent = `We couldn't find a record for name "${rawQuery}"... Kindly connect with the HC Admin Team for support.`;
+            msgDiv.classList.remove('hidden');
+        }
     }
 }
+
+		
+
 
 function submitChangePassword() {
     if (!cpSelectedKey || !allParticipants[cpSelectedKey]) {
@@ -1270,14 +1286,22 @@ function submitChangePassword() {
     });
 }
 
+
 function filterResetPasswordParticipants() {
-    const query = document.getElementById('rp-search-name').value.toLowerCase();
+    const queryInput = document.getElementById('rp-search-name');
+    const query = queryInput ? queryInput.value.toLowerCase().trim() : "";
+    const rawQuery = queryInput ? queryInput.value.trim() : "";
     const resultsBox = document.getElementById('rp-search-results');
+    const msgDiv = document.getElementById('rp-name-not-found-msg');
+
+    if (msgDiv) msgDiv.classList.add('hidden');
     resultsBox.innerHTML = '';
+    
     if (query.length < 3) {
         resultsBox.classList.add('hidden');
         return;
     }
+    
     let matches = [];
     for (let key in allParticipants) {
         let p = allParticipants[key];
@@ -1286,8 +1310,11 @@ function filterResetPasswordParticipants() {
             matches.push({ key: key, data: p });
         }
     }
+    
     if (matches.length > 0) {
         resultsBox.classList.remove('hidden');
+        if (msgDiv) msgDiv.classList.add('hidden');
+        
         matches.forEach(m => {
             let div = document.createElement('div');
             div.className = "px-4 py-2 hover:bg-indigo-50 cursor-pointer text-sm border-b bg-white";
@@ -1304,13 +1331,20 @@ function filterResetPasswordParticipants() {
                 let displayElem = document.getElementById('rp-selected-display');
                 if (displayElem) displayElem.value = fullDisplayVal;
                 resultsBox.classList.add('hidden');
+                if (msgDiv) msgDiv.classList.add('hidden');
             };
             resultsBox.appendChild(div);
         });
     } else {
         resultsBox.classList.add('hidden');
+        if (query.length >= 3 && msgDiv) {
+            msgDiv.textContent = `We couldn't find a record for name "${rawQuery}"... Kindly connect with the HC Admin Team for support.`;
+            msgDiv.classList.remove('hidden');
+        }
     }
 }
+		
+		
 
 function submitResetPassword() {
     if (!rpSelectedKey || !allParticipants[rpSelectedKey]) {
