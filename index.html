@@ -267,17 +267,16 @@
     </div>
 </div>
 
-<!-- Country Field -->
+<!-- Country Field (Dropdown) -->
 <div>
     <label class="block text-gray-700 text-[11px] font-bold mb-0.5">Country</label>
     <div class="flex items-center space-x-1.5">
-        <input type="text" id="update-profile-country" autocomplete="off" disabled class="w-full bg-gray-100 border rounded-md px-2.5 py-1 text-gray-600 cursor-not-allowed">
+        <select id="update-profile-country" disabled onchange="onCountrySelected()" class="w-full bg-gray-100 border rounded-md px-2.5 py-1 text-gray-600 cursor-not-allowed">
+            <option value="">Select Country</option>
+        </select>
         <button type="button" id="btn-country" onclick="enableField('country')" class="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold py-1.5 px-3 rounded-md transition flex-shrink-0">Edit</button>
     </div>
 </div>
-
-
-
 
 
 
