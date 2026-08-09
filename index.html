@@ -1448,9 +1448,13 @@ function logout() {
 
 		// state for international courty
 
-function openUpdateProfileModal() {
+
+		function openUpdateProfileModal() {
     if (!currentActiveUser) return;
     
+    // Fetch fresh country master list from Firebase and populate dropdown
+    fetchCountryMaster();
+
     // Check user country
     let countryVal = (currentActiveUser.ps_country || currentActiveUser.country || "India").toString().trim().toUpperCase();
     let isIndia = (countryVal === "INDIA" || countryVal === "IN");
@@ -1490,19 +1494,16 @@ function openUpdateProfileModal() {
     document.getElementById('update-profile-email').value = currentActiveUser.ps_email || "";
     document.getElementById('update-profile-centre').value = currentActiveUser.ps_centre || "";
 
-
-// --- ADDED COUNTRY POPULATION & LOCKING HERE ---
-    let countryInputElem = document.getElementById('update-profile-country');
-    if (countryInputElem) {
-        countryInputElem.value = currentActiveUser.ps_country || currentActiveUser.country || "India";
-        countryInputElem.disabled = true;
-        countryInputElem.classList.add('bg-gray-100', 'cursor-not-allowed');
-        countryInputElem.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
+    // --- COUNTRY POPULATION & LOCKING ---
+    let countryDropdown = document.getElementById('update-profile-country');
+    if (countryDropdown) {
+        countryDropdown.value = currentActiveUser.ps_country || currentActiveUser.country || "India";
+        countryDropdown.disabled = true;
+        countryDropdown.classList.add('bg-gray-100', 'cursor-not-allowed');
+        countryDropdown.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
     }
-    // -----------------------------------------------
+    // ------------------------------------
 
-
-    
     // Note: Zone is hidden per previous configuration
     // document.getElementById('update-profile-zone').value = currentActiveUser.ps_zone || ""; 
     
@@ -1512,17 +1513,13 @@ function openUpdateProfileModal() {
 		
 		
 		
-		
-		function closeUpdateProfileModal() {
+function closeUpdateProfileModal() {
     document.getElementById('update-profile-screen').classList.add('hidden');
     document.getElementById('dashboard-screen').classList.remove('hidden');
 }
 
 // Global variable to hold the zone-state master mapping
 let zoneStateMapping = {};
-
-
-
 
 
 // 1. Fetch Master List Zone State from Firebase when opening the profile modal
@@ -2171,7 +2168,75 @@ function evaluateWorkshopAccess(workshop) {
     return accessStatus;
 }
 		
-		
+		// Global variable to hold the country master list
+let countryMasterList = [];
+
+// Fetch Master List Country from Firebase
+function fetchCountryMaster() {
+    db.ref('control_tower/Master_List_Country').once('value').then(snapshot => {
+        const data = snapshot.val();
+        let countryDropdown = document.getElementById('update-profile-country');
+        if (!countryDropdown) return;
+
+        // Preserve current selected value if any
+        let currentVal = countryDropdown.value;
+        countryDropdown.innerHTML = '<option value="">Select Country</option>';
+
+        if (data) {
+            // If data is an object map or an array, handle it gracefully
+            if (Array.isArray(data)) {
+                countryMasterList = data.filter(Boolean);
+            } else {
+                countryMasterList = Object.keys(data);
+            }
+
+            // Sort alphabetically just in case
+            countryMasterList.sort();
+
+            countryMasterList.forEach(country => {
+                let opt = document.createElement('option');
+                opt.value = country;
+                opt.textContent = country;
+                countryDropdown.appendChild(opt);
+            });
+        }
+        countryDropdown.value = currentVal;
+    }).catch(error => {
+        console.error("Error fetching country master:", error);
+    });
+}
+
+// Handler when user changes country selection in the dropdown
+function onCountrySelected() {
+    let countryDropdown = document.getElementById('update-profile-country');
+    if (!countryDropdown) return;
+    let selectedCountry = countryDropdown.value.trim().toUpperCase();
+    let isIndia = (selectedCountry === "INDIA" || selectedCountry === "IN");
+
+    let stateDropdown = document.getElementById('update-profile-state');
+    let stateTextInput = document.getElementById('update-profile-state-text');
+
+    if (isIndia) {
+        if (stateDropdown) stateDropdown.classList.remove('hidden');
+        if (stateTextInput) stateTextInput.classList.add('hidden');
+        if (Object.keys(zoneStateMapping).length === 0) {
+            fetchZoneStateMaster();
+        }
+    } else {
+        if (stateDropdown) stateDropdown.classList.add('hidden');
+        if (stateTextInput) {
+            stateTextInput.classList.remove('hidden');
+            if (!stateTextInput.value) stateTextInput.value = "";
+        }
+    }
+
+    let saveBtn = document.getElementById('save-profile-btn');
+    if (saveBtn && !document.getElementById('update-profile-country').disabled) {
+        saveBtn.disabled = false;
+        saveBtn.classList.remove('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+        saveBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700', 'text-white', 'cursor-pointer');
+    }
+}
 
 
 
