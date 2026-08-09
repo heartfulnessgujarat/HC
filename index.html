@@ -516,14 +516,14 @@ let inactivityTimer;
 
 function resetInactivityTimer() {
     clearTimeout(inactivityTimer);
-    // 10 minutes = 600,00 milliseconds[cite: 1]
+    // 10 minutes = 600,000 milliseconds[cite: 1]
     inactivityTimer = setTimeout(() => {
         if (typeof logoutUser === 'function') {
             logoutUser();
         } else {
             location.reload(); 
         }
-    }, 60000);
+    }, 600000);
 }
 
 // Bind activity listeners to reset timer on interaction[cite: 1]
