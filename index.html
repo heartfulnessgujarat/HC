@@ -1567,6 +1567,7 @@ function onStateSelected() {
     }
 }
 
+
 // 4. Existing Save Profile Changes function with Zone & State logic intact
 function saveProfileChanges() {
     if (!currentActiveUser) return;
@@ -1588,9 +1589,18 @@ function saveProfileChanges() {
     let newEmail = emailInput.value.trim();
     let newCentre = document.getElementById('update-profile-centre').value.trim();
 
-	// the below line was removed to remove zone from view
-//    let newZone = document.getElementById('update-profile-zone').value.trim();
-    let newState = document.getElementById('update-profile-state').value.trim();
+    // Dynamically grab state depending on whether user is from India or International
+    let countryVal = (currentActiveUser.ps_country || currentActiveUser.country || "India").toString().trim().toUpperCase();
+    let isIndia = (countryVal === "INDIA" || countryVal === "IN");
+    
+    let newState = "";
+    if (isIndia) {
+        let stateDropdown = document.getElementById('update-profile-state');
+        newState = stateDropdown ? stateDropdown.value.trim() : "";
+    } else {
+        let stateTextInput = document.getElementById('update-profile-state-text');
+        newState = stateTextInput ? stateTextInput.value.trim() : "";
+    }
     
     // Build payload dynamically by comparing with currentActiveUser to track exact changes
     let payload = {};
@@ -1609,13 +1619,6 @@ function saveProfileChanges() {
         updatedFieldsList.push("ps_centre");                
     }
 
-	// below 4 lines were removed to remove zone from view
-//    if (newZone !== (currentActiveUser.ps_zone || "")) {
-//        payload.ps_zone = newZone;
- //       updatedFieldsList.push("ps_zone");
- //   }
-
-	
     if (newState !== (currentActiveUser.ps_state || "")) {
         payload.ps_state = newState;
         updatedFieldsList.push("ps_state");
@@ -1640,10 +1643,6 @@ function saveProfileChanges() {
         currentActiveUser.ps_mob = newMob;
         currentActiveUser.ps_email = newEmail;
         currentActiveUser.ps_centre = newCentre;
-
-		// below line was removed for removing zone
-		
-//        currentActiveUser.ps_zone = newZone;
         currentActiveUser.ps_state = newState;
         
         if (statusDiv) statusDiv.classList.add('hidden');
@@ -1656,7 +1655,11 @@ function saveProfileChanges() {
         showCustomAlert("Firebase update error: " + err);
     });
 }
-        
+
+
+
+
+		
 
 function enableField(fieldType) {
     // Resolve correct element if field is 'state'
