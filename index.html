@@ -60,7 +60,9 @@
                 <span id="login-workshop-name" class="text-[10px] uppercase tracking-widest bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full font-semibold">--</span>
             </div>
             <h2 class="text-base sm:text-lg font-bold text-gray-800 mb-2 text-center">Participant Login</h2>
-            
+
+
+			
             <div class="mb-2 relative">
                 <label class="block text-gray-700 text-[11px] font-bold mb-0.5">Type your name in English (at least 3 letters):</label>
                 <input type="text" id="search-name" autocomplete="off" placeholder="Type here.." class="w-full px-2.5 py-1 text-xs border rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500" oninput="filterParticipants()">
@@ -266,7 +268,11 @@
                     </div>
                 </div>
 
-             <!-- Zone Field (Cascading Dropdown) -->
+
+				<!-- Zone Field (Cascading Dropdown) TEMPORARILY COMMENTED OUT -->
+    <!--
+				
+				<!-- Zone Field (Cascading Dropdown) -->
     <div>
         <label class="block text-gray-700 text-[11px] font-bold mb-0.5">Zone</label>
         <div class="flex items-center space-x-1.5">
@@ -277,7 +283,7 @@
         </div>
         <p class="text-[10px] text-gray-500 italic mt-0.5">Kindly select a State first to view its available Zones.</p>
     </div>
-
+-->
 
 
 
@@ -566,7 +572,7 @@ function renderDashboard() {
            <div><strong>Mobile Number:</strong> ${pMob}</div>
            <div><strong>Email Address:</strong> ${pEmail}</div>
            <div><strong>Centre:</strong> ${pCentre}</div>
-           <div><strong>Zone:</strong> ${pZone}</div>
+         <!--  <div><strong>Zone:</strong> ${pZone}</div> -->
            <div><strong>State:</strong> ${pState}</div>
         </div>
     `;
@@ -1431,7 +1437,8 @@ function openUpdateProfileModal() {
             
             // Note: After fetchZoneStateMaster completes, the dropdown values 
             // for zone and state will automatically match currentActiveUser
-            document.getElementById('update-profile-zone').value = currentActiveUser.ps_zone || ""; 
+	// below line was commented out to remove view of zone.
+        //    document.getElementById('update-profile-zone').value = currentActiveUser.ps_zone || ""; 
             document.getElementById('update-profile-state').value = currentActiveUser.ps_state || "";
             
             document.getElementById('dashboard-screen').classList.add('hidden');
@@ -1529,7 +1536,9 @@ function saveProfileChanges() {
     let newMob = document.getElementById('update-profile-mob').value.trim();
     let newEmail = emailInput.value.trim();
     let newCentre = document.getElementById('update-profile-centre').value.trim();
-    let newZone = document.getElementById('update-profile-zone').value.trim();
+
+	// the below line was removed to remove zone from view
+//    let newZone = document.getElementById('update-profile-zone').value.trim();
     let newState = document.getElementById('update-profile-state').value.trim();
     
     // Build payload dynamically by comparing with currentActiveUser to track exact changes
@@ -1548,10 +1557,14 @@ function saveProfileChanges() {
         payload.ps_centre = newCentre;
         updatedFieldsList.push("ps_centre");                
     }
-    if (newZone !== (currentActiveUser.ps_zone || "")) {
-        payload.ps_zone = newZone;
-        updatedFieldsList.push("ps_zone");
-    }
+
+	// below 4 lines were removed to remove zone from view
+//    if (newZone !== (currentActiveUser.ps_zone || "")) {
+//        payload.ps_zone = newZone;
+ //       updatedFieldsList.push("ps_zone");
+ //   }
+
+	
     if (newState !== (currentActiveUser.ps_state || "")) {
         payload.ps_state = newState;
         updatedFieldsList.push("ps_state");
@@ -1576,7 +1589,10 @@ function saveProfileChanges() {
         currentActiveUser.ps_mob = newMob;
         currentActiveUser.ps_email = newEmail;
         currentActiveUser.ps_centre = newCentre;
-        currentActiveUser.ps_zone = newZone;
+
+		// below line was removed for removing zone
+		
+//        currentActiveUser.ps_zone = newZone;
         currentActiveUser.ps_state = newState;
         
         if (statusDiv) statusDiv.classList.add('hidden');
