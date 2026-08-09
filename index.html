@@ -1512,39 +1512,39 @@ function logout() {
 		// state for international courty
 
 
-		function openUpdateProfileModal() {
+function openUpdateProfileModal() {
     if (!currentActiveUser) return;
     
-    // Fetch fresh country master list from Firebase and populate dropdown
-    fetchCountryMaster();
+    // Determine user country
+    let userCountry = (currentActiveUser.ps_country || currentActiveUser.country || "India").toString().trim();
 
-    // Check user country
-    let countryVal = (currentActiveUser.ps_country || currentActiveUser.country || "India").toString().trim().toUpperCase();
+    // Fetch fresh country master list from Firebase and automatically select user's country
+    fetchCountryMaster(userCountry);
+
+    // Check user country for state logic
+    let countryVal = userCountry.toUpperCase();
     let isIndia = (countryVal === "INDIA" || countryVal === "IN");
 
     let stateDropdown = document.getElementById('update-profile-state');
     let stateTextInput = document.getElementById('update-profile-state-text');
 
     if (isIndia) {
-        // Show dropdown, hide text box, and fetch master list for India
         if (stateDropdown) {
             stateDropdown.classList.remove('hidden');
-            stateDropdown.disabled = true; // Ensure locked by default
+            stateDropdown.disabled = true;
             stateDropdown.classList.add('bg-gray-100', 'cursor-not-allowed');
             stateDropdown.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
         }
         if (stateTextInput) stateTextInput.classList.add('hidden');
         
-        // Fetch fresh state and zone master list from Firebase and populate dropdowns
         fetchZoneStateMaster();
         
         if (stateDropdown) stateDropdown.value = currentActiveUser.ps_state || "";
     } else {
-        // Hide India dropdown, show free-text input for international users
         if (stateDropdown) stateDropdown.classList.add('hidden');
         if (stateTextInput) {
             stateTextInput.classList.remove('hidden');
-            stateTextInput.disabled = true; // Ensure locked by default
+            stateTextInput.disabled = true;
             stateTextInput.classList.add('bg-gray-100', 'cursor-not-allowed');
             stateTextInput.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
             stateTextInput.value = currentActiveUser.ps_state || "";
@@ -1557,27 +1557,11 @@ function logout() {
     document.getElementById('update-profile-email').value = currentActiveUser.ps_email || "";
     document.getElementById('update-profile-centre').value = currentActiveUser.ps_centre || "";
 
-   // --- COUNTRY POPULATION & LOCKING ---
-    let userCountry = currentActiveUser.ps_country || currentActiveUser.country || "India";
-    
-    setTimeout(() => {
-        let countryDropdown = document.getElementById('update-profile-country');
-        if (countryDropdown) {
-            countryDropdown.value = userCountry;
-            countryDropdown.disabled = true;
-            countryDropdown.classList.add('bg-gray-100', 'cursor-not-allowed');
-            countryDropdown.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
-        }
-    }, 300); // Gives Firebase 300ms to populate the dropdown options first
-    // ------------------------------------
-
-    // Note: Zone is hidden per previous configuration
-    // document.getElementById('update-profile-zone').value = currentActiveUser.ps_zone || ""; 
-    
     document.getElementById('dashboard-screen').classList.add('hidden');
     document.getElementById('update-profile-screen').classList.remove('hidden');
 }
-		
+
+
 		
 function closeUpdateProfileModal() {
     document.getElementById('update-profile-screen').classList.add('hidden');
@@ -2241,36 +2225,29 @@ function evaluateWorkshopAccess(workshop) {
 let countryMasterList = [];
 
 
-
-// Updated function to extract clean display names from Firebase
-function fetchCountryMaster() {
+// Updated function to extract clean display names from Firebase and set target value
+function fetchCountryMaster(targetCountry = "") {
     db.ref('control_tower/Master_List_Country').once('value').then(snapshot => {
         const data = snapshot.val();
         let countryDropdown = document.getElementById('update-profile-country');
         if (!countryDropdown) return;
 
-        // Preserve current selected value if any
-        let currentVal = countryDropdown.value;
         countryDropdown.innerHTML = '<option value="">Select Country</option>';
-
         countryMasterList = [];
 
         if (data) {
             if (Array.isArray(data)) {
                 countryMasterList = data.filter(Boolean);
             } else {
-                // If stored as child nodes (e.g. Saudi_Arabia: { country: "Saudi Arabia" } or just values)
                 Object.keys(data).forEach(key => {
                     let val = data[key];
                     let countryName = "";
                     
                     if (typeof val === 'object' && val !== null) {
-                        // If it contains a property like val.country or val.name
                         countryName = val.country || val.name || key.replace(/_/g, " ");
                     } else if (typeof val === 'string' && val.trim() !== "") {
                         countryName = val;
                     } else {
-                        // Fallback to formatting the node key back into a readable string
                         countryName = key.replace(/_/g, " ");
                     }
                     
@@ -2285,12 +2262,16 @@ function fetchCountryMaster() {
 
             countryMasterList.forEach(country => {
                 let opt = document.createElement('option');
-                opt.value = country; // This will now be the clean text e.g. "Saudi Arabia"
+                opt.value = country;
                 opt.textContent = country;
                 countryDropdown.appendChild(opt);
             });
         }
-        countryDropdown.value = currentVal;
+
+        // Set the target country if provided, otherwise fallback to existing value or India
+        let finalCountry = targetCountry || countryDropdown.value || "India";
+        countryDropdown.value = finalCountry;
+
     }).catch(error => {
         console.error("Error fetching country master:", error);
     });
