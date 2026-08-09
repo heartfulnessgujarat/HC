@@ -1438,7 +1438,6 @@ function logout() {
 
 		// state for international courty
 
-
 function openUpdateProfileModal() {
     if (!currentActiveUser) return;
     
@@ -1451,7 +1450,12 @@ function openUpdateProfileModal() {
 
     if (isIndia) {
         // Show dropdown, hide text box, and fetch master list for India
-        if (stateDropdown) stateDropdown.classList.remove('hidden');
+        if (stateDropdown) {
+            stateDropdown.classList.remove('hidden');
+            stateDropdown.disabled = true; // Ensure locked by default
+            stateDropdown.classList.add('bg-gray-100', 'cursor-not-allowed');
+            stateDropdown.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
+        }
         if (stateTextInput) stateTextInput.classList.add('hidden');
         
         // Fetch fresh state and zone master list from Firebase and populate dropdowns
@@ -1463,6 +1467,9 @@ function openUpdateProfileModal() {
         if (stateDropdown) stateDropdown.classList.add('hidden');
         if (stateTextInput) {
             stateTextInput.classList.remove('hidden');
+            stateTextInput.disabled = true; // Ensure locked by default
+            stateTextInput.classList.add('bg-gray-100', 'cursor-not-allowed');
+            stateTextInput.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
             stateTextInput.value = currentActiveUser.ps_state || "";
         }
     }
@@ -1479,8 +1486,11 @@ function openUpdateProfileModal() {
     document.getElementById('dashboard-screen').classList.add('hidden');
     document.getElementById('update-profile-screen').classList.remove('hidden');
 }
-
-function closeUpdateProfileModal() {
+		
+		
+		
+		
+		function closeUpdateProfileModal() {
     document.getElementById('update-profile-screen').classList.add('hidden');
     document.getElementById('dashboard-screen').classList.remove('hidden');
 }
@@ -1646,7 +1656,18 @@ function saveProfileChanges() {
         
 
 function enableField(fieldType) {
+    // Resolve correct element if field is 'state'
     let inputElem = document.getElementById('update-profile-' + fieldType);
+    if (fieldType === 'state') {
+        let dropdown = document.getElementById('update-profile-state');
+        let textInput = document.getElementById('update-profile-state-text');
+        if (dropdown && !dropdown.classList.contains('hidden')) {
+            inputElem = dropdown;
+        } else if (textInput && !textInput.classList.contains('hidden')) {
+            inputElem = textInput;
+        }
+    }
+
     let btnElem = document.getElementById('btn-' + fieldType);
     if (!inputElem || !btnElem) return;
     
@@ -1677,10 +1698,9 @@ function enableField(fieldType) {
             if (!validateEmailFormat(val)) {
                 showCustomAlert("Please check the email entered by you. It does not have a proper format (missing '@' or domain).");
                 inputElem.focus();
-                return; // Keep open until valid format is provided
+                return; 
             }
             
-            // Lock field back down visually
             inputElem.disabled = true;
             inputElem.classList.add('bg-gray-100', 'cursor-not-allowed');
             inputElem.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
@@ -1689,52 +1709,34 @@ function enableField(fieldType) {
             btnElem.classList.remove('bg-green-600', 'hover:bg-green-700', 'text-white');
             btnElem.classList.add('bg-indigo-600', 'hover:bg-indigo-700', 'text-white');
             
-            // Grab the participant's name dynamically from the name input field or display element
             let nameInput = document.getElementById('update-profile-name') || document.getElementById('profile-name-input');
             let psName = nameInput ? nameInput.value.trim() : "";
-            
-            // Fallback: If name isn't an input field, try reading it from the profile text heading
             if (!psName) {
                 let nameDisplay = document.body.innerText.match(/Name:\s*([^\n]+)/);
                 psName = (nameDisplay && nameDisplay[1]) ? nameDisplay[1].trim() : "Participant";
             }
 
-            // Trigger email verification dispatch safely with both the email and the resolved name
             triggerEmailVerification(val, psName);
 
-
-
-
-// included international mobile number 
-
-			} else if (fieldType === 'mob') {
-            // Check if the user's country is India (defaulting to India if field is missing)
+        } else if (fieldType === 'mob') {
             let countryVal = (currentActiveUser.ps_country || currentActiveUser.country || "India").toString().trim().toUpperCase();
             let isIndia = (countryVal === "INDIA" || countryVal === "IN");
 
             if (isIndia) {
-                // Validate Indian mobile number (e.g., 10 digits starting with 6-9, or optional +91 prefix)
                 const mobileRegex = /^(\+91[\-\s]?)?[6-9]\d{9}$/;
                 if (!mobileRegex.test(val)) {
                     showCustomAlert("Please enter a valid 10-digit Indian mobile number starting with digits 6 through 9.");
                     inputElem.focus();
-                    return; // Keep open until valid format is provided
+                    return; 
                 }
             } else {
-                // Relaxed validation for international participants (e.g., just checks that it's not empty and has a reasonable length)
                 if (!val || val.length < 5) {
                     showCustomAlert("Please enter a valid contact number.");
                     inputElem.focus();
                     return;
                 }
             }
-			
-         
-
-
-
-			
-            // Lock field back down visually
+            
             inputElem.disabled = true;
             inputElem.classList.add('bg-gray-100', 'cursor-not-allowed');
             inputElem.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
@@ -1771,6 +1773,8 @@ function enableField(fieldType) {
 }
 
 
+
+		
 function triggerEmailVerification(emailVal, userName) {
     let statusElem = document.getElementById('profile-update-status');
     statusElem.textContent = "Sending verification code to " + emailVal + "... Please wait.";
