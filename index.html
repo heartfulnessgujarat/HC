@@ -526,6 +526,7 @@ function resetInactivityTimer() {
 });
 
 
+
 function filterParticipants() {
     const queryInput = document.getElementById('search-name');
     const query = queryInput ? queryInput.value.toLowerCase().trim() : "";
@@ -580,15 +581,14 @@ function filterParticipants() {
         });
     } else {
         resultsBox.classList.add('hidden');
-        // If 3 or more characters typed and no matches found, show the custom inline warning message
+        // If 3 or more characters typed and no matches found, show the NVC-flavored warning message
         if (query.length >= 3 && msgDiv) {
-            msgDiv.textContent = `Name having "${rawQuery}" is not in our records... Kindly contact HC Admin Team`;
+            msgDiv.textContent = `We couldn't find a record for name "${rawQuery}"... Kindly connect with the HC Admin Team for support.`;
             msgDiv.classList.remove('hidden');
         }
     }
 }
-
-
+		
 		
 
 
