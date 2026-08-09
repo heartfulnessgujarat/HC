@@ -1434,36 +1434,63 @@ function logout() {
             document.getElementById('custom-alert-modal').classList.add('hidden');
         }
 
+
+
+		// state for international courty
+
+
 function openUpdateProfileModal() {
-            if (!currentActiveUser) return;
-            
-            // Fetch fresh state and zone master list from Firebase and populate dropdowns
-            fetchZoneStateMaster();
-            
-            document.getElementById('update-profile-name').value = currentActiveUser.ps_name || "";
-            document.getElementById('update-profile-id').value = currentActiveUser.ps_id || "";
-            document.getElementById('update-profile-mob').value = currentActiveUser.ps_mob || "";
-            document.getElementById('update-profile-email').value = currentActiveUser.ps_email || "";
-            document.getElementById('update-profile-centre').value = currentActiveUser.ps_centre || "";
-            
-            // Note: After fetchZoneStateMaster completes, the dropdown values 
-            // for zone and state will automatically match currentActiveUser
-	// below line was commented out to remove view of zone.
-        //    document.getElementById('update-profile-zone').value = currentActiveUser.ps_zone || ""; 
-            document.getElementById('update-profile-state').value = currentActiveUser.ps_state || "";
-            
-            document.getElementById('dashboard-screen').classList.add('hidden');
-            document.getElementById('update-profile-screen').classList.remove('hidden');
-        }
+    if (!currentActiveUser) return;
+    
+    // Check user country
+    let countryVal = (currentActiveUser.ps_country || currentActiveUser.country || "India").toString().trim().toUpperCase();
+    let isIndia = (countryVal === "INDIA" || countryVal === "IN");
 
-        function closeUpdateProfileModal() {
-            document.getElementById('update-profile-screen').classList.add('hidden');
-            document.getElementById('dashboard-screen').classList.remove('hidden');
-        }
+    let stateDropdown = document.getElementById('update-profile-state');
+    let stateTextInput = document.getElementById('update-profile-state-text');
 
-     
+    if (isIndia) {
+        // Show dropdown, hide text box, and fetch master list for India
+        if (stateDropdown) stateDropdown.classList.remove('hidden');
+        if (stateTextInput) stateTextInput.classList.add('hidden');
+        
+        // Fetch fresh state and zone master list from Firebase and populate dropdowns
+        fetchZoneStateMaster();
+        
+        if (stateDropdown) stateDropdown.value = currentActiveUser.ps_state || "";
+    } else {
+        // Hide India dropdown, show free-text input for international users
+        if (stateDropdown) stateDropdown.classList.add('hidden');
+        if (stateTextInput) {
+            stateTextInput.classList.remove('hidden');
+            stateTextInput.value = currentActiveUser.ps_state || "";
+        }
+    }
+    
+    document.getElementById('update-profile-name').value = currentActiveUser.ps_name || "";
+    document.getElementById('update-profile-id').value = currentActiveUser.ps_id || "";
+    document.getElementById('update-profile-mob').value = currentActiveUser.ps_mob || "";
+    document.getElementById('update-profile-email').value = currentActiveUser.ps_email || "";
+    document.getElementById('update-profile-centre').value = currentActiveUser.ps_centre || "";
+    
+    // Note: Zone is hidden per previous configuration
+    // document.getElementById('update-profile-zone').value = currentActiveUser.ps_zone || ""; 
+    
+    document.getElementById('dashboard-screen').classList.add('hidden');
+    document.getElementById('update-profile-screen').classList.remove('hidden');
+}
+
+function closeUpdateProfileModal() {
+    document.getElementById('update-profile-screen').classList.add('hidden');
+    document.getElementById('dashboard-screen').classList.remove('hidden');
+}
+
 // Global variable to hold the zone-state master mapping
 let zoneStateMapping = {};
+
+
+
+
 
 // 1. Fetch Master List Zone State from Firebase when opening the profile modal
 function fetchZoneStateMaster() {
