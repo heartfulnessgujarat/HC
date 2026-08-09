@@ -1557,14 +1557,18 @@ function logout() {
     document.getElementById('update-profile-email').value = currentActiveUser.ps_email || "";
     document.getElementById('update-profile-centre').value = currentActiveUser.ps_centre || "";
 
-    // --- COUNTRY POPULATION & LOCKING ---
-    let countryDropdown = document.getElementById('update-profile-country');
-    if (countryDropdown) {
-        countryDropdown.value = currentActiveUser.ps_country || currentActiveUser.country || "India";
-        countryDropdown.disabled = true;
-        countryDropdown.classList.add('bg-gray-100', 'cursor-not-allowed');
-        countryDropdown.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
-    }
+   // --- COUNTRY POPULATION & LOCKING ---
+    let userCountry = currentActiveUser.ps_country || currentActiveUser.country || "India";
+    
+    setTimeout(() => {
+        let countryDropdown = document.getElementById('update-profile-country');
+        if (countryDropdown) {
+            countryDropdown.value = userCountry;
+            countryDropdown.disabled = true;
+            countryDropdown.classList.add('bg-gray-100', 'cursor-not-allowed');
+            countryDropdown.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
+        }
+    }, 300); // Gives Firebase 300ms to populate the dropdown options first
     // ------------------------------------
 
     // Note: Zone is hidden per previous configuration
@@ -1573,7 +1577,6 @@ function logout() {
     document.getElementById('dashboard-screen').classList.add('hidden');
     document.getElementById('update-profile-screen').classList.remove('hidden');
 }
-		
 		
 		
 function closeUpdateProfileModal() {
