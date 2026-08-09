@@ -207,15 +207,7 @@
         </div>
 
 
-
-
-
-
-
-
-
-
-		
+	
         <!-- SCREEN 5: UPDATE PROFILE SCREEN -->
         <div id="update-profile-screen" class="bg-white rounded-lg shadow-md p-3 sm:p-4 mt-1 hidden text-xs">
             <h2 class="text-base font-bold text-gray-800 mb-2.5 text-center">Update Profile Details</h2>
@@ -275,7 +267,23 @@
     </div>
 </div>
 
-			
+<!-- Country Field -->
+<div>
+    <label class="block text-gray-700 text-[11px] font-bold mb-0.5">Country</label>
+    <div class="flex items-center space-x-1.5">
+        <input type="text" id="update-profile-country" autocomplete="off" disabled class="w-full bg-gray-100 border rounded-md px-2.5 py-1 text-gray-600 cursor-not-allowed">
+        <button type="button" id="btn-country" onclick="enableField('country')" class="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold py-1.5 px-3 rounded-md transition flex-shrink-0">Edit</button>
+    </div>
+</div>
+
+
+
+
+
+
+
+
+				
 				<!-- Zone Field (Cascading Dropdown) -->
 
 
@@ -1482,6 +1490,19 @@ function openUpdateProfileModal() {
     document.getElementById('update-profile-mob').value = currentActiveUser.ps_mob || "";
     document.getElementById('update-profile-email').value = currentActiveUser.ps_email || "";
     document.getElementById('update-profile-centre').value = currentActiveUser.ps_centre || "";
+
+
+// --- ADDED COUNTRY POPULATION & LOCKING HERE ---
+    let countryInputElem = document.getElementById('update-profile-country');
+    if (countryInputElem) {
+        countryInputElem.value = currentActiveUser.ps_country || currentActiveUser.country || "India";
+        countryInputElem.disabled = true;
+        countryInputElem.classList.add('bg-gray-100', 'cursor-not-allowed');
+        countryInputElem.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
+    }
+    // -----------------------------------------------
+
+
     
     // Note: Zone is hidden per previous configuration
     // document.getElementById('update-profile-zone').value = currentActiveUser.ps_zone || ""; 
@@ -1588,10 +1609,10 @@ function saveProfileChanges() {
     let newMob = document.getElementById('update-profile-mob').value.trim();
     let newEmail = emailInput.value.trim();
     let newCentre = document.getElementById('update-profile-centre').value.trim();
+    let newCountry = document.getElementById('update-profile-country').value.trim();
 
-    // Dynamically grab state depending on whether user is from India or International
-    let countryVal = (currentActiveUser.ps_country || currentActiveUser.country || "India").toString().trim().toUpperCase();
-    let isIndia = (countryVal === "INDIA" || countryVal === "IN");
+    // Dynamically grab state depending on whether the newly entered country is India or International
+    let isIndia = (newCountry.toUpperCase() === "INDIA" || newCountry.toUpperCase() === "IN");
     
     let newState = "";
     if (isIndia) {
@@ -1618,7 +1639,10 @@ function saveProfileChanges() {
         payload.ps_centre = newCentre;
         updatedFieldsList.push("ps_centre");                
     }
-
+    if (newCountry !== (currentActiveUser.ps_country || currentActiveUser.country || "")) {
+        payload.ps_country = newCountry;
+        updatedFieldsList.push("ps_country");
+    }
     if (newState !== (currentActiveUser.ps_state || "")) {
         payload.ps_state = newState;
         updatedFieldsList.push("ps_state");
@@ -1643,6 +1667,7 @@ function saveProfileChanges() {
         currentActiveUser.ps_mob = newMob;
         currentActiveUser.ps_email = newEmail;
         currentActiveUser.ps_centre = newCentre;
+        currentActiveUser.ps_country = newCountry;
         currentActiveUser.ps_state = newState;
         
         if (statusDiv) statusDiv.classList.add('hidden');
@@ -1659,10 +1684,10 @@ function saveProfileChanges() {
 
 
 
-		
 
+		
 function enableField(fieldType) {
-    // Resolve correct element if field is 'state'
+    // Resolve correct element if field is 'state' or 'country'
     let inputElem = document.getElementById('update-profile-' + fieldType);
     if (fieldType === 'state') {
         let dropdown = document.getElementById('update-profile-state');
@@ -1725,7 +1750,7 @@ function enableField(fieldType) {
             triggerEmailVerification(val, psName);
 
         } else if (fieldType === 'mob') {
-            let countryVal = (currentActiveUser.ps_country || currentActiveUser.country || "India").toString().trim().toUpperCase();
+            let countryVal = document.getElementById('update-profile-country') ? document.getElementById('update-profile-country').value.trim().toUpperCase() : (currentActiveUser.ps_country || currentActiveUser.country || "India").toString().trim().toUpperCase();
             let isIndia = (countryVal === "INDIA" || countryVal === "IN");
 
             if (isIndia) {
@@ -1758,6 +1783,48 @@ function enableField(fieldType) {
                 saveBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700', 'text-white', 'cursor-pointer');
             }
             
+        } else if (fieldType === 'country') {
+            // Validate country is not empty
+            if (!val) {
+                showCustomAlert("Country cannot be empty.");
+                inputElem.focus();
+                return;
+            }
+
+            inputElem.disabled = true;
+            inputElem.classList.add('bg-gray-100', 'cursor-not-allowed');
+            inputElem.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
+            
+            btnElem.textContent = "Edit";
+            btnElem.classList.remove('bg-green-600', 'hover:bg-green-700', 'text-white');
+            btnElem.classList.add('bg-indigo-600', 'hover:bg-indigo-700', 'text-white');
+
+            // Dynamically toggle State input type based on whether the newly entered country is India or International
+            let isIndia = (val.toUpperCase() === "INDIA" || val.toUpperCase() === "IN");
+            let stateDropdown = document.getElementById('update-profile-state');
+            let stateTextInput = document.getElementById('update-profile-state-text');
+
+            if (isIndia) {
+                if (stateDropdown) stateDropdown.classList.remove('hidden');
+                if (stateTextInput) stateTextInput.classList.add('hidden');
+                if (Object.keys(zoneStateMapping).length === 0) {
+                    fetchZoneStateMaster();
+                }
+            } else {
+                if (stateDropdown) stateDropdown.classList.add('hidden');
+                if (stateTextInput) {
+                    stateTextInput.classList.remove('hidden');
+                    if (!stateTextInput.value) stateTextInput.value = "";
+                }
+            }
+            
+            let saveBtn = document.getElementById('save-profile-btn');
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.classList.remove('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+                saveBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700', 'text-white', 'cursor-pointer');
+            }
+
         } else {
             // For Centre, State or other fields
             inputElem.disabled = true;
@@ -1779,6 +1846,9 @@ function enableField(fieldType) {
 }
 
 
+
+		
+		
 
 		
 function triggerEmailVerification(emailVal, userName) {
