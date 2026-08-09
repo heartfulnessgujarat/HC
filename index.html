@@ -1668,16 +1668,39 @@ function enableField(fieldType) {
 
             // Trigger email verification dispatch safely with both the email and the resolved name
             triggerEmailVerification(val, psName);
-            
-        } else if (fieldType === 'mob') {
-            // Validate Indian mobile number (e.g., 10 digits starting with 6-9, or optional +91 prefix)
-            const mobileRegex = /^(\+91[\-\s]?)?[6-9]\d{9}$/;
-            if (!mobileRegex.test(val)) {
-                showCustomAlert("Please enter a valid 10-digit Indian mobile number starting with digits 6 through 9.");
-                inputElem.focus();
-                return; // Keep open until valid format is provided
+
+
+
+
+// included international mobile number 
+
+			} else if (fieldType === 'mob') {
+            // Check if the user's country is India (defaulting to India if field is missing)
+            let countryVal = (currentActiveUser.ps_country || currentActiveUser.country || "India").toString().trim().toUpperCase();
+            let isIndia = (countryVal === "INDIA" || countryVal === "IN");
+
+            if (isIndia) {
+                // Validate Indian mobile number (e.g., 10 digits starting with 6-9, or optional +91 prefix)
+                const mobileRegex = /^(\+91[\-\s]?)?[6-9]\d{9}$/;
+                if (!mobileRegex.test(val)) {
+                    showCustomAlert("Please enter a valid 10-digit Indian mobile number starting with digits 6 through 9.");
+                    inputElem.focus();
+                    return; // Keep open until valid format is provided
+                }
+            } else {
+                // Relaxed validation for international participants (e.g., just checks that it's not empty and has a reasonable length)
+                if (!val || val.length < 5) {
+                    showCustomAlert("Please enter a valid contact number.");
+                    inputElem.focus();
+                    return;
+                }
             }
-            
+			
+         
+
+
+
+			
             // Lock field back down visually
             inputElem.disabled = true;
             inputElem.classList.add('bg-gray-100', 'cursor-not-allowed');
