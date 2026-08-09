@@ -257,17 +257,23 @@
                     </div>
                 </div>
 
-                <!-- State Field (Dropdown) -->
-                <div>
-                    <label class="block text-gray-700 text-[11px] font-bold mb-0.5">State</label>
-                    <div class="flex items-center space-x-1.5">
-                        <select id="update-profile-state" disabled onchange="onStateSelected()" class="w-full bg-gray-100 border rounded-md px-2.5 py-1 text-gray-600 cursor-not-allowed">
-                            <option value="">Select State</option>
-                        </select>
-                        <button type="button" id="btn-state" onclick="enableField('state')" class="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold py-1.5 px-3 rounded-md transition flex-shrink-0">Edit</button>
-                    </div>
-                </div>
+          <!--  update state for international users -->
 
+				<!-- State Field (Dynamic: Dropdown for India, Text Input for International) -->
+<div>
+    <label class="block text-gray-700 text-[11px] font-bold mb-0.5">State / Province</label>
+    <div class="flex items-center space-x-1.5">
+        <!-- Dropdown used for Indian participants (populated from master list) -->
+        <select id="update-profile-state" disabled onchange="onStateSelected()" class="w-full bg-gray-100 border rounded-md px-2.5 py-1 text-gray-600 cursor-not-allowed">
+            <option value="">Select State</option>
+        </select>
+        
+        <!-- Text Input used for International participants (initially hidden) -->
+        <input type="text" id="update-profile-state-text" disabled placeholder="Enter State / Province" class="w-full bg-gray-100 border rounded-md px-2.5 py-1 text-gray-600 cursor-not-allowed hidden" />
+
+        <button type="button" id="btn-state" onclick="enableField('state')" class="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold py-1.5 px-3 rounded-md transition flex-shrink-0">Edit</button>
+    </div>
+</div>
 
 			
 				<!-- Zone Field (Cascading Dropdown) -->
