@@ -204,7 +204,7 @@
                 <input type="text" id="rp-selected-display" readonly autocomplete="off" class="w-full px-2.5 py-1 bg-gray-100 border rounded-md text-gray-600" placeholder="Selected participant name">
             </div>
             <button onclick="submitResetPassword()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1.5 px-3 rounded-md transition mb-2">
-                Reset Password to 123456
+                Reset Password to HC@FT3H#2809
             </button>
             <button onclick="showLoginScreen()" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-1.5 px-3 rounded-md transition">
                 Back to Login
@@ -1142,7 +1142,7 @@ function renderTSLaunchForm(workshop) {
                 return;
             }
             let user = allParticipants[selectedParticipantKey];
-            let storedPassword = user.password ? user.password.toString() : "123456";
+            let storedPassword = user.password ? user.password.toString() : "HC@FT3H#2809";
             if (passwordInput === storedPassword) {
                 currentActiveUser = user;
                 renderDashboard();
@@ -1226,7 +1226,7 @@ function submitChangePassword() {
         return;
     }
     let user = allParticipants[cpSelectedKey];
-    let storedPass = user.password ? user.password.toString() : "123456";
+    let storedPass = user.password ? user.password.toString() : "HC@FT3H#2809";
     if (currentPass !== storedPass) {
         showCustomAlert("Current password is incorrect.");
         return;
@@ -1307,14 +1307,14 @@ function submitResetPassword() {
     }
 
     let payload = {
-        password: "123456",
+        password: "HC@FT3H#2809",
         fieldupdated: "password",
         lastsyntimestamp: new Date().toLocaleString()
     };
 
     db.ref('control_tower/participants/' + rpSelectedKey).update(payload).then(() => {
-        showCustomAlert("Password reset to 123456");
-        allParticipants[rpSelectedKey].password = "123456";
+        showCustomAlert("Password reset to HC@FT3H#2809");
+        allParticipants[rpSelectedKey].password = "HC@FT3H#2809";
         showLoginScreen();
     }).catch(err => {
         showCustomAlert("Failed to reset password: " + err);
