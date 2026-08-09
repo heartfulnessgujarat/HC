@@ -1148,17 +1148,23 @@ function togglePasswordVisibility(inputId, iconId) {
 }
 
 
+function selectParticipant(key, data) {
+    selectedParticipantKey = key;
+    
+    // Fetch the absolute freshest user data directly from Firebase to ensure password and attributes are synced
+    db.ref('control_tower/participants/' + key).once('value').then(snapshot => {
+        if (snapshot.exists()) {
+            allParticipants[key] = snapshot.val();
+        }
+    });
 
+    document.getElementById('search-name').value = data.ps_name;
+    document.getElementById('selected-participant-display').value = data.ps_name;
+    document.getElementById('selected-participant-container').classList.remove('hidden');
+    document.getElementById('search-results').classList.add('hidden');
+}
 
 		
-        function selectParticipant(key, data) {
-            selectedParticipantKey = key;
-            document.getElementById('search-name').value = data.ps_name;
-            document.getElementById('selected-participant-display').value = data.ps_name;
-            document.getElementById('selected-participant-container').classList.remove('hidden');
-            document.getElementById('search-results').classList.add('hidden');
-        }
-
         function handleLogin() {
             const passwordInput = document.getElementById('login-password').value;
             if (!selectedParticipantKey || !allParticipants[selectedParticipantKey]) {
