@@ -1,1 +1,112 @@
 
+// Variable to hold current active announcement ID
+let activeAnnouncementId = "";
+
+// Map month string to numeric month index for accurate JS date parsing
+const monthMap = {
+    "jan": 0, "feb": 1, "mar": 2, "apr": 3, "may": 4, "jun": 5,
+    "jul": 6, "aug": 7, "sep": 8, "oct": 9, "nov": 10, "dec": 11
+};
+
+// Function to parse custom "DD-MMM-YYYY" and "HR:MM" formats cleanly
+function parseCustomDateTime(dateStr, timeStr) {
+    if (!dateStr || !timeStr) return 0;
+    
+    let dateParts = dateStr.split('-'); // e.g. ["10", "Aug", "2026"]
+    let timeParts = timeStr.split(':'); // e.g. ["08", "00"]
+    
+    if (dateParts.length !== 3 || timeParts.length !== 2) return 0;
+    
+    let day = parseInt(dateParts[0], 10);
+    let monthStr = dateParts[1].toLowerCase();
+    let month = monthMap[monthStr];
+    let year = parseInt(dateParts[2], 10);
+    
+    let hour = parseInt(timeParts[0], 10);
+    let minute = parseInt(timeParts[1], 10);
+    
+    if (isNaN(day) || month === undefined || isNaN(year) || isNaN(hour) || isNaN(minute)) {
+        return 0;
+    }
+    
+    return new Date(year, month, day, hour, minute, 0).getTime();
+}
+
+function isCurrentTimeWithinWindow(startDate, startTime, endDate, endTime) {
+    let now = new Date().getTime();
+    let startTimestamp = parseCustomDateTime(startDate, startTime);
+    let endTimestamp = parseCustomDateTime(endDate, endTime);
+
+    if (startTimestamp === 0 || endTimestamp === 0) return true; 
+
+    return now >= startTimestamp && now <= endTimestamp;
+}
+
+function checkAndDisplayAnnouncement(userRole, userUniqueId) {
+    // === TESTING SAFEGUARD: Only show for your dummy test user (HC-FT3H) ===
+    let dummyTestId = "HC-FT3H"; 
+    if (userUniqueId !== dummyTestId) {
+        let banner = document.getElementById('announcement-banner');
+        if (banner) banner.classList.add('hidden');
+        return; // Exit immediately for all other users during testing!
+    }
+    // ====================================================================
+
+    // Fetch directly from Firebase
+    db.ref('control_tower/announcements/current_announcement').once('value').then(snapshot => {
+        const ann = snapshot.val();
+        let banner = document.getElementById('announcement-banner');
+        
+        if (!ann || !ann.active) {
+            if (banner) banner.classList.add('hidden');
+            return;
+        }
+
+        activeAnnouncementId = ann.id;
+
+        // 1. Check local storage to see if this user already clicked "Got it"
+        let userKey = userUniqueId || "guest";
+        let acknowledgedId = localStorage.getItem('acknowledged_announcement_' + userKey);
+        if (acknowledgedId === ann.id) {
+            if (banner) banner.classList.add('hidden');
+            return;
+        }
+
+        // 2. Check Role Matching
+        let allowedRoles = ann.target_roles ? ann.target_roles.split(',').map(r => r.trim().toLowerCase()) : [];
+        let userRoleClean = (userRole || "").trim().toLowerCase();
+        
+        let isRoleMatched = allowedRoles.includes("all") || allowedRoles.includes(userRoleClean);
+        if (!isRoleMatched) {
+            if (banner) banner.classList.add('hidden');
+            return;
+        }
+
+        // 3. Check Time Window (DD-MMM-YYYY + HR:MM)
+        if (!isCurrentTimeWithinWindow(ann.start_date, ann.start_time, ann.end_date, ann.end_time)) {
+            if (banner) banner.classList.add('hidden');
+            return;
+        }
+
+        // 4. Render Banner & Add Flashing Effect
+        document.getElementById('announcement-text').textContent = ann.message;
+        if (banner) {
+            banner.classList.remove('hidden');
+            banner.classList.add('flashing-banner');
+        }
+
+    }).catch(err => {
+        console.error("Error fetching announcement:", err);
+    });
+}
+
+function acknowledgeAnnouncement() {
+    let banner = document.getElementById('announcement-banner');
+    if (banner) {
+        banner.classList.add('hidden');
+    }
+    let userKey = (typeof currentActiveUser !== 'undefined' && currentActiveUser.ps_id) ? currentActiveUser.ps_id : "guest";
+    if (activeAnnouncementId) {
+        localStorage.setItem('acknowledged_announcement_' + userKey, activeAnnouncementId);
+    }
+}
