@@ -1194,8 +1194,8 @@ function selectParticipant(key, data) {
     document.getElementById('search-results').classList.add('hidden');
 }
 
-		
-        function handleLogin() {
+
+function handleLogin() {
             const passwordInput = document.getElementById('login-password').value;
             if (!selectedParticipantKey || !allParticipants[selectedParticipantKey]) {
                 showCustomAlert("Please search and select a valid participant.");
@@ -1205,13 +1205,22 @@ function selectParticipant(key, data) {
             let storedPassword = user.password ? user.password.toString() : "Daaji@2809";
             if (passwordInput === storedPassword) {
                 currentActiveUser = user;
+                
+                // Safely assign title and subtitle text before rendering/showing the dashboard container
+                if (typeof currentWorkshop !== 'undefined' && currentWorkshop) {
+                    const titleEl = document.getElementById('workshop-title-display');
+                    const subtitleEl = document.getElementById('workshop-subtitle-display');
+                    if (titleEl) titleEl.textContent = currentWorkshop.name || "Participant Portal";
+                    if (subtitleEl) subtitleEl.textContent = currentWorkshop.subtitle || "";
+                }
+
                 renderDashboard();
             } else {
                 showCustomAlert("Incorrect password. Please try again.");
             }
         }
 
-
+		
 function filterChangePasswordParticipants() {
     const queryInput = document.getElementById('cp-search-name');
     const query = queryInput ? queryInput.value.toLowerCase().trim() : "";
