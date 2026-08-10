@@ -463,6 +463,28 @@ function filterParticipants() {
         }
     }
 }
+
+
+
+
+        function handleLogin() {
+            const passwordInput = document.getElementById('login-password').value;
+            if (!selectedParticipantKey || !allParticipants[selectedParticipantKey]) {
+                showCustomAlert("Please search and select a valid participant.");
+                return;
+            }
+            let user = allParticipants[selectedParticipantKey];
+            let storedPassword = user.password ? user.password.toString() : "Daaji@2809";
+            if (passwordInput === storedPassword) {
+                currentActiveUser = user;
+                renderDashboard();
+            } else {
+                showCustomAlert("Incorrect password. Please try again.");
+            }
+        }
+
+
+	
 		
 		
 
