@@ -1,61 +1,55 @@
+
+
 <!DOCTYPE html>
 <html lang="en">
+
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="page-title">Heartful Communication | Participant Portal (Sandbox)</title>
+    <!-- Base title without hardcoded ID -->
+    <title id="page-title">Heartful Communication | Participant Portal</title>
     
-    <!-- Tailwind CSS -->
+    <!-- Tailwind CSS for modern responsive design -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 </head>
 
+
+	
 <body class="bg-gray-50 min-h-screen flex flex-col justify-between text-xs sm:text-sm">
     
-    <!-- Persistent Global Header Logo -->
+    <!-- Persistent Global Header Logo (Full-width box fit) -->
     <div id="global-header" class="max-w-md mx-auto w-full px-3 pt-2 hidden">
         <div class="bg-white rounded-lg shadow-sm p-0 overflow-hidden flex justify-center w-full">
             <img id="app-logo" src="" alt="App Logo" class="w-full h-auto object-cover block" />
         </div>
     </div>
 
-    <!-- ANNOUNCEMENT BANNER (PLACED SAFELY HERE FOR TESTING) -->
-    <div id="announcement-banner" class="max-w-md mx-auto w-full px-3 pt-2 hidden">
-        <div class="p-4 bg-amber-50 border-2 border-amber-400 rounded-lg shadow-md transition-all duration-300 flex items-start justify-between">
-            <div class="flex items-center space-x-3">
-                <div class="flex-shrink-0 text-amber-500">
-                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
-                    </svg>
-                </div>
-                <div>
-                    <h3 class="text-sm font-bold text-amber-800 uppercase tracking-wide">Important Announcement</h3>
-                    <p id="announcement-text" class="text-sm text-amber-900 mt-1 font-medium"></p>
-                </div>
-            </div>
-            <button onclick="acknowledgeAnnouncement()" class="ml-4 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-md shadow transition flex-shrink-0">
-                Got it
-            </button>
-        </div>
-    </div>
 
-    <!-- Flashing Border CSS Animation -->
-    <style>
-    @keyframes borderFlash {
-        0%, 100% { border-color: #f59e0b; box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
-        50% { border-color: #b45309; box-shadow: 0 0 10px 3px rgba(245, 158, 11, 0.6); }
-    }
-    .flashing-banner {
-        animation: borderFlash 3s infinite;
-    }
-    </style>
 
-    <!-- Top Header Bar -->
+
+
+
+
+	
+
+
+
+
+
+
+
+	
+    
+  <!-- Top Header Bar -->
     <header id="app-header" class="max-w-md mx-auto px-3 pt-1 hidden w-full">
         <div class="bg-blue-50 border border-blue-200 text-blue-900 shadow-sm rounded-lg p-2.5 flex items-center justify-between w-full gap-2">
-            <div id="header-user-info" class="text-xs overflow-hidden"></div>
+            <div id="header-user-info" class="text-xs overflow-hidden">
+                <!-- Populated dynamically via  -->
+            </div>
             <div class="flex flex-shrink-0 items-center space-x-1.5">
                 <button onclick="openUpdateProfileModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold py-1 px-2 rounded transition shadow leading-tight text-center">
                     Update<br>Profile
@@ -67,7 +61,10 @@
         </div>
     </header>
 
-    <!-- Main Container -->
+
+
+    
+    <!-- Main Container with tightened spacing -->
     <main class="max-w-md mx-auto px-3 py-1 flex-grow w-full">
         <!-- SCREEN 1: LOGIN VIEW -->
         <div id="login-screen" class="bg-white rounded-lg shadow-md p-3 sm:p-4 mt-1">
@@ -76,13 +73,28 @@
             </div>
             <h2 class="text-base sm:text-lg font-bold text-gray-800 mb-2 text-center">Participant Login</h2>
 
+
+<div class="mb-2 relative">
+    <label class="block text-gray-700 text-[11px] font-bold mb-0.5">Type your name in English (at least 3 letters):</label>
+    <input type="text" id="search-name" autocomplete="off" placeholder="Type here.." class="w-full px-2.5 py-1 text-xs border rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500" oninput="filterParticipants()">
+    <!-- Added dynamic warning message box -->
+    <div id="name-not-found-msg" class="text-red-500 text-[11px] mt-1 hidden"></div>
+    <div id="search-results" class="absolute left-0 right-0 bg-white border mt-1 rounded-md shadow-lg max-h-32 overflow-y-auto hidden z-20 text-xs"></div>
+</div>
+
+
+			
+			   <!--  
             <div class="mb-2 relative">
                 <label class="block text-gray-700 text-[11px] font-bold mb-0.5">Type your name in English (at least 3 letters):</label>
                 <input type="text" id="search-name" autocomplete="off" placeholder="Type here.." class="w-full px-2.5 py-1 text-xs border rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500" oninput="filterParticipants()">
-                <div id="name-not-found-msg" class="text-red-500 text-[11px] mt-1 hidden"></div>
                 <div id="search-results" class="absolute left-0 right-0 bg-white border mt-1 rounded-md shadow-lg max-h-32 overflow-y-auto hidden z-20 text-xs"></div>
-            </div>
+            </div> -->
 
+
+
+			
+            
             <div id="selected-participant-container" class="mb-2 hidden">
                 <label class="block text-gray-700 text-[11px] font-bold mb-0.5">Name of the Participant:</label>
                 <input type="text" id="selected-participant-display" readonly class="w-full px-2.5 py-1 text-xs bg-gray-100 border rounded-md text-gray-600">
@@ -91,12 +103,20 @@
             <div class="mb-3 relative">
                 <label class="block text-gray-700 text-[11px] font-bold mb-0.5">Password:</label>
                 <div class="relative">
-                    <input type="password" id="login-password" autocomplete="new-password" placeholder="Enter password" class="w-full px-2.5 py-1 text-xs pr-8 border rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500">
-                    <button type="button" onclick="togglePasswordVisibility('login-password', 'login-eye-icon')" class="absolute inset-y-0 right-0 px-2 flex items-center text-gray-500 hover:text-gray-700 focus:outline-none">
-                        <svg id="login-eye-icon" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a10.05 10.05 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                        </svg>
-                    </button>
+					
+             <!--     <input type="password" id="login-password" placeholder="Enter password" class="w-full px-2.5 py-1 text-xs pr-8 border rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"> -->
+
+					<input type="password" id="login-password" autocomplete="new-password" placeholder="Enter password" class="w-full px-2.5 py-1 text-xs pr-8 border rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500">
+
+
+<button type="button" onclick="togglePasswordVisibility('login-password', 'login-eye-icon')" class="absolute inset-y-0 right-0 px-2 flex items-center text-gray-500 hover:text-gray-700 focus:outline-none">
+    <svg id="login-eye-icon" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a10.05 10.05 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+    </svg>
+</button>
+
+					
+                   
                 </div>
             </div>
             
@@ -104,20 +124,292 @@
                 Login
             </button>
 
-            <div class="flex justify-between items-center text-[11px] px-0.5">
+
+
+			<div class="flex justify-between items-center text-[11px] px-0.5">
                 <a href="#" onclick="navToChangePassword(event)" class="text-indigo-600 hover:underline font-medium">Change Password</a>
                 <a href="#" onclick="navToResetPassword(event)" class="text-indigo-600 hover:underline font-medium">Reset Password</a>
             </div>
         </div>
 
-        <!-- SCREEN 2: DASHBOARD VIEW -->
+
+        
+  <!-- SCREEN 2: DASHBOARD VIEW -->
         <div id="dashboard-screen" class="hidden space-y-1 mt-1">
-            <div class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-sm rounded-lg py-2 px-3 text-center">
-                <h2 id="workshop-title-display" class="text-xs sm:text-sm font-bold"></h2>
-                <div id="workshop-subtitle-display" class="text-[11px] sm:text-xs font-medium text-purple-200 mt-0.5"></div>
+            <!-- UNIFIED BLUE HEADER WITH WORKSHOP TITLE AND SUBTITLE -->
+
+
+		<div class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-sm rounded-lg py-2 px-3 text-center">
+    <h2 id="workshop-title-display" class="text-xs sm:text-sm font-bold"></h2>
+    <div id="workshop-subtitle-display" class="text-[11px] sm:text-xs font-medium text-purple-200 mt-0.5"></div>
+</div>
+
+
+
+			
+            <!-- SINGLE UNIFIED CARD CONTAINER FOR ALL 5 LINKS -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <!-- All items are injected here as a clean vertical list inside this single box with tight padding -->
+                <div class="px-3 py-1 text-xs text-gray-800" id="resources-container">
+                    <!-- JavaScript populates all 5 rows here cleanly -->
+                </div>
+            </div>
+        </div>
+
+
+
+<!-- SCREEN 3: CHANGE PASSWORD SCREEN -->
+        <div id="change-password-screen" class="bg-white rounded-lg shadow-md p-3 sm:p-4 mt-1 hidden text-xs">
+            <h2 class="text-base font-bold text-gray-800 mb-2.5 text-center">Change Password</h2>
+            
+            <div class="mb-2 relative">
+                <label class="block text-gray-700 text-[11px] font-bold mb-0.5">Type your name in English (at least 3 letters):</label>
+                <input type="text" id="cp-search-name" autocomplete="off" spellcheck="false" placeholder="Type here.." class="w-full px-2.5 py-1 border rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500" oninput="filterChangePasswordParticipants()">
+                <!-- ADD THE WARNING DIV RIGHT HERE, BETWEEN THE INPUT AND THE RESULTS BOX -->
+    <div id="cp-name-not-found-msg" class="text-red-500 text-[11px] mt-1 hidden"></div>
+				<div id="cp-search-results" class="absolute left-0 right-0 bg-white border mt-1 rounded-md shadow-lg max-h-32 overflow-y-auto hidden z-20"></div>
+            </div>
+            <div class="mb-2">
+                <label class="block text-gray-700 text-[11px] font-bold mb-0.5">Name of the Participant:</label>
+                <input type="text" id="cp-selected-display" readonly autocomplete="off" class="w-full px-2.5 py-1 bg-gray-100 border rounded-md text-gray-600" placeholder="Selected participant name">
+            </div>
+
+
+<div class="mb-2 relative">
+    <label class="block text-gray-700 text-[11px] font-bold mb-0.5">Current Password:</label>
+    <div class="relative">
+        <input type="password" id="cp-current-password" autocomplete="new-password" spellcheck="false" placeholder="Current Password" class="w-full px-2.5 py-1 pr-8 border rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500">
+        <button type="button" onclick="togglePasswordVisibility('cp-current-password', 'cp-eye-1')" class="absolute inset-y-0 right-0 px-2 flex items-center text-gray-500 hover:text-gray-700 focus:outline-none">
+            <svg id="cp-eye-1" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a10.05 10.05 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+            </svg>
+        </button>
+    </div>
+</div>
+
+
+<div class="mb-2 relative">
+    <label class="block text-gray-700 text-[11px] font-bold mb-0.5">New Password (Max 10 Chars):</label>
+    <div class="relative">
+        <input type="password" id="cp-new-password" autocomplete="new-password" spellcheck="false" placeholder="New Password" maxlength="10" class="w-full px-2.5 py-1 pr-8 border rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500">
+        <button type="button" onclick="togglePasswordVisibility('cp-new-password', 'cp-eye-2')" class="absolute inset-y-0 right-0 px-2 flex items-center text-gray-500 hover:text-gray-700 focus:outline-none">
+            <svg id="cp-eye-2" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a10.05 10.05 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+            </svg>
+        </button>
+    </div>
+</div>
+			
+
+<div class="mb-3 relative">
+    <label class="block text-gray-700 text-[11px] font-bold mb-0.5">Confirm New Password:</label>
+    <div class="relative">
+        <input type="password" id="cp-confirm-password" autocomplete="new-password" spellcheck="false" placeholder="Confirm New Password" maxlength="10" class="w-full px-2.5 py-1 pr-8 border rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500">
+        <button type="button" onclick="togglePasswordVisibility('cp-confirm-password', 'cp-eye-3')" class="absolute inset-y-0 right-0 px-2 flex items-center text-gray-500 hover:text-gray-700 focus:outline-none">
+            <svg id="cp-eye-3" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a10.05 10.05 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+            </svg>
+        </button>
+    </div>
+</div>
+
+			
+     
+            <button onclick="submitChangePassword()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1.5 px-3 rounded-md transition mb-2">
+                Update Password
+            </button>
+            <button onclick="showLoginScreen()" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-1.5 px-3 rounded-md transition">
+                Back to Login
+            </button>
+        </div>
+
+        <!-- SCREEN 4: RESET PASSWORD SCREEN -->
+        <div id="reset-password-screen" class="bg-white rounded-lg shadow-md p-3 sm:p-4 mt-1 hidden text-xs">
+            <h2 class="text-base font-bold text-gray-800 mb-2.5 text-center">Reset Password</h2>
+            
+            <div class="mb-2 relative">
+                <label class="block text-gray-700 text-[11px] font-bold mb-0.5">Type your name in English (at least 3 letters):</label>
+                <input type="text" id="rp-search-name" autocomplete="off" spellcheck="false" placeholder="Type here.." class="w-full px-2.5 py-1 border rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500" oninput="filterResetPasswordParticipants()">
+                <!-- ADD THE WARNING DIV RIGHT HERE, BETWEEN THE INPUT AND THE RESULTS BOX -->
+    <div id="rp-name-not-found-msg" class="text-red-500 text-[11px] mt-1 hidden"></div>
+				
+				
+				<div id="rp-search-results" class="absolute left-0 right-0 bg-white border mt-1 rounded-md shadow-lg max-h-32 overflow-y-auto hidden z-20"></div>
+            </div>
+            <div class="mb-3">
+                <label class="block text-gray-700 text-[11px] font-bold mb-0.5">Name of the Participant:</label>
+                <input type="text" id="rp-selected-display" readonly autocomplete="off" class="w-full px-2.5 py-1 bg-gray-100 border rounded-md text-gray-600" placeholder="Selected participant name">
+            </div>
+            <button onclick="submitResetPassword()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1.5 px-3 rounded-md transition mb-2">
+                Reset Password to Daaji@2809
+            </button>
+            <button onclick="showLoginScreen()" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-1.5 px-3 rounded-md transition">
+                Back to Login
+            </button>
+        </div>
+
+
+	
+        <!-- SCREEN 5: UPDATE PROFILE SCREEN -->
+        <div id="update-profile-screen" class="bg-white rounded-lg shadow-md p-3 sm:p-4 mt-1 hidden text-xs">
+            <h2 class="text-base font-bold text-gray-800 mb-2.5 text-center">Update Profile Details</h2>
+            
+            <div class="space-y-2">
+                <div>
+                    <label class="block text-gray-700 text-[11px] font-bold mb-0.5">Name (Read-only)</label>
+                    <input type="text" id="update-profile-name" disabled class="w-full bg-gray-100 border rounded-md px-2.5 py-1 text-gray-600 cursor-not-allowed">
+                </div>
+                <div>
+                    <label class="block text-gray-700 text-[11px] font-bold mb-0.5">Unique ID Number (Read-only)</label>
+                    <input type="text" id="update-profile-id" disabled class="w-full bg-gray-100 border rounded-md px-2.5 py-1 text-gray-600 cursor-not-allowed">
+                </div>
+                
+                <!-- Mobile Number Field -->
+                <div>
+                    <label class="block text-gray-700 text-[11px] font-bold mb-0.5">Mobile Number</label>
+                    <div class="flex items-center space-x-1.5">
+                        <input type="text" id="update-profile-mob" autocomplete="off" disabled class="w-full bg-gray-100 border rounded-md px-2.5 py-1 text-gray-600 cursor-not-allowed">
+                        <button type="button" id="btn-mob" onclick="enableField('mob')" class="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold py-1.5 px-3 rounded-md transition flex-shrink-0">Edit</button>
+                    </div>
+                </div>
+
+                <!-- Email Address Field -->
+                <div>
+                    <label class="block text-gray-700 text-[11px] font-bold mb-0.5">Email Address</label>
+                    <div class="flex items-center space-x-1.5">
+                        <input type="email" id="update-profile-email" autocomplete="off" disabled class="w-full bg-gray-100 border rounded-md px-2.5 py-1 text-gray-600 cursor-not-allowed">
+                        <button type="button" id="btn-email" onclick="enableField('email')" class="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold py-1.5 px-3 rounded-md transition flex-shrink-0">Edit</button>
+                    </div>
+                </div>
+
+                <!-- Centre Field -->
+                <div>
+                    <label class="block text-gray-700 text-[11px] font-bold mb-0.5">Centre</label>
+                    <div class="flex items-center space-x-1.5">
+                        <input type="text" id="update-profile-centre" autocomplete="off" disabled class="w-full bg-gray-100 border rounded-md px-2.5 py-1 text-gray-600 cursor-not-allowed">
+                        <button type="button" id="btn-centre" onclick="enableField('centre')" class="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold py-1.5 px-3 rounded-md transition flex-shrink-0">Edit</button>
+                    </div>
+                </div>
+
+          <!--  update state for international users -->
+
+				<!-- State Field (Dynamic: Dropdown for India, Text Input for International) -->
+<div>
+    <label class="block text-gray-700 text-[11px] font-bold mb-0.5">State / Province</label>
+    <div class="flex items-center space-x-1.5">
+        <!-- Dropdown used for Indian participants (populated from master list) -->
+        <select id="update-profile-state" disabled onchange="onStateSelected()" class="w-full bg-gray-100 border rounded-md px-2.5 py-1 text-gray-600 cursor-not-allowed">
+            <option value="">Select State</option>
+        </select>
+        
+        <!-- Text Input used for International participants (initially hidden) -->
+        <input type="text" id="update-profile-state-text" disabled placeholder="Enter State / Province" class="w-full bg-gray-100 border rounded-md px-2.5 py-1 text-gray-600 cursor-not-allowed hidden" />
+
+        <button type="button" id="btn-state" onclick="enableField('state')" class="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold py-1.5 px-3 rounded-md transition flex-shrink-0">Edit</button>
+    </div>
+</div>
+
+<!-- Country Field (Dropdown) -->
+<div>
+    <label class="block text-gray-700 text-[11px] font-bold mb-0.5">Country</label>
+    <div class="flex items-center space-x-1.5">
+        <select id="update-profile-country" disabled onchange="onCountrySelected()" class="w-full bg-gray-100 border rounded-md px-2.5 py-1 text-gray-600 cursor-not-allowed">
+            <option value="">Select Country</option>
+        </select>
+        <button type="button" id="btn-country" onclick="enableField('country')" class="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold py-1.5 px-3 rounded-md transition flex-shrink-0">Edit</button>
+    </div>
+</div>
+
+
+
+
+
+				
+				<!-- Zone Field (Cascading Dropdown) -->
+
+
+	<!-- Zone Field (Cascading Dropdown) TEMPORARILY COMMENTED OUT -->
+    <!--		
+    <div>
+        <label class="block text-gray-700 text-[11px] font-bold mb-0.5">Zone</label>
+        <div class="flex items-center space-x-1.5">
+            <select id="update-profile-zone" disabled class="w-full bg-gray-100 border rounded-md px-2.5 py-1 text-gray-600 cursor-not-allowed">
+                <option value="">Select Zone</option>
+            </select>
+            <button type="button" id="btn-zone" onclick="enableField('zone')" class="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold py-1.5 px-3 rounded-md transition flex-shrink-0">Edit</button>
+        </div>  -->
+
+	
+				
+   <!--     <p class="text-[10px] text-gray-500 italic mt-0.5">Kindly select a State first to view its available Zones.</p>
+    </div>  -->
+
+
+
+
+				
+            </div>
+            
+            <!-- Loading status text -->
+            <p id="profile-update-status" class="text-xs text-blue-600 font-medium hidden my-2 text-center"></p>
+            
+            <div class="mt-3 space-y-2">
+                <button id="save-profile-btn" onclick="saveProfileChanges()" disabled class="w-full bg-gray-300 text-gray-500 font-bold py-1.5 px-3 rounded-md cursor-not-allowed transition text-xs">
+                    Save Changes
+                </button>
+                <button onclick="closeUpdateProfileModal()" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-1.5 px-3 rounded-md transition text-xs">
+                    Cancel / Back to Dashboard
+                </button>
             </div>
         </div>
     </main>
+
+    <!-- Footer -->
+    <footer class="text-center py-1.5 text-[10px] text-gray-500">
+        Heartful Communication - Participant Login System
+    </footer>
+
+    <!-- Custom Message Box Modal -->
+    <div id="custom-alert-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-3">
+        <div class="bg-white rounded-lg shadow-xl max-w-xs w-full p-4 text-center transform transition-all text-xs">
+            <div id="custom-alert-message" class="text-gray-800 text-xs mb-4 font-medium"></div>
+            <button onclick="closeCustomAlert()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold py-1.5 px-4 rounded transition shadow">
+                OK
+            </button>
+        </div>
+    </div>
+
+  <!-- Custom Verification Modal -->
+    <div id="customVerificationModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-3">
+        <div class="bg-white rounded-lg p-4 max-w-xs w-full mx-auto shadow-xl text-xs">
+
+			
+            <h3 class="text-sm font-semibold text-gray-800 mb-1.5">Enter Verification Code</h3>
+
+						
+            <p id="modalMessage" class="text-[11px] text-gray-600 mb-3">A 6-digit verification code has been sent to your email.</p>
+            
+            <input type="text" id="verificationInput" maxlength="10" placeholder="Enter 6-digit code" autocomplete="off" spellcheck="false"
+                class="w-full px-2.5 py-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 mb-3 text-center tracking-widest text-sm">
+            
+            <div class="flex justify-end space-x-1.5">
+                <button onclick="closeVerificationModal()" class="px-3 py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 text-xs">Cancel</button>
+                <button onclick="handleVerifyCodeClick()" class="px-3 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-xs">Verify</button>
+            </div>
+        </div>
+    </div>
+    
+
+
+
+
+
+
+
+
+
+
+    
 
     <!-- JAVASCRIPT FUNCTIONS BLOCK -->
     <script>
