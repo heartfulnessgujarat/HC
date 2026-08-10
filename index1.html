@@ -2387,6 +2387,7 @@ function isCurrentTimeWithinWindow(startDate, startTime, endDate, endTime) {
     return now >= startTimestamp && now <= endTimestamp;
 }
 
+
 function checkAndDisplayAnnouncement(userRole, userUniqueId) {
     let dummyTestId = "VDC123"; 
     if (userUniqueId !== dummyTestId) {
@@ -2399,7 +2400,8 @@ function checkAndDisplayAnnouncement(userRole, userUniqueId) {
         const ann = snapshot.val();
         let banner = document.getElementById('announcement-banner');
         
-        if (!ann || !ann.active) {
+        // Check if announcement exists, is active, AND has actual text content
+        if (!ann || !ann.active || !ann.message || ann.message.trim() === "") {
             if (banner) banner.classList.add('hidden');
             return;
         }
@@ -2417,7 +2419,6 @@ function checkAndDisplayAnnouncement(userRole, userUniqueId) {
         let userRoleClean = (userRole || "").trim().toLowerCase();
         let isRoleMatched = allowedRoles.includes("all") || allowedRoles.includes(userRoleClean);
         if (!isRoleMatched) {
-            if (banner) banner.path.classList.add('hidden'); // safe fallback check
             if (banner) banner.classList.add('hidden');
             return;
         }
@@ -2427,6 +2428,7 @@ function checkAndDisplayAnnouncement(userRole, userUniqueId) {
             return;
         }
 
+        // Assign message and show banner safely
         document.getElementById('announcement-text').textContent = ann.message;
         if (banner) {
             banner.classList.remove('hidden');
@@ -2437,6 +2439,10 @@ function checkAndDisplayAnnouncement(userRole, userUniqueId) {
     });
 }
 
+
+
+
+		
 function acknowledgeAnnouncement() {
     let banner = document.getElementById('announcement-banner');
     if (banner) banner.classList.add('hidden');
