@@ -634,17 +634,9 @@ function filterParticipants() {
 }
 		
 		
-
-
 // --- 2. REPLACED: renderDashboard ---
 function renderDashboard() {
     resetInactivityTimer(); // Initialize timer on dashboard load
-    
-    document.getElementById('login-screen').classList.add('hidden');
-    document.getElementById('change-password-screen').classList.add('hidden');
-    document.getElementById('reset-password-screen').classList.add('hidden');
-    document.getElementById('dashboard-screen').classList.remove('hidden');
-    document.getElementById('app-header').classList.remove('hidden');
     
     let pName = currentActiveUser.ps_name || "Participant";
     let pId = currentActiveUser.ps_id || "N/A";
@@ -653,7 +645,7 @@ function renderDashboard() {
     let pCentre = currentActiveUser.ps_centre || "N/A";
     let pZone = currentActiveUser.ps_zone || "N/A";
     let pState = currentActiveUser.ps_state || "N/A";
-	let pCountry= currentActiveUser.ps_country || "N/A";
+    let pCountry = currentActiveUser.ps_country || "N/A";
     
     const headerInfo = document.getElementById('header-user-info');
     headerInfo.innerHTML = `
@@ -665,8 +657,7 @@ function renderDashboard() {
            <div><strong>Centre:</strong> ${pCentre}</div>
          <!--  <div><strong>Zone:</strong> ${pZone}</div> -->
            <div><strong>State / Province:</strong> ${pState}</div>
-		   <div><strong>Country:</strong> ${pCountry}</div>
-		   
+           <div><strong>Country:</strong> ${pCountry}</div>
         </div>
     `;
 
@@ -712,6 +703,13 @@ function renderDashboard() {
         let accessRules = typeof evaluateWorkshopAccess === 'function' ? evaluateWorkshopAccess(workshop) : { resourcesUnlocked: true };
         if (!accessRules.resourcesUnlocked) {
             resourcesContainer.innerHTML = `<div class="text-amber-600 text-xs sm:text-sm italic p-2 bg-amber-50 rounded">Resources will unlock automatically after the first day's session concludes. Please feel free to check or update your profile details shown above.</div>`;
+            
+            // Reveal screens safely after building content
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('change-password-screen').classList.add('hidden');
+            document.getElementById('reset-password-screen').classList.add('hidden');
+            document.getElementById('dashboard-screen').classList.remove('hidden');
+            document.getElementById('app-header').classList.remove('hidden');
             return; 
         }
 
@@ -822,11 +820,14 @@ function renderDashboard() {
         `;
         renderTshHub(workshop);
     }
+
+    // Reveal the dashboard screen and header container ONLY AFTER all text and contents are fully built
+    document.getElementById('login-screen').classList.add('hidden');
+    document.getElementById('change-password-screen').classList.add('hidden');
+    document.getElementById('reset-password-screen').classList.add('hidden');
+    document.getElementById('dashboard-screen').classList.remove('hidden');
+    document.getElementById('app-header').classList.remove('hidden');
 }
-
-
-
-
 		
 // --- 3. REPLACED / UPDATED: renderTshHub ---
 function renderTshHub(workshop) {
