@@ -399,6 +399,72 @@
         </div>
     </div>
     
+<script>
+
+	
+function filterParticipants() {
+    const queryInput = document.getElementById('search-name');
+    const query = queryInput ? queryInput.value.toLowerCase().trim() : "";
+    const rawQuery = queryInput ? queryInput.value.trim() : ""; // Keeps original casing/script for the message
+    const resultsBox = document.getElementById('search-results');
+    const msgDiv = document.getElementById('name-not-found-msg');
+
+    // Hide message box by default at the start of filtering
+    if (msgDiv) msgDiv.classList.add('hidden');
+    resultsBox.innerHTML = '';
+    
+    if (query.length < 3) {
+        resultsBox.classList.add('hidden');
+        return;
+    }
+    
+    let matches = [];
+    for (let key in allParticipants) {
+        let p = allParticipants[key];
+        
+        // CHECK: Allow if workshop matches OR if the user has global "ALL" access (T&S admins)
+        let pWorkshopId = p.workshop_id ? p.workshop_id.toString().trim().toUpperCase() : "";
+        let pRole = p.role ? p.role.toString().trim().toUpperCase() : "";
+        
+        let isGlobalAdmin = (pWorkshopId === "ALL" || pRole === "T&S" || pRole === "TRUST & SAFETY");
+        
+        if (!isGlobalAdmin && pWorkshopId !== activeWorkshopId) {
+            continue;
+        }
+        
+        let pName = (p.ps_name || "").toLowerCase();
+        if (pName.includes(query)) {
+            matches.push({ key: key, data: p });
+        }
+    }
+    
+    if (matches.length > 0) {
+        resultsBox.classList.remove('hidden');
+        if (msgDiv) msgDiv.classList.add('hidden');
+        
+        matches.forEach(m => {
+            let div = document.createElement('div');
+            div.className = "px-4 py-2 hover:bg-indigo-50 cursor-pointer text-sm border-b bg-white";
+            
+            // Added Centre display alongside Name
+            let nameStr = m.data.ps_name || "";
+            let centreStr = m.data.ps_centre ? ` (${m.data.ps_centre})` : "";
+            div.innerText = nameStr + centreStr;
+            
+            div.onclick = () => selectParticipant(m.key, m.data);
+            resultsBox.appendChild(div);
+        });
+    } else {
+        resultsBox.classList.add('hidden');
+        // If 3 or more characters typed and no matches found, show the NVC-flavored warning message
+        if (query.length >= 3 && msgDiv) {
+            msgDiv.textContent = `We couldn't find a record for name "${rawQuery}"... Kindly connect with the HC Admin Team for support.`;
+            msgDiv.classList.remove('hidden');
+        }
+    }
+}
+		
+		
 
 
 
@@ -411,8 +477,8 @@
 
     
 
-    <!-- JAVASCRIPT FUNCTIONS BLOCK -->
-    <script>
+    <!-- JAVASCRIPT FUNCTIONS BLOCK new codes  for index1.html  -->
+  
         let activeAnnouncementId = "";
 
         const monthMap = {
