@@ -1,5 +1,4 @@
 
-
 <!DOCTYPE html>
 <html lang="en">
 
@@ -399,9 +398,157 @@
         </div>
     </div>
     
-<script>
+    <script>
 
-	
+
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwZwp6CgVUqLM9LUWob9FvgiioA3S5sACYHlkOD7RiopRucNaHzP8IsAcKMEARKbunH3A/exec";
+
+
+
+// === STRICT DYNAMIC WORKSHOP ID EXTRACTION (HASH-BASED, NO FALLBACKS) ===
+        const activeWorkshopId = window.location.hash.replace('#', '').trim();
+        
+        // If no workshop ID is provided after the #, throw an error immediately
+        if (!activeWorkshopId) {
+            console.error("No workshop ID provided in the URL hash.");
+            showWorkshopNotFoundError("No workshop ID specified. Please use a valid workshop link.");
+            throw new Error("Missing Workshop ID");
+        }
+        
+        console.log("Active Workshop ID detected from Hash:", activeWorkshopId);
+        // ======================================================================
+
+        // Immediately update the page title using the dynamic ID
+        document.getElementById('page-title').innerText = `Heartful Communication - Facilitator Training Workshop (${activeWorkshopId}) | Participant Portal`;
+
+        // === STRICT DATABASE VALIDATION FUNCTION ===
+        function validateWorkshopExists(workshopData) {
+            if (!workshopData || (typeof workshopData === 'object' && Object.keys(workshopData).length === 0)) {
+                console.error(`Workshop ID "${activeWorkshopId}" does not exist in the database.`);
+                
+                const mainContainer = document.getElementById('main-container');
+                if (mainContainer) {
+                    mainContainer.style.display = 'none';
+                }
+
+                showWorkshopNotFoundError(`The workshop ID <span class="font-semibold text-red-600">"${activeWorkshopId}"</span> does not exist or is inactive.`);
+                return false;
+            }
+            return true;
+        }
+
+		
+        const firebaseConfig = {
+            apiKey: "AIzaSyAt_HbqtG_kMn41NC1wPy5KDFNsDp5HTb8",
+            authDomain: "hc-app-72298.firebaseapp.com",
+            databaseURL: "https://hc-app-72298-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "hc-app-72298",
+            storageBucket: "hc-app-72298.firebasestorage.app",
+            messagingSenderId: "1013251414152",
+            appId: "1:1013251414152:web:3e598848e31a81bb43273d"
+        };
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.database();
+        let allParticipants = {};
+        let allWorkshops = {};
+        let currentActiveUser = null;
+        let selectedParticipantKey = null;
+        
+        let cpSelectedKey = null;
+        let rpSelectedKey = null;
+
+
+
+function loadFirebaseData() {
+    db.ref('control_tower').once('value').then(snapshot => {
+        const data = snapshot.val();
+        console.log("Firebase Raw Data Loaded for control_tower:", data);
+        if (data) {
+            allParticipants = data.participants || {};
+            allWorkshops = data.workshops || {};
+            
+            console.log("Parsed allParticipants:", allParticipants);
+            console.log("Parsed allWorkshops:", allWorkshops);
+            
+            // 1. Check if the workshop exists in the database
+            const targetWorkshop = allWorkshops[activeWorkshopId];
+            if (!validateWorkshopExists(targetWorkshop)) {
+                return; // Stops execution if workshop ID doesn't exist
+            }
+            
+            // 2. Check if the workshop is Inactive or Closed
+            if (targetWorkshop.status === "Inactive" || targetWorkshop.status === "Closed") {
+                console.warn(`Workshop ID "${activeWorkshopId}" is inactive/closed.`);
+                showWorkshopInactiveError(`Workshop ID "${activeWorkshopId}" has concluded or is currently inactive. Access is closed.`);
+                return; // Stops execution if workshop is inactive
+            }
+            
+            updateLoginWorkshopBadge();
+        } else {
+            console.warn("Firebase returned empty data for control_tower.");
+            showWorkshopNotFoundError("No control tower records found in the database.");
+        }
+    }).catch(err => console.error("Error fetching data from Firebase:", err));
+
+    // Fetch and display persistent global header logo dynamically using activeWorkshopId
+    db.ref('control_tower/workshops/' + activeWorkshopId).on('value', (snapshot) => {
+        const workshop = snapshot.val();
+        console.log("Workshop Data fetched for logo (" + activeWorkshopId + "):", workshop);
+        
+        const logoContainer = document.getElementById('global-header');
+        const logoElement = document.getElementById('app-logo');
+        
+        if (workshop && workshop.logo_status === "ON" && workshop.logo_url) {
+            logoElement.src = workshop.logo_url;
+            logoContainer.classList.remove('hidden');
+        } else {
+            logoContainer.classList.add('hidden');
+        }
+    });
+}
+window.onload = loadFirebaseData;
+
+
+		
+		
+       function updateLoginWorkshopBadge() {
+    console.log("Active Workshop ID:", activeWorkshopId);
+    let currentWorkshop = allWorkshops[activeWorkshopId];
+    
+    if (currentWorkshop && currentWorkshop.workshop_name) {
+        document.getElementById('login-workshop-name').innerText = currentWorkshop.workshop_name;
+        document.getElementById('login-workshop-badge').classList.remove('hidden');
+    } else {
+        console.warn(`Workshop ID "${activeWorkshopId}" not found in workshops list.`);
+        // Optional: Trigger your workshop not found error if needed
+    }
+}
+
+
+// --- 1. NEW: INACTIVITY AUTO-LOGOUT (10 MINS) ---
+let inactivityTimer;
+
+function resetInactivityTimer() {
+    clearTimeout(inactivityTimer);
+    // 10 minutes = 600,000 milliseconds[cite: 1]
+    inactivityTimer = setTimeout(() => {
+        if (typeof logoutUser === 'function') {
+            logoutUser();
+        } else {
+            location.reload(); 
+        }
+    }, 600000);
+}
+
+// Bind activity listeners to reset timer on interaction[cite: 1]
+['mousemove', 'keydown', 'click', 'scroll', 'touchstart'].forEach(eventType => {
+    window.addEventListener(eventType, resetInactivityTimer, true);
+});
+
+
+
 function filterParticipants() {
     const queryInput = document.getElementById('search-name');
     const query = queryInput ? queryInput.value.toLowerCase().trim() : "";
@@ -463,10 +610,569 @@ function filterParticipants() {
         }
     }
 }
+		
+		
+
+
+// --- 2. REPLACED: renderDashboard ---
+function renderDashboard() {
+    resetInactivityTimer(); // Initialize timer on dashboard load
+    
+    document.getElementById('login-screen').classList.add('hidden');
+    document.getElementById('change-password-screen').classList.add('hidden');
+    document.getElementById('reset-password-screen').classList.add('hidden');
+    document.getElementById('dashboard-screen').classList.remove('hidden');
+    document.getElementById('app-header').classList.remove('hidden');
+    
+    let pName = currentActiveUser.ps_name || "Participant";
+    let pId = currentActiveUser.ps_id || "N/A";
+    let pMob = maskMobile(currentActiveUser.ps_mob);
+    let pEmail = maskEmail(currentActiveUser.ps_email);
+    let pCentre = currentActiveUser.ps_centre || "N/A";
+    let pZone = currentActiveUser.ps_zone || "N/A";
+    let pState = currentActiveUser.ps_state || "N/A";
+	let pCountry= currentActiveUser.ps_country || "N/A";
+    
+    const headerInfo = document.getElementById('header-user-info');
+    headerInfo.innerHTML = `
+        <div class="grid grid-cols-1 gap-y-1 text-xs sm:text-sm">
+           <div><strong>Name:</strong> ${pName}</div>
+           <div><strong>Unique ID Number:</strong> ${pId}</div>
+           <div><strong>Mobile Number:</strong> ${pMob}</div>
+           <div><strong>Email Address:</strong> ${pEmail}</div>
+           <div><strong>Centre:</strong> ${pCentre}</div>
+         <!--  <div><strong>Zone:</strong> ${pZone}</div> -->
+           <div><strong>State / Province:</strong> ${pState}</div>
+		   <div><strong>Country:</strong> ${pCountry}</div>
+		   
+        </div>
+    `;
+
+    // --- "ALL" Correction & Unified Declarations ---
+    let wId = (currentActiveUser.workshop_id || "").toString().trim().toUpperCase();
+    let workshop = {};
+    let role = (currentActiveUser.role || "").toString().trim().toUpperCase();
+    let subRole = (currentActiveUser.sub_role || currentActiveUser.subrole || "").toString().trim();
+    
+    if (role === "T&S" || role === "TRUST & SAFETY") {
+        if (wId === "ALL") {
+            workshop = {
+                workshop_id: "ALL",
+                workshop_name: "Global T&S Administration",
+                workshop_type: "Global / Cross-Batch",
+                workshop_region: "All Regions"
+            };
+        } else {
+            workshop = allWorkshops[wId] || {};
+        }
+    } else {
+        workshop = allWorkshops[wId] || {};
+    }
+
+    let workshopName = workshop.workshop_name || "Workshop Name Not Available";
+
+    let subtitleDisplay = document.getElementById('workshop-subtitle-display');
+    const resourcesContainer = document.getElementById('resources-container');
+    resourcesContainer.innerHTML = '';
+
+    // 1. IF IT IS A PARTICIPANT
+    if (role === "PARTICIPANT" || role === "") {
+        document.getElementById('workshop-title-display').innerText = workshopName;
+        subtitleDisplay.innerHTML = `
+            <div class="text-center">
+                <div class="text-sm font-bold text-white">Participant Resources</div>
+            </div>
+        `;
+
+        let workshopZoomYn = workshop.common_zoom_url_yn ? workshop.common_zoom_url_yn.toString().trim().toUpperCase() : "NO";
+        let activeZoomLink = (workshopZoomYn === "YES") ? workshop.common_zoom_url : currentActiveUser.personal_zoom_link;
+
+        let accessRules = typeof evaluateWorkshopAccess === 'function' ? evaluateWorkshopAccess(workshop) : { resourcesUnlocked: true };
+        if (!accessRules.resourcesUnlocked) {
+            resourcesContainer.innerHTML = `<div class="text-amber-600 text-xs sm:text-sm italic p-2 bg-amber-50 rounded">Resources will unlock automatically after the first day's session concludes. Please feel free to check or update your profile details shown above.</div>`;
+            return; 
+        }
+
+        let prefix = "p_resource_";
+        let resourceCount = 0;
+        Object.keys(workshop).forEach(key => {
+            if (key.startsWith(prefix + 'label')) {
+                let indexStr = key.replace(prefix + 'label', '');
+                let index = parseInt(indexStr, 10);
+                if (!isNaN(index) && index > resourceCount) {
+                    resourceCount = index;
+                }
+            }
+        });
+
+        for (let i = 1; i <= resourceCount; i++) {
+            let label = workshop[`${prefix}label${i}`];
+            let url = workshop[`${prefix}url${i}`];
+
+            if (!label || label.toString().trim() === "" || label.toString().trim() === "**") {
+                continue;
+            }
+
+            let linkVal = (i === 1) ? (activeZoomLink ? activeZoomLink.toString().trim() : "") : (url ? url.toString().trim() : "");
+            let isLinkValid = linkVal.startsWith('http://') || linkVal.startsWith('https://');
+
+            let row = document.createElement('div');
+            row.className = "py-1.5 border-b border-gray-100";
+
+            if (isLinkValid) {
+                row.innerHTML = `
+                   <div class="text-gray-900 font-medium text-xs sm:text-sm leading-tight">
+                       <a href="${linkVal}" target="_blank" class="text-indigo-600 hover:underline font-semibold">${label}</a>
+                   </div>
+                `;
+            } else {
+                row.innerHTML = `
+                   <div class="text-gray-400 font-medium text-xs sm:text-sm leading-tight">
+                       ${label} <span class="italic text-[10px]">(Not Available)</span>
+                   </div>
+                `;
+            }
+            resourcesContainer.appendChild(row);
+        }
+    }
+    
+    // 2. IF IT IS A FACILITATOR
+    else if (role === "FACILITATOR" || role === "FACILITATORS") {
+        document.getElementById('workshop-title-display').innerText = workshopName;
+        subtitleDisplay.innerHTML = `
+            <div>
+                <div class="text-center text-sm font-bold text-indigo-200 mb-0.5">Role Assigned</div>
+                <div class="text-left px-4 text-xs font-medium text-white mb-1 whitespace-pre-line">${subRole}</div>
+                <div class="text-center px-2 text-sm font-bold text-white">Facilitator Resources</div>
+            </div>
+        `;
+
+        let prefix = "f_resource_";
+        let resourceCount = 0;
+        Object.keys(workshop).forEach(key => {
+            if (key.startsWith(prefix + 'label')) {
+                let indexStr = key.replace(prefix + 'label', '');
+                let index = parseInt(indexStr, 10);
+                if (!isNaN(index) && index > resourceCount) {
+                    resourceCount = index;
+                }
+            }
+        });
+
+        for (let i = 1; i <= resourceCount; i++) {
+            let label = workshop[`${prefix}label${i}`];
+            let url = workshop[`${prefix}url${i}`];
+
+            if (!label || label.toString().trim() === "" || label.toString().trim() === "**") {
+                continue;
+            }
+
+            let linkVal = url ? url.toString().trim() : "";
+            let isLinkValid = linkVal.startsWith('http://') || linkVal.startsWith('https://');
+
+            let row = document.createElement('div');
+            row.className = "py-1.5 border-b border-gray-100";
+
+            if (isLinkValid) {
+                row.innerHTML = `
+                   <div class="text-gray-900 font-medium text-xs sm:text-sm leading-tight">
+                       <a href="${linkVal}" target="_blank" class="text-indigo-600 hover:underline font-semibold">${label}</a>
+                   </div>
+                `;
+            } else {
+                row.innerHTML = `
+                   <div class="text-gray-400 font-medium text-xs sm:text-sm leading-tight">
+                       ${label} <span class="italic text-[10px]">(Not Available)</span>
+                   </div>
+                `;
+            }
+            resourcesContainer.appendChild(row);
+        }
+    }
+    
+    // 3. IF IT IS T&S (Training & Support) - RENDER TWO-TIER HUB DIRECTLY UPON LOGIN
+    else if (role === "T&S" || role === "TRUST & SAFETY") {
+        document.getElementById('workshop-title-display').innerText = "";
+        subtitleDisplay.innerHTML = `
+            <div class="text-center">
+                <div class="text-sm font-bold text-amber-300">T&S Control & Support Hub</div>
+            </div>
+        `;
+        renderTshHub(workshop);
+    }
+}
 
 
 
 
+		
+// --- 3. REPLACED / UPDATED: renderTshHub ---
+function renderTshHub(workshop) {
+    const resourcesContainer = document.getElementById('resources-container');
+    
+    resourcesContainer.innerHTML = `
+        <div class="p-4 bg-white rounded-lg shadow border border-gray-200 space-y-4 text-xs">
+            
+            <!-- SECTION A: STRATEGIC / MANAGEMENT CONTROLS (TOP LEVEL) -->
+            <div>
+                <h3 class="font-bold text-indigo-700 uppercase tracking-wide mb-2">Strategic Planning & Management</h3>
+                <div class="space-y-2">
+                    <button id="btn-plan-workshop" class="w-full py-2.5 px-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded shadow transition text-left flex justify-between items-center">
+                        <span>Plan Workshop / Schedule Setup</span>
+                        <span class="text-sm">→</span>
+                    </button>
+                    <button id="btn-report" class="w-full py-2.5 px-3 bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold rounded transition text-left flex justify-between items-center">
+                        <span>Report (Facilitator Involvement)</span>
+                        <span class="text-sm">→</span>
+                    </button>
+                </div>
+            </div>
+
+            <hr class="border-gray-200">
+
+            <!-- SECTION B: ACTIVE BATCH OPERATIONAL CONTROLS -->
+            <div>
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="font-bold text-gray-700 uppercase tracking-wide">Active Batch Operational Controls</h3>
+                    <span class="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded font-medium">Active Batch: ${workshop.workshop_id || 'ALL'}</span>
+                </div>
+                <div class="space-y-2">
+                    <button id="btn-launch-form" class="w-full py-2 px-3 bg-gray-50 hover:bg-gray-100 text-gray-800 font-medium rounded border border-gray-200 transition text-left flex justify-between items-center">
+                        <span>Launch a Facilitator Sign-up Form</span>
+                        <span>→</span>
+                    </button>
+                    <button id="btn-view-responses" class="w-full py-2 px-3 bg-gray-50 hover:bg-gray-100 text-gray-800 font-medium rounded border border-gray-200 transition text-left flex justify-between items-center">
+                        <span>View Facilitator Sign-up Form Responses</span>
+                        <span>→</span>
+                    </button>
+                    <button id="btn-alloc-role" class="w-full py-2 px-3 bg-gray-50 hover:bg-gray-100 text-gray-800 font-medium rounded border border-gray-200 transition text-left flex justify-between items-center">
+                        <span>Allocation of Role (Subrole Assignment)</span>
+                        <span>→</span>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    `;
+
+    document.getElementById('btn-plan-workshop').addEventListener('click', () => {
+        renderTSPlanWorkshopModule();
+    });
+    document.getElementById('btn-report').addEventListener('click', () => {
+        showCustomAlert("Involvement report module coming up next!");
+    });
+    document.getElementById('btn-launch-form').addEventListener('click', () => {
+        renderTSLaunchForm(workshop);
+    });
+    document.getElementById('btn-view-responses').addEventListener('click', () => {
+        showCustomAlert("Facilitator responses view module coming up next!");
+    });
+    document.getElementById('btn-alloc-role').addEventListener('click', () => {
+        showCustomAlert("Role allocation module coming up next!");
+    });
+}
+
+
+
+
+
+
+// --- 4. UPDATED: renderTSPlanWorkshopModule with DD-MMM-YYYY Date Formatting ---
+function renderTSPlanWorkshopModule() {
+    const container = document.getElementById('resources-container');
+    container.innerHTML = `
+        <div class="p-4 bg-white rounded-lg shadow border border-gray-200 text-xs">
+            <h3 class="text-sm font-bold text-gray-800 mb-2">Plan New Workshop Batch</h3>
+            <p class="text-gray-500 mb-3">Select a template from the Master List, define your custom Batch ID, and schedule dates for each session.</p>
+            
+            <div class="space-y-3">
+                <div>
+                    <label class="block font-bold text-gray-700 mb-1">Select Workshop Template (Master List):</label>
+                    <select id="plan-template-select" class="w-full p-2 border rounded-md bg-white">
+                        <option value="">-- Select Master Workshop Template --</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-bold text-gray-700 mb-1">Custom Batch ID (workshop_id):</label>
+                    <input type="text" id="plan-batch-id-input" placeholder="e.g. FT4H" class="w-full p-2 border rounded-md uppercase">
+                    <span class="text-[10px] text-gray-400 italic">Must be unique to prevent duplication.</span>
+                </div>
+                
+                <!-- Dynamic Sessions & Dates Container -->
+                <div id="plan-sessions-container" class="space-y-2 mt-3 hidden">
+                    <label class="block font-bold text-gray-700 uppercase tracking-wide">Schedule Session Dates:</label>
+                    <div id="plan-sessions-list" class="space-y-2"></div>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-4 mt-4 border-t border-gray-100">
+                <button onclick="renderTshHub(currentActiveUser)" class="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded">Back to Hub</button>
+                <button id="btn-save-launch-workshop" class="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded shadow">Save & Proceed to Launch</button>
+            </div>
+        </div>
+    `;
+
+    const templateSelect = document.getElementById('plan-template-select');
+    let masterWorkshopsData = {};
+
+    // Get today's date in YYYY-MM-DD format for min attribute validation
+    const todayObj = new Date();
+    const year = todayObj.getFullYear();
+    const month = String(todayObj.getMonth() + 1).padStart(2, '0');
+    const day = String(todayObj.getDate()).padStart(2, '0');
+    const todayFormatted = `${year}-${month}-${day}`;
+
+    // Helper function to convert YYYY-MM-DD to DD-MMM-YYYY format
+    const formatDateToDDMMMYYYY = (dateString) => {
+        if (!dateString) return "";
+        const parts = dateString.split("-");
+        if (parts.length !== 3) return dateString;
+        const y = parts[0];
+        const m = parseInt(parts[1], 10);
+        const d = parts[2];
+        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const monthStr = months[m - 1] || "Jan";
+        return `${d}-${monthStr}-${y}`;
+    };
+
+    const populateDropdown = (data) => {
+        masterWorkshopsData = data || {};
+        templateSelect.innerHTML = '<option value="">-- Select Master Workshop Template --</option>';
+        
+        Object.keys(masterWorkshopsData).forEach(wKey => {
+            let workshopObj = masterWorkshopsData[wKey];
+            let opt = document.createElement('option');
+            opt.value = wKey;
+            opt.innerText = `${workshopObj.workshop_name || wKey} (${workshopObj.workshop_language || 'N/A'})`;
+            templateSelect.appendChild(opt);
+        });
+    };
+
+    // 1. Fetch template list from Firebase
+    firebase.database().ref('control_tower/Master_List_Workshops').once('value').then(snapshot => {
+        populateDropdown(snapshot.val());
+    }).catch(err => {
+        console.error("Error loading master workshops:", err);
+        showCustomAlert("Could not load Master Workshop templates from database.");
+    });
+
+    // 2. Handle Template Selection change to dynamically generate session date fields
+    templateSelect.addEventListener('change', (e) => {
+        let selectedKey = e.target.value;
+        const sessionsContainer = document.getElementById('plan-sessions-container');
+        const sessionsList = document.getElementById('plan-sessions-list');
+        sessionsList.innerHTML = '';
+
+        if (!selectedKey || !masterWorkshopsData[selectedKey]) {
+            sessionsContainer.classList.add('hidden');
+            return;
+        }
+
+        sessionsContainer.classList.remove('hidden');
+        let template = masterWorkshopsData[selectedKey];
+
+        for (let i = 1; i <= 14; i++) {
+            let titleKey = `session_${i}_title`;
+            if (template[titleKey]) {
+                let sessionTitle = template[titleKey];
+                let row = document.createElement('div');
+                row.className = "flex items-center justify-between p-2 bg-gray-50 rounded border border-gray-100 gap-2";
+                row.innerHTML = `
+                    <span class="font-medium text-gray-800 w-1/2 truncate" title="${sessionTitle}">${i}. ${sessionTitle}</span>
+                    <input type="date" id="plan_session_date_${i}" min="${todayFormatted}" class="w-1/2 p-1 border rounded bg-white text-xs session-date-input" data-session-num="${i}">
+                `;
+                sessionsList.appendChild(row);
+            }
+        }
+    });
+
+    // 3. Save & Proceed to Launch Click Handler with Validation & DD-MMM-YYYY formatting
+    document.getElementById('btn-save-launch-workshop').addEventListener('click', () => {
+        let selectedTemplateKey = templateSelect.value;
+        let customBatchId = document.getElementById('plan-batch-id-input').value.trim().toUpperCase();
+
+        if (!selectedTemplateKey) {
+            showCustomAlert("Please select a Master Workshop Template.");
+            return;
+        }
+        if (!customBatchId) {
+            showCustomAlert("Please enter a custom Batch ID (workshop_id).");
+            return;
+        }
+
+        // Validate Past Dates & Sequential Session Dates Interlock
+        let activeSessionInputs = document.querySelectorAll('.session-date-input');
+        let previousDateVal = "";
+        let previousSessionNum = 0;
+
+        for (let input of activeSessionInputs) {
+            let currentDateVal = input.value;
+            let currentNum = parseInt(input.getAttribute('data-session-num'));
+
+            if (!currentDateVal) {
+                showCustomAlert(`Please enter a date for Session ${currentNum}.`);
+                return;
+            }
+
+            // Past Date Interlock
+            if (currentDateVal < todayFormatted) {
+                showCustomAlert(`Date Interlock Error:\nSession ${currentNum} date cannot be in the past.`);
+                return;
+            }
+
+            // Sequential Order Interlock
+            if (previousDateVal && currentDateVal < previousDateVal) {
+                showCustomAlert(`Date Interlock Error:\nSession ${currentNum} date cannot be earlier than Session ${previousSessionNum} date.`);
+                return;
+            }
+
+            previousDateVal = currentDateVal;
+            previousSessionNum = currentNum;
+        }
+
+        // Strict Duplication Check in Firebase under control_tower/Launched_Workshops
+        firebase.database().ref('control_tower/Launched_Workshops/' + customBatchId).once('value').then(snapshot => {
+            if (snapshot.exists()) {
+                showCustomAlert(`Duplicate Error:\nThe Batch ID "${customBatchId}" already exists in Launched Workshops. Please choose a unique Batch ID.`);
+                return;
+            }
+
+            let template = masterWorkshopsData[selectedTemplateKey];
+            let workshopName = template.workshop_name || "";
+            
+            let newBatchData = {
+                workshop_id: customBatchId,
+                workshop_name: workshopName,
+                workshop_type: template.workshop_type || "",
+                workshop_region: template.workshop_region || "",
+                workshop_language: template.workshop_language || "",
+                form_status: "Active"
+            };
+
+            for (let i = 1; i <= 14; i++) {
+                if (template[`session_${i}_title`]) {
+                    newBatchData[`session_${i}_title`] = template[`session_${i}_title`];
+                    let dateInput = document.getElementById(`plan_session_date_${i}`);
+                    // Format output as DD-MMM-YYYY before writing to Firebase
+                    let rawDate = dateInput ? dateInput.value : "";
+                    newBatchData[`session_${i}_date`] = formatDateToDDMMMYYYY(rawDate);
+                }
+            }
+
+            // Save directly to Firebase
+            firebase.database().ref('control_tower/Launched_Workshops/' + customBatchId).set(newBatchData)
+                .then(() => {
+                    showCustomAlert(`🎉 Success!\n\nWorkshop "${workshopName}" has been successfully launched with Batch ID: ${customBatchId}.`);
+                    renderTshHub(currentActiveUser);
+                })
+                .catch(error => {
+                    showCustomAlert("Failed to save workshop: " + error.message);
+                });
+        });
+    });
+}
+
+
+
+
+
+
+
+
+
+		
+		
+// --- 5. NEW: renderTSLaunchForm ---
+function renderTSLaunchForm(workshop) {
+    const container = document.getElementById('resources-container');
+    
+    container.innerHTML = `
+        <div class="p-4 bg-white rounded-lg shadow border border-gray-200 text-xs">
+            <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-200">
+                <div>
+                    <h3 class="text-sm font-bold text-gray-800">Facilitator Sign-up Form Setup</h3>
+                    <p class="text-xs text-gray-500">Review sessions, dates, workshop type, and region settings.</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="font-semibold text-gray-700">Form Status:</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="signup-form-toggle" checked class="sr-only peer">
+                        <div class="w-9 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
+                    </label>
+                    <span id="form-status-label" class="font-bold text-indigo-600">Active</span>
+                </div>
+            </div>
+
+            <!-- Display Workshop Type & Region Preview -->
+            <div class="grid grid-cols-2 gap-2 mb-4 bg-gray-50 p-2.5 rounded border border-gray-100">
+                <div><strong>Workshop Type:</strong> <span class="text-indigo-600">${workshop.workshop_type || 'N/A'}</span></div>
+                <div><strong>Workshop Region:</strong> <span class="text-indigo-600">${workshop.workshop_region || 'N/A'}</span></div>
+            </div>
+
+            <div class="mb-4">
+                <label class="block font-bold text-gray-700 mb-2 uppercase tracking-wide">Included Sessions & Dates Preview:</label>
+                <div id="ts-sessions-checklist" class="space-y-2"></div>
+            </div>
+            <div class="flex justify-end gap-2 pt-3 border-t border-gray-100">
+                <button onclick="renderTshHub(currentActiveUser)" class="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded transition">Back to Hub</button>
+                <button onclick="showCustomAlert('Sign-up form configuration saved and published successfully for facilitators!')" class="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded shadow transition">Save & Publish Form</button>
+            </div>
+        </div>
+    `;
+    
+    const checklistContainer = document.getElementById('ts-sessions-checklist');
+    for (let i = 1; i <= 4; i++) {
+        let titleKey = `session_${i}_title`;
+        let dateKey = `session_${i}_date`;
+        let titleVal = workshop[titleKey] || `Session ${i}`;
+        let dateVal = workshop[dateKey] ? new Date(workshop[dateKey]).toLocaleDateString() : "Date TBA";
+        let rowDiv = document.createElement('div');
+        rowDiv.className = "flex items-center justify-between p-2 bg-gray-50 rounded border border-gray-100";
+        
+        rowDiv.innerHTML = `
+            <div class="flex items-center gap-2">
+                <input type="checkbox" checked id="include_session_${i}" class="rounded text-indigo-600 focus:ring-indigo-500">
+                <span class="font-medium text-gray-800">${titleVal}</span>
+            </div>
+            <span class="text-gray-500 italic bg-white px-2 py-0.5 rounded border border-gray-200">${dateVal}</span>
+        `;
+        checklistContainer.appendChild(rowDiv);
+    }
+}
+
+
+function togglePasswordVisibility(inputId, iconId) {
+    const input = document.getElementById(inputId);
+    const icon = document.getElementById(iconId);
+    if (input.type === "password") {
+        input.type = "text";
+        // Show OPEN eye when password is visible
+        icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />`;
+    } else {
+        input.type = "password";
+        // Show CROSSED-OUT eye when password is hidden
+        icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a10.05 10.05 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />`;
+    }
+}
+
+
+function selectParticipant(key, data) {
+    selectedParticipantKey = key;
+    
+    // Fetch the absolute freshest user data directly from Firebase to ensure password and attributes are synced
+    db.ref('control_tower/participants/' + key).once('value').then(snapshot => {
+        if (snapshot.exists()) {
+            allParticipants[key] = snapshot.val();
+        }
+    });
+
+    document.getElementById('search-name').value = data.ps_name;
+    document.getElementById('selected-participant-display').value = data.ps_name;
+    document.getElementById('selected-participant-container').classList.remove('hidden');
+    document.getElementById('search-results').classList.add('hidden');
+}
+
+		
         function handleLogin() {
             const passwordInput = document.getElementById('login-password').value;
             if (!selectedParticipantKey || !allParticipants[selectedParticipantKey]) {
@@ -484,110 +1190,1148 @@ function filterParticipants() {
         }
 
 
-	
-		
-		
+function filterChangePasswordParticipants() {
+    const queryInput = document.getElementById('cp-search-name');
+    const query = queryInput ? queryInput.value.toLowerCase().trim() : "";
+    const rawQuery = queryInput ? queryInput.value.trim() : "";
+    const resultsBox = document.getElementById('cp-search-results');
+    const msgDiv = document.getElementById('cp-name-not-found-msg');
 
-
-
-
-
-
-
-
-
-
+    if (msgDiv) msgDiv.classList.add('hidden');
+    resultsBox.innerHTML = '';
     
+    if (query.length < 3) {
+        resultsBox.classList.add('hidden');
+        return;
+    }
+    
+    let matches = [];
+    for (let key in allParticipants) {
+        let p = allParticipants[key];
+        let pName = (p.ps_name || "").toLowerCase();
+        if (pName.includes(query)) {
+            matches.push({ key: key, data: p });
+        }
+    }
+    
+    if (matches.length > 0) {
+        resultsBox.classList.remove('hidden');
+        if (msgDiv) msgDiv.classList.add('hidden');
+        
+        matches.forEach(m => {
+            let div = document.createElement('div');
+            div.className = "px-4 py-2 hover:bg-indigo-50 cursor-pointer text-sm border-b bg-white";
+            
+            // Added Centre display alongside Name for Change Password
+            let nameStr = m.data.ps_name || "";
+            let centreStr = m.data.ps_centre ? ` (${m.data.ps_centre})` : "";
+            div.innerText = nameStr + centreStr;
+            
+            div.onclick = () => {
+                cpSelectedKey = m.key;
+                let fullDisplayVal = nameStr + centreStr;
+                document.getElementById('cp-search-name').value = fullDisplayVal;
+                let displayElem = document.getElementById('cp-selected-display');
+                if (displayElem) displayElem.value = fullDisplayVal;
+                resultsBox.classList.add('hidden');
+                if (msgDiv) msgDiv.classList.add('hidden');
+            };
+            resultsBox.appendChild(div);
+        });
+    } else {
+        resultsBox.classList.add('hidden');
+        if (query.length >= 3 && msgDiv) {
+            msgDiv.textContent = `We couldn't find a record for name "${rawQuery}"... Kindly connect with the HC Admin Team for support.`;
+            msgDiv.classList.remove('hidden');
+        }
+    }
+}
 
-    <!-- JAVASCRIPT FUNCTIONS BLOCK new codes  for index1.html  -->
-  
-        let activeAnnouncementId = "";
+		
 
-        const monthMap = {
-            "jan": 0, "feb": 1, "mar": 2, "apr": 3, "may": 4, "jun": 5,
-            "jul": 6, "aug": 7, "sep": 8, "oct": 9, "nov": 10, "dec": 11
-        };
 
-        function parseCustomDateTime(dateStr, timeStr) {
-            if (!dateStr || !timeStr) return 0;
-            let dateParts = dateStr.split('-');
-            let timeParts = timeStr.split(':');
-            if (dateParts.length !== 3 || timeParts.length !== 2) return 0;
-            let day = parseInt(dateParts[0], 10);
-            let monthStr = dateParts[1].toLowerCase();
-            let month = monthMap[monthStr];
-            let year = parseInt(dateParts[2], 10);
-            let hour = parseInt(timeParts[0], 10);
-            let minute = parseInt(timeParts[1], 10);
-            if (isNaN(day) || month === undefined || isNaN(year) || isNaN(hour) || isNaN(minute)) return 0;
-            return new Date(year, month, day, hour, minute, 0).getTime();
+function submitChangePassword() {
+    if (!cpSelectedKey || !allParticipants[cpSelectedKey]) {
+        const typedName = document.getElementById('cp-search-name').value.trim().toLowerCase();
+        for (let key in allParticipants) {
+            let pName = allParticipants[key].ps_name ? allParticipants[key].ps_name.toLowerCase() : (allParticipants[key].name ? allParticipants[key].name.toLowerCase() : "");
+            if (pName && typedName.includes(pName)) {
+                cpSelectedKey = key;
+                break;
+            }
+        }
+    }
+
+    if (!cpSelectedKey || !allParticipants[cpSelectedKey]) {
+        showCustomAlert("Please search and select a valid participant.");
+        return;
+    }
+
+    const currentPass = document.getElementById('cp-current-password').value.trim();
+    const newPass = document.getElementById('cp-new-password').value.trim();
+    const confirmPass = document.getElementById('cp-confirm-password').value.trim();
+    
+    if (!currentPass || !newPass || !confirmPass) {
+        showCustomAlert("Please fill in all password fields.");
+        return;
+    }
+    if (newPass !== confirmPass) {
+        showCustomAlert("New password and confirm password do not match.");
+        return;
+    }
+    let user = allParticipants[cpSelectedKey];
+    let storedPass = user.password ? user.password.toString() : "Daaji@2809";
+    if (currentPass !== storedPass) {
+        showCustomAlert("Current password is incorrect.");
+        return;
+    }
+
+    let payload = {
+        password: newPass,
+        fieldupdated: "password",
+        lastsyntimestamp: new Date().toLocaleString()
+    };
+
+    db.ref('control_tower/participants/' + cpSelectedKey).update(payload).then(() => {
+        showCustomAlert("Password successfully updated!");
+        allParticipants[cpSelectedKey].password = newPass;
+        showLoginScreen();
+    }).catch(err => {
+        showCustomAlert("Failed to update password: " + err);
+    });
+}
+
+
+function filterResetPasswordParticipants() {
+    const queryInput = document.getElementById('rp-search-name');
+    const query = queryInput ? queryInput.value.toLowerCase().trim() : "";
+    const rawQuery = queryInput ? queryInput.value.trim() : "";
+    const resultsBox = document.getElementById('rp-search-results');
+    const msgDiv = document.getElementById('rp-name-not-found-msg');
+
+    if (msgDiv) msgDiv.classList.add('hidden');
+    resultsBox.innerHTML = '';
+    
+    if (query.length < 3) {
+        resultsBox.classList.add('hidden');
+        return;
+    }
+    
+    let matches = [];
+    for (let key in allParticipants) {
+        let p = allParticipants[key];
+        let pName = (p.ps_name || "").toLowerCase();
+        if (pName.includes(query)) {
+            matches.push({ key: key, data: p });
+        }
+    }
+    
+    if (matches.length > 0) {
+        resultsBox.classList.remove('hidden');
+        if (msgDiv) msgDiv.classList.add('hidden');
+        
+        matches.forEach(m => {
+            let div = document.createElement('div');
+            div.className = "px-4 py-2 hover:bg-indigo-50 cursor-pointer text-sm border-b bg-white";
+            
+            // Added Centre display alongside Name for Reset Password
+            let nameStr = m.data.ps_name || "";
+            let centreStr = m.data.ps_centre ? ` (${m.data.ps_centre})` : "";
+            div.innerText = nameStr + centreStr;
+            
+            div.onclick = () => {
+                rpSelectedKey = m.key;
+                let fullDisplayVal = nameStr + centreStr;
+                document.getElementById('rp-search-name').value = fullDisplayVal;
+                let displayElem = document.getElementById('rp-selected-display');
+                if (displayElem) displayElem.value = fullDisplayVal;
+                resultsBox.classList.add('hidden');
+                if (msgDiv) msgDiv.classList.add('hidden');
+            };
+            resultsBox.appendChild(div);
+        });
+    } else {
+        resultsBox.classList.add('hidden');
+        if (query.length >= 3 && msgDiv) {
+            msgDiv.textContent = `We couldn't find a record for name "${rawQuery}"... Kindly connect with the HC Admin Team for support.`;
+            msgDiv.classList.remove('hidden');
+        }
+    }
+}
+		
+		
+
+function submitResetPassword() {
+    if (!rpSelectedKey || !allParticipants[rpSelectedKey]) {
+        const typedName = document.getElementById('rp-search-name').value.trim().toLowerCase();
+        for (let key in allParticipants) {
+            let pName = allParticipants[key].ps_name ? allParticipants[key].ps_name.toLowerCase() : (allParticipants[key].name ? allParticipants[key].name.toLowerCase() : "");
+            if (pName && typedName.includes(pName)) {
+                rpSelectedKey = key;
+                break;
+            }
+        }
+    }
+
+    if (!rpSelectedKey || !allParticipants[rpSelectedKey]) {
+        showCustomAlert("Please search and select a valid participant.");
+        return;
+    }
+
+    let payload = {
+        password: "Daaji@2809",
+        fieldupdated: "password",
+        lastsyntimestamp: new Date().toLocaleString()
+    };
+
+    db.ref('control_tower/participants/' + rpSelectedKey).update(payload).then(() => {
+        showCustomAlert("Password reset to Daaji@2809");
+        allParticipants[rpSelectedKey].password = "Daaji@2809";
+        showLoginScreen();
+    }).catch(err => {
+        showCustomAlert("Failed to reset password: " + err);
+    });
+}
+
+
+		
+
+
+        
+        function maskMobile(mob) {
+            if (!mob) return "***";
+            let s = mob.toString().trim();
+            if (s.length <= 4) return "****";
+            return s.substring(0, 2) + "****" + s.substring(s.length - 2);
         }
 
-        function isCurrentTimeWithinWindow(startDate, startTime, endDate, endTime) {
-            let now = new Date().getTime();
-            let startTimestamp = parseCustomDateTime(startDate, startTime);
-            let endTimestamp = parseCustomDateTime(endDate, endTime);
-            if (startTimestamp === 0 || endTimestamp === 0) return true; 
-            return now >= startTimestamp && now <= endTimestamp;
+        function maskEmail(email) {
+            if (!email || !email.includes("@")) return "***@***.com";
+            let parts = email.toString().trim().split("@");
+            let name = parts[0];
+            let domain = parts[1];
+            let maskedName = name.length > 2 ? name.substring(0, 2) + "***" : "***";
+            return maskedName + "@" + domain;
         }
 
-        function checkAndDisplayAnnouncement(userRole, userUniqueId) {
-            let dummyTestId = "VDC123"; 
-            if (userUniqueId !== dummyTestId) {
-                let banner = document.getElementById('announcement-banner');
-                if (banner) banner.classList.add('hidden');
+
+
+
+
+
+
+function showChangePasswordScreen() {
+    document.getElementById('login-screen').classList.add('hidden');
+    document.getElementById('change-password-screen').classList.remove('hidden');
+    document.getElementById('reset-password-screen').classList.add('hidden');
+    
+    // Preserve active hash in URL
+    if (window.location.hash) {
+        history.replaceState(null, null, window.location.hash);
+    }
+    clearForms();
+}
+
+function showResetPasswordScreen() {
+    document.getElementById('login-screen').classList.add('hidden');
+    document.getElementById('change-password-screen').classList.add('hidden');
+    document.getElementById('reset-password-screen').classList.remove('hidden');
+    
+    // Preserve active hash in URL
+    if (window.location.hash) {
+        history.replaceState(null, null, window.location.hash);
+    }
+    clearForms();
+}
+
+function showLoginScreen() {
+    document.getElementById('login-screen').classList.remove('hidden');
+    document.getElementById('change-password-screen').classList.add('hidden');
+    document.getElementById('reset-password-screen').classList.add('hidden');
+    document.getElementById('dashboard-screen').classList.add('hidden');
+    document.getElementById('app-header').classList.add('hidden');
+    
+    // Preserve active hash in URL when going back to login
+    if (window.location.hash) {
+        history.replaceState(null, null, window.location.hash);
+    }
+    clearForms();
+}
+
+
+
+
+
+			
+function logout() {
+    currentActiveUser = null;
+    selectedParticipantKey = null;
+    
+    let profileScreen = document.getElementById('update-profile-screen');
+    if (profileScreen) profileScreen.classList.add('hidden');
+    
+    // Preserve the active workshop hash (e.g., #FT3H) instead of dropping it
+    const currentHash = window.location.hash || "#FT3H";
+    
+    // If you want to fully reload or reset state to the hash page:
+    window.location.hash = currentHash;
+    showLoginScreen();
+}
+
+
+        function clearForms() {
+            let loginInput = document.getElementById('search-name');
+            let passInput = document.getElementById('login-password');
+            let selectedDisplay = document.getElementById('selected-participant-display');
+            let selectedContainer = document.getElementById('selected-participant-container');
+            
+            if (loginInput) loginInput.value = '';
+            if (passInput) passInput.value = '';
+            if (selectedDisplay) selectedDisplay.value = '';
+            if (selectedContainer) selectedContainer.classList.add('hidden');
+            selectedParticipantKey = null;
+
+            let cpSearch = document.getElementById('cp-search-name');
+            let cpDisplay = document.getElementById('cp-selected-display');
+            let cpCurrent = document.getElementById('cp-current-password');
+            let cpNew = document.getElementById('cp-new-password');
+            let cpConfirm = document.getElementById('cp-confirm-password');
+            
+            if (cpSearch) cpSearch.value = '';
+            if (cpDisplay) cpDisplay.value = '';
+            if (cpCurrent) cpCurrent.value = '';
+            if (cpNew) cpNew.value = '';
+            if (cpConfirm) cpConfirm.value = '';
+            cpSelectedKey = null;
+
+            let rpSearch = document.getElementById('rp-search-name');
+            let rpDisplay = document.getElementById('rp-selected-display');
+            
+            if (rpSearch) rpSearch.value = '';
+            if (rpDisplay) rpDisplay.value = '';
+            rpSelectedKey = null;
+        }
+        
+        function showCustomAlert(message) {
+            document.getElementById('custom-alert-message').innerText = message;
+            document.getElementById('custom-alert-modal').classList.remove('hidden');
+        }
+
+        function closeCustomAlert() {
+            document.getElementById('custom-alert-modal').classList.add('hidden');
+        }
+
+
+
+		// state for international courty
+
+
+function openUpdateProfileModal() {
+    if (!currentActiveUser) return;
+    
+    // Determine user country
+    let userCountry = (currentActiveUser.ps_country || currentActiveUser.country || "India").toString().trim();
+
+    // Fetch fresh country master list from Firebase and automatically select user's country
+    fetchCountryMaster(userCountry);
+
+    // Check user country for state logic
+    let countryVal = userCountry.toUpperCase();
+    let isIndia = (countryVal === "INDIA" || countryVal === "IN");
+
+    let stateDropdown = document.getElementById('update-profile-state');
+    let stateTextInput = document.getElementById('update-profile-state-text');
+
+    if (isIndia) {
+        if (stateDropdown) {
+            stateDropdown.classList.remove('hidden');
+            stateDropdown.disabled = true;
+            stateDropdown.classList.add('bg-gray-100', 'cursor-not-allowed');
+            stateDropdown.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
+        }
+        if (stateTextInput) stateTextInput.classList.add('hidden');
+        
+        fetchZoneStateMaster();
+        
+        if (stateDropdown) stateDropdown.value = currentActiveUser.ps_state || "";
+    } else {
+        if (stateDropdown) stateDropdown.classList.add('hidden');
+        if (stateTextInput) {
+            stateTextInput.classList.remove('hidden');
+            stateTextInput.disabled = true;
+            stateTextInput.classList.add('bg-gray-100', 'cursor-not-allowed');
+            stateTextInput.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
+            stateTextInput.value = currentActiveUser.ps_state || "";
+        }
+    }
+    
+    document.getElementById('update-profile-name').value = currentActiveUser.ps_name || "";
+    document.getElementById('update-profile-id').value = currentActiveUser.ps_id || "";
+    document.getElementById('update-profile-mob').value = currentActiveUser.ps_mob || "";
+    document.getElementById('update-profile-email').value = currentActiveUser.ps_email || "";
+    document.getElementById('update-profile-centre').value = currentActiveUser.ps_centre || "";
+
+    document.getElementById('dashboard-screen').classList.add('hidden');
+    document.getElementById('update-profile-screen').classList.remove('hidden');
+}
+
+
+		
+function closeUpdateProfileModal() {
+    document.getElementById('update-profile-screen').classList.add('hidden');
+    document.getElementById('dashboard-screen').classList.remove('hidden');
+}
+
+// Global variable to hold the zone-state master mapping
+let zoneStateMapping = {};
+
+
+// 1. Fetch Master List Zone State from Firebase when opening the profile modal
+function fetchZoneStateMaster() {
+    db.ref('control_tower/Master_List_Zone_State').once('value').then(snapshot => {
+        const data = snapshot.val();
+        if (data) {
+            zoneStateMapping = data;
+            populateStateDropdown();
+        }
+    }).catch(error => {
+        console.error("Error fetching zone-state master:", error);
+    });
+}
+
+// 2. Populate the State dropdown dynamically
+function populateStateDropdown() {
+    let stateSelect = document.getElementById('update-profile-state');
+    if (!stateSelect) return;
+    
+    // Save current state value if any, to retain selection if re-opened
+    let currentValue = stateSelect.value || (currentActiveUser ? currentActiveUser.ps_state : "");
+    
+    stateSelect.innerHTML = '<option value="">Select State</option>';
+    
+    Object.keys(zoneStateMapping).forEach(state => {
+        let option = document.createElement('option');
+        option.value = state;
+        option.textContent = state;
+        if (state === currentValue) {
+            option.selected = true;
+        }
+        stateSelect.appendChild(option);
+    });
+    
+    // Trigger zone population based on the selected state
+    onStateSelected();
+}
+
+// 3. Automatically update Zone options when State changes
+function onStateSelected() {
+    let stateSelect = document.getElementById('update-profile-state');
+    let zoneSelect = document.getElementById('update-profile-zone');
+    
+    if (!stateSelect || !zoneSelect) return;
+    
+    let selectedState = stateSelect.value;
+    let currentZoneValue = zoneSelect.value || (currentActiveUser ? currentActiveUser.ps_zone : "");
+    
+    zoneSelect.innerHTML = '<option value="">Select Zone</option>';
+    
+    if (selectedState && zoneStateMapping[selectedState]) {
+        zoneStateMapping[selectedState].forEach(zone => {
+            let option = document.createElement('option');
+            option.value = zone;
+            option.textContent = zone;
+            if (zone === currentZoneValue) {
+                option.selected = true;
+            }
+            zoneSelect.appendChild(option);
+        });
+    }
+}
+
+
+
+
+		
+// 4. Existing Save Profile Changes function with Zone & State logic intact
+function saveProfileChanges() {
+    if (!currentActiveUser) return;
+    
+    let emailInput = document.getElementById('update-profile-email');
+    if (emailInput && !emailInput.disabled) {
+        showCustomAlert("Please lock/verify your email address before saving changes.");
+        emailInput.focus();
+        return;
+    }
+    
+    let participantKey = currentActiveUser.ps_id ? currentActiveUser.ps_id.toString().trim().replace(/[\.\#\$\[\]\/]/g, "_").replace(/\s+/g, "_") : "";
+    if (!participantKey) {
+        showCustomAlert("Invalid Participant ID.");
+        return;
+    }
+    
+    let newMob = document.getElementById('update-profile-mob').value.trim();
+    let newEmail = emailInput.value.trim();
+    let newCentre = document.getElementById('update-profile-centre').value.trim();
+    let newCountry = document.getElementById('update-profile-country').value.trim();
+
+    // Dynamically grab state depending on whether the newly entered country is India or International
+    let isIndia = (newCountry.toUpperCase() === "INDIA" || newCountry.toUpperCase() === "IN");
+    
+    let newState = "";
+    if (isIndia) {
+        let stateDropdown = document.getElementById('update-profile-state');
+        newState = stateDropdown ? stateDropdown.value.trim() : "";
+    } else {
+        let stateTextInput = document.getElementById('update-profile-state-text');
+        newState = stateTextInput ? stateTextInput.value.trim() : "";
+    }
+    
+    // Build payload dynamically by comparing with currentActiveUser to track exact changes
+    let payload = {};
+    let updatedFieldsList = [];
+
+    if (newMob !== (currentActiveUser.ps_mob || "")) {
+        payload.ps_mob = newMob;
+        updatedFieldsList.push("ps_mob");
+    }
+    if (newEmail !== (currentActiveUser.ps_email || "")) {
+        payload.ps_email = newEmail;
+        updatedFieldsList.push("ps_email");
+    }
+    if (newCentre !== (currentActiveUser.ps_centre || "")) {
+        payload.ps_centre = newCentre;
+        updatedFieldsList.push("ps_centre");                
+    }
+    if (newCountry !== (currentActiveUser.ps_country || currentActiveUser.country || "")) {
+        payload.ps_country = newCountry;
+        updatedFieldsList.push("ps_country");
+    }
+    if (newState !== (currentActiveUser.ps_state || "")) {
+        payload.ps_state = newState;
+        updatedFieldsList.push("ps_state");
+    }
+
+    if (Object.keys(payload).length === 0) {
+        showCustomAlert("No changes detected to save.");
+        return;
+    }
+
+    // Include fieldupdated in the payload so it syncs correctly to Firebase and Sheet
+    payload.fieldupdated = updatedFieldsList.join(", ");
+    payload.lastsyntimestamp = new Date().toLocaleString();
+
+    let statusDiv = document.getElementById('profile-update-status');
+    if (statusDiv) {
+        statusDiv.innerText = "Your Profile is being updated.... Please wait.....";
+        statusDiv.classList.remove('hidden');
+    }
+
+    db.ref('control_tower/participants/' + participantKey).update(payload).then(() => {
+        currentActiveUser.ps_mob = newMob;
+        currentActiveUser.ps_email = newEmail;
+        currentActiveUser.ps_centre = newCentre;
+        currentActiveUser.ps_country = newCountry;
+        currentActiveUser.ps_state = newState;
+        
+        if (statusDiv) statusDiv.classList.add('hidden');
+        showCustomAlert("Profile updated successfully!");
+        closeUpdateProfileModal();
+        renderDashboard();
+
+    }).catch(err => {
+        if (statusDiv) statusDiv.classList.add('hidden');
+        showCustomAlert("Firebase update error: " + err);
+    });
+}
+
+
+
+
+
+		
+function enableField(fieldType) {
+    // Resolve correct element if field is 'state' or 'country'
+    let inputElem = document.getElementById('update-profile-' + fieldType);
+    if (fieldType === 'state') {
+        let dropdown = document.getElementById('update-profile-state');
+        let textInput = document.getElementById('update-profile-state-text');
+        if (dropdown && !dropdown.classList.contains('hidden')) {
+            inputElem = dropdown;
+        } else if (textInput && !textInput.classList.contains('hidden')) {
+            inputElem = textInput;
+        }
+    }
+
+    let btnElem = document.getElementById('btn-' + fieldType);
+    if (!inputElem || !btnElem) return;
+    
+    let isLocked = inputElem.disabled;
+    
+    if (isLocked) {
+        // Unlock for editing
+        inputElem.disabled = false;
+        inputElem.classList.remove('bg-gray-100', 'cursor-not-allowed');
+        inputElem.classList.add('bg-white', 'ring-2', 'ring-indigo-500');
+        inputElem.focus();
+        
+        btnElem.textContent = "Done";
+        btnElem.classList.remove('bg-indigo-600', 'hover:bg-indigo-700', 'text-white');
+        btnElem.classList.add('bg-green-600', 'hover:bg-green-700', 'text-white');
+        
+        let saveBtn = document.getElementById('save-profile-btn');
+        if (saveBtn) {
+            saveBtn.disabled = true;
+            saveBtn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700', 'text-white', 'cursor-pointer');
+            saveBtn.classList.add('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+        }
+    } else {
+        // Clicked "Done"
+        let val = inputElem.value.trim();
+        
+        if (fieldType === 'email') {
+            if (!validateEmailFormat(val)) {
+                showCustomAlert("Please check the email entered by you. It does not have a proper format (missing '@' or domain).");
+                inputElem.focus();
+                return; 
+            }
+            
+            inputElem.disabled = true;
+            inputElem.classList.add('bg-gray-100', 'cursor-not-allowed');
+            inputElem.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
+            
+            btnElem.textContent = "Edit";
+            btnElem.classList.remove('bg-green-600', 'hover:bg-green-700', 'text-white');
+            btnElem.classList.add('bg-indigo-600', 'hover:bg-indigo-700', 'text-white');
+            
+            let nameInput = document.getElementById('update-profile-name') || document.getElementById('profile-name-input');
+            let psName = nameInput ? nameInput.value.trim() : "";
+            if (!psName) {
+                let nameDisplay = document.body.innerText.match(/Name:\s*([^\n]+)/);
+                psName = (nameDisplay && nameDisplay[1]) ? nameDisplay[1].trim() : "Participant";
+            }
+
+            triggerEmailVerification(val, psName);
+
+        } else if (fieldType === 'mob') {
+            let countryVal = document.getElementById('update-profile-country') ? document.getElementById('update-profile-country').value.trim().toUpperCase() : (currentActiveUser.ps_country || currentActiveUser.country || "India").toString().trim().toUpperCase();
+            let isIndia = (countryVal === "INDIA" || countryVal === "IN");
+
+            if (isIndia) {
+                const mobileRegex = /^(\+91[\-\s]?)?[6-9]\d{9}$/;
+                if (!mobileRegex.test(val)) {
+                    showCustomAlert("Please enter a valid 10-digit Indian mobile number starting with digits 6 through 9.");
+                    inputElem.focus();
+                    return; 
+                }
+            } else {
+                if (!val || val.length < 5) {
+                    showCustomAlert("Please enter a valid contact number.");
+                    inputElem.focus();
+                    return;
+                }
+            }
+            
+            inputElem.disabled = true;
+            inputElem.classList.add('bg-gray-100', 'cursor-not-allowed');
+            inputElem.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
+            
+            btnElem.textContent = "Edit";
+            btnElem.classList.remove('bg-green-600', 'hover:bg-green-700', 'text-white');
+            btnElem.classList.add('bg-indigo-600', 'hover:bg-indigo-700', 'text-white');
+            
+            let saveBtn = document.getElementById('save-profile-btn');
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.classList.remove('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+                saveBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700', 'text-white', 'cursor-pointer');
+            }
+            
+        } else if (fieldType === 'country') {
+            // Validate country is not empty
+            if (!val) {
+                showCustomAlert("Country cannot be empty.");
+                inputElem.focus();
                 return;
             }
 
-            db.ref('control_tower/announcements/current_announcement').once('value').then(snapshot => {
-                const ann = snapshot.val();
-                let banner = document.getElementById('announcement-banner');
-                
-                if (!ann || !ann.active) {
-                    if (banner) banner.classList.add('hidden');
-                    return;
-                }
+            inputElem.disabled = true;
+            inputElem.classList.add('bg-gray-100', 'cursor-not-allowed');
+            inputElem.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
+            
+            btnElem.textContent = "Edit";
+            btnElem.classList.remove('bg-green-600', 'hover:bg-green-700', 'text-white');
+            btnElem.classList.add('bg-indigo-600', 'hover:bg-indigo-700', 'text-white');
 
-                activeAnnouncementId = ann.id;
+            // Dynamically toggle State input type based on whether the newly entered country is India or International
+            let isIndia = (val.toUpperCase() === "INDIA" || val.toUpperCase() === "IN");
+            let stateDropdown = document.getElementById('update-profile-state');
+            let stateTextInput = document.getElementById('update-profile-state-text');
 
-                let userKey = userUniqueId || "guest";
-                let acknowledgedId = localStorage.getItem('acknowledged_announcement_' + userKey);
-                if (acknowledgedId === ann.id) {
-                    if (banner) banner.classList.add('hidden');
-                    return;
+            if (isIndia) {
+                if (stateDropdown) stateDropdown.classList.remove('hidden');
+                if (stateTextInput) stateTextInput.classList.add('hidden');
+                if (Object.keys(zoneStateMapping).length === 0) {
+                    fetchZoneStateMaster();
                 }
+            } else {
+                if (stateDropdown) stateDropdown.classList.add('hidden');
+                if (stateTextInput) {
+                    stateTextInput.classList.remove('hidden');
+                    if (!stateTextInput.value) stateTextInput.value = "";
+                }
+            }
+            
+            let saveBtn = document.getElementById('save-profile-btn');
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.classList.remove('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+                saveBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700', 'text-white', 'cursor-pointer');
+            }
 
-                let allowedRoles = ann.target_roles ? ann.target_roles.split(',').map(r => r.trim().toLowerCase()) : [];
-                let userRoleClean = (userRole || "").trim().toLowerCase();
-                let isRoleMatched = allowedRoles.includes("all") || allowedRoles.includes(userRoleClean);
-                if (!isRoleMatched) {
-                    if (banner) banner.classList.add('hidden');
-                    return;
-                }
+        } else {
+            // For Centre, State or other fields
+            inputElem.disabled = true;
+            inputElem.classList.add('bg-gray-100', 'cursor-not-allowed');
+            inputElem.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
+            
+            btnElem.textContent = "Edit";
+            btnElem.classList.remove('bg-green-600', 'hover:bg-green-700', 'text-white');
+            btnElem.classList.add('bg-indigo-600', 'hover:bg-indigo-700', 'text-white');
+            
+            let saveBtn = document.getElementById('save-profile-btn');
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.classList.remove('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+                saveBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700', 'text-white', 'cursor-pointer');
+            }
+        }
+    }
+}
 
-                if (!isCurrentTimeWithinWindow(ann.start_date, ann.start_time, ann.end_date, ann.end_time)) {
-                    if (banner) banner.classList.add('hidden');
-                    return;
-                }
 
-                document.getElementById('announcement-text').textContent = ann.message;
-                if (banner) {
-                    banner.classList.remove('hidden');
-                    banner.classList.add('flashing-banner');
+
+		
+		
+
+		
+function triggerEmailVerification(emailVal, userName) {
+    let statusElem = document.getElementById('profile-update-status');
+    statusElem.textContent = "Sending verification code to " + emailVal + "... Please wait.";
+    statusElem.classList.remove('hidden', 'text-red-600', 'text-green-600');
+    statusElem.classList.add('text-blue-600');
+    
+    let psName = userName || "Participant";
+
+    fetch(WEB_APP_URL, {
+        method: "POST",
+        body: JSON.stringify({ 
+            action: "sendEmailVerificationCode", 
+            email: emailVal,
+            workshopId: activeWorkshopId,
+            ps_name: psName 
+        })
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.status === "Success") {
+            statusElem.textContent = "Verification code sent successfully! Please check your inbox.";
+            statusElem.classList.remove('text-blue-600');
+            statusElem.classList.add('text-green-600');
+            
+            setTimeout(() => {
+                openVerificationPopup(emailVal);
+            }, 600);
+        } else {
+            statusElem.classList.add('hidden');
+            showCustomAlert("Error: " + result.message);
+            
+            let emailInput = document.getElementById('update-profile-email');
+            if (emailInput) emailInput.disabled = false;
+        }
+    })
+    .catch(error => {
+        statusElem.classList.add('hidden');
+        showCustomAlert("Network error while sending code: " + error.toString());
+        
+        let emailInput = document.getElementById('update-profile-email');
+        if (emailInput) emailInput.disabled = false;
+    });
+}
+
+
+
+   
+
+function validateEmailFormat(email) {
+    if (!email) return false;
+    
+    // 1. Basic structural check (@ and single dot in domain)
+    let re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!re.test(email)) return false;
+    
+    // 2. Prevent consecutive dots (e.g., test..email@gmail.com)
+    if (email.includes('..')) return false;
+    
+    // 3. Split into local part and domain
+    let parts = email.split('@');
+    if (parts.length !== 2) return false;
+    let localPart = parts[0];
+    let domain = parts[1];
+    
+    // 4. Local part or domain cannot start or end with a dot
+    if (localPart.startsWith('.') || localPart.endsWith('.') || domain.startsWith('.') || domain.endsWith('.')) {
+        return false;
+    }
+    
+    // 5. Ensure domain has at least one valid top-level domain (TLD) of at least 2 characters, 
+    // and prevent bizarre multi-level gibberish extensions like .comfdfdf.in.fdsf
+    let domainParts = domain.split('.');
+    let tld = domainParts[domainParts.length - 1];
+    if (tld.length < 2) return false;
+    
+    // Optional: restrict maximum TLD length to avoid absurd entries (e.g. max 6-7 chars for standard TLDs)
+    if (tld.length > 10) return false;
+
+    return true;
+}
+
+         
+
+
+
+            let currentVerificationEmail = ""; // Temporary variable to hold the email being verified
+
+        function openVerificationPopup(email) {
+            currentVerificationEmail = email; // Store the email globally for the modal submit button to use
+            
+            // Update the message text inside your custom modal
+            document.getElementById("modalMessage").innerText = `A 6-digit verification code has been sent to ${email}.\nIt is valid for 5 minutes.`;
+            
+            // Clear any old input
+            document.getElementById("verificationInput").value = "";
+            
+            // Show your custom modal
+            document.getElementById("customVerificationModal").classList.remove("hidden");
+        }
+
+        function closeVerificationModal() {
+            // Hide the modal if the user cancels
+            document.getElementById("customVerificationModal").classList.add("hidden");
+        }
+
+        function handleVerifyCodeClick() {
+            let enteredCode = document.getElementById("verificationInput").value;
+            
+            if (!enteredCode || enteredCode.trim() === "") {
+                alert("Please enter the verification code.");
+                return;
+            }
+
+            // Hide the modal
+            document.getElementById("customVerificationModal").classList.add("hidden");
+            
+            // Pass both the stored email and the trimmed code to your existing verification function
+            verifyCodeWithBackend(currentVerificationEmail, enteredCode.trim());
+        }
+
+   
+      
+
+        function verifyCodeWithBackend(email, code) {
+            let statusElem = document.getElementById('profile-update-status');
+            statusElem.textContent = "Verifying code...";
+            statusElem.classList.remove('hidden');
+            
+            fetch(WEB_APP_URL, {
+                method: "POST",
+                body: JSON.stringify({ action: "verifyEmailCode", email: email, code: code })
+            })
+            .then(response => response.json())
+            .then(result => {
+                statusElem.classList.add('hidden');
+                if (result.status === "Success") {
+                    showCustomAlert("Email verified successfully! You can now click 'Save Changes'.");
+                    
+                    let emailInput = document.getElementById('update-profile-email');
+                    emailInput.disabled = true;
+                    emailInput.classList.add('bg-gray-100', 'cursor-not-allowed');
+                    emailInput.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
+                    
+                    let saveBtn = document.getElementById('save-profile-btn');
+                    if (saveBtn) {
+                        saveBtn.disabled = false;
+                        saveBtn.classList.remove('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+                        saveBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700', 'text-white', 'cursor-pointer');
+                    }
+                } else {
+                    showCustomAlert("Verification Failed: " + result.message);
                 }
-            }).catch(err => {
-                console.error("Error fetching announcement:", err);
+            })
+            .catch(error => {
+                statusElem.classList.add('hidden');
+                showCustomAlert("Network error during code verification: " + error.toString());
             });
         }
 
-        function acknowledgeAnnouncement() {
-            let banner = document.getElementById('announcement-banner');
-            if (banner) banner.classList.add('hidden');
-            let userKey = (typeof currentActiveUser !== 'undefined' && currentActiveUser.ps_id) ? currentActiveUser.ps_id : "guest";
-            if (activeAnnouncementId) {
-                localStorage.setItem('acknowledged_announcement_' + userKey, activeAnnouncementId);
-            }
+
+
+function validateWorkshopAndInitialize() {
+    // 1. Get workshop ID from the URL hash
+    const activeWorkshopId = window.location.hash.replace('#', '').trim();
+    
+    // Check if the hash is completely missing
+    if (!activeWorkshopId) {
+        showWorkshopError("No workshop code specified in the URL. Please check your link.");
+        return;
+    }
+
+    // 2. Check if workshops data has loaded and if the ID exists in Firebase
+    if (allWorkshops && !allWorkshops[activeWorkshopId]) {
+        showWorkshopError(`Workshop ID "${activeWorkshopId}" does not exist in our records. Please verify the URL link.`);
+        return;
+    }
+
+    // 3. Check if the workshop status is explicitly Inactive or Closed
+    const workshopData = allWorkshops[activeWorkshopId];
+    const workshopStatus = workshopData.status ? workshopData.status.trim().toLowerCase() : 'active';
+    
+    if (workshopStatus === 'inactive' || workshopStatus === 'closed') {
+        showWorkshopInactiveError(`Workshop ID "${activeWorkshopId}" has concluded or is currently inactive. Access is closed.`);
+        return;
+    }
+
+    // If it exists and is active, proceed normally
+    console.log(`Workshop "${activeWorkshopId}" validated and active successfully.`);
+}
+
+	
+function navToChangePassword(event) {
+    event.preventDefault(); // Stops the # from clearing the URL hash
+    const currentHash = window.location.hash; // Captures #FT3H, #FT4H, etc.
+    showChangePasswordScreen();
+    if (currentHash) {
+        window.location.hash = currentHash; // Restores the batch suffix
+    }
+}
+
+function navToResetPassword(event) {
+    event.preventDefault(); // Stops the # from clearing the URL hash
+    const currentHash = window.location.hash; // Captures #FT3H, #FT4H, etc.
+    showResetPasswordScreen();
+    if (currentHash) {
+        window.location.hash = currentHash; // Restores the batch suffix
+    }
+}
+
+
+		function showWorkshopNotFoundError(message) {
+    let timeLeft = 10;
+    
+    document.body.innerHTML = `
+        <div class="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+            <div class="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center border border-red-100">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-100 text-red-600 mb-4 text-2xl">
+                    ⚠️
+                </div>
+                <h2 class="text-xl font-bold text-gray-900 mb-2">Workshop Not Found</h2>
+                <p class="text-gray-600 text-sm mb-4">${message}</p>
+                <p class="text-xs text-gray-400">Redirecting to main website in <span id="countdown-timer">${timeLeft}</span> seconds...</p>
+            </div>
+        </div>
+    `;
+
+    const timerInterval = setInterval(() => {
+        timeLeft--;
+        const timerElement = document.getElementById('countdown-timer');
+        if (timerElement) {
+            timerElement.innerText = timeLeft;
         }
+        if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            window.location.href = "https://heartfulness.org/heartful-communication/";
+        }
+    }, 1000);
+}
+
+function showWorkshopInactiveError(message) {
+    let timeLeft = 10;
+    
+    // Ensure main container is hidden
+    const mainContainer = document.getElementById('main-container');
+    if (mainContainer) {
+        mainContainer.style.display = 'none';
+    }
+
+    document.body.innerHTML = `
+        <div class="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+            <div class="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center border border-amber-100">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-100 text-amber-600 mb-4 text-2xl">
+                    🔒
+                </div>
+                <h2 class="text-xl font-bold text-gray-900 mb-2">Workshop Closed</h2>
+                <p class="text-gray-600 text-sm mb-4">${message}</p>
+                <p class="text-xs text-gray-400">Redirecting to main website in <span id="countdown-timer-inactive">${timeLeft}</span> seconds...</p>
+            </div>
+        </div>
+    `;
+
+    const timerInterval = setInterval(() => {
+        timeLeft--;
+        const timerElement = document.getElementById('countdown-timer-inactive');
+        if (timerElement) {
+            timerElement.innerText = timeLeft;
+        }
+        if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            window.location.href = "https://heartfulness.org/heartful-communication/";
+        }
+    }, 1000);
+}
+		
+// Example helper to fetch regional formatting rules and format workshop dates
+function applyRegionalDateFormat(workshopData) {
+    let region = workshopData.workshop_region || "India";
+
+    // Database reference to regional configuration if stored, or hardcoded fallback rule
+    db.ref('control_tower/Master_List_Regions/' + region).once('value').then(snapshot => {
+        let regionConfig = snapshot.val();
+        // Apply strict "DD-MMM-YYYY HR:MM" formatting for India
+        if (region === "India") {
+            console.log("Applying Indian standard date-time format: DD-MMM-YYYY HR:MM");
+        }
+    });
+}
+
+
+
+		// 1. Robust Date Parser to handle ISO strings from Firebase safely
+function parseCustomDateString(dateStr) {
+    if (!dateStr) return new Date(0);
+    return new Date(dateStr);
+}
+
+// 2. Updated Access Evaluator
+function evaluateWorkshopAccess(workshop) {
+    let now = new Date(); 
+    let startDate = parseCustomDateString(workshop.from_date); 
+    let endDate = parseCustomDateString(workshop.to_date);
+    
+    let gracePeriodEnd = new Date(endDate.getTime() + (24 * 60 * 60 * 1000));
+    
+    let accessStatus = {
+        resourcesUnlocked: false,
+        workshopActive: true
+    };
+
+    if (now >= startDate) {
+        accessStatus.resourcesUnlocked = true;
+    }
+
+    if (now > gracePeriodEnd) {
+        accessStatus.workshopActive = false;
+        accessStatus.resourcesUnlocked = false; 
+    }
+
+    return accessStatus;
+}
+		
+		// Global variable to hold the country master list
+let countryMasterList = [];
+
+
+function fetchCountryMaster(targetCountry = "") {
+    db.ref('control_tower/Master_List_Country').once('value').then(snapshot => {
+        const data = snapshot.val();
+        let countryDropdown = document.getElementById('update-profile-country');
+        if (!countryDropdown) return;
+
+        countryDropdown.innerHTML = '<option value="">Select Country</option>';
+        countryMasterList = [];
+
+        if (data) {
+            if (Array.isArray(data)) {
+                countryMasterList = data.filter(Boolean);
+            } else {
+                Object.keys(data).forEach(key => {
+                    let val = data[key];
+                    let countryName = "";
+                    
+                    if (typeof val === 'object' && val !== null) {
+                        countryName = val.country || val.name || key.replace(/_/g, " ");
+                    } else if (typeof val === 'string' && val.trim() !== "") {
+                        countryName = val;
+                    } else {
+                        countryName = key.replace(/_/g, " ");
+                    }
+                    
+                    if (countryName) {
+                        countryMasterList.push(countryName);
+                    }
+                });
+            }
+
+            // Sort alphabetically
+            countryMasterList.sort();
+
+            countryMasterList.forEach(country => {
+                let opt = document.createElement('option');
+                opt.value = country;
+                opt.textContent = country;
+                countryDropdown.appendChild(opt);
+            });
+        }
+
+        // Set the target country immediately after options load
+        let finalCountry = targetCountry || countryDropdown.value || "India";
+        countryDropdown.value = finalCountry;
+        
+        // Ensure locking styles are applied correctly here too
+        countryDropdown.disabled = true;
+        countryDropdown.classList.add('bg-gray-100', 'cursor-not-allowed');
+        countryDropdown.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
+
+    }).catch(error => {
+        console.error("Error fetching country master:", error);
+    });
+}
+		
+
+		
+// Handler when user changes country selection in the dropdown
+function onCountrySelected() {
+    let countryDropdown = document.getElementById('update-profile-country');
+    if (!countryDropdown) return;
+    let selectedCountry = countryDropdown.value.trim().toUpperCase();
+    let isIndia = (selectedCountry === "INDIA" || selectedCountry === "IN");
+
+    let stateDropdown = document.getElementById('update-profile-state');
+    let stateTextInput = document.getElementById('update-profile-state-text');
+
+    if (isIndia) {
+        if (stateDropdown) stateDropdown.classList.remove('hidden');
+        if (stateTextInput) stateTextInput.classList.add('hidden');
+        if (Object.keys(zoneStateMapping).length === 0) {
+            fetchZoneStateMaster();
+        }
+    } else {
+        if (stateDropdown) stateDropdown.classList.add('hidden');
+        if (stateTextInput) {
+            stateTextInput.classList.remove('hidden');
+            if (!stateTextInput.value) stateTextInput.value = "";
+        }
+    }
+
+    let saveBtn = document.getElementById('save-profile-btn');
+    if (saveBtn && !document.getElementById('update-profile-country').disabled) {
+        saveBtn.disabled = false;
+        saveBtn.classList.remove('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+        saveBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700', 'text-white', 'cursor-pointer');
+    }
+}
+
+
+
+		
     </script>
 </body>
 </html>
