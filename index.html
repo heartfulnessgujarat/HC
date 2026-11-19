@@ -2257,15 +2257,10 @@ function evaluateWorkshopAccess(workshop) {
     }
 
     if (now > gracePeriodEnd) {
- //       accessStatus.workshopActive = false;
- //       accessStatus.resourcesUnlocked = false; 
+       accessStatus.workshopActive = false;
+      accessStatus.resourcesUnlocked = false; 
 
-		accessStatus.workshopActive = true;
-        accessStatus.resourcesUnlocked = true; 
-
-
-
-		
+				
     }
 
     return accessStatus;
