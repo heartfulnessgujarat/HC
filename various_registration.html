@@ -8,7 +8,6 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        /* Fallback styles so layout & hiding always work even if external CDN is blocked/slow */
         .hidden { display: none !important; }
         body {
             margin: 0;
@@ -368,17 +367,18 @@
             updateUserStrip();
 
             if (!db) {
-                document.getElementById("workshop-name-sub").innerText = `Batch: ${workshopId} (Offline / SDK blocked)`;
-                populateSelectOptions(document.getElementById("f1-section"), ["Section 1", "Section 2"], "-- Select Section --");
-                populateSelectOptions(document.getElementById("f1-module"), ["Module 1", "Module 2", "Module 3", "Module 4"], "-- Select Module --");
-                populateSelectOptions(document.getElementById("f1-participant-name"), forwardedUserName ? [forwardedUserName] : [], "-- Select Your Name --", forwardedUserName);
-                document.getElementById("my-submissions-tbody").innerHTML = `<tr><td colspan="5" class="py-3 px-2 text-center text-red-500">Firebase SDK could not load. Please check internet connection.</td></tr>`;
+                document.getElementById("workshop-name-sub").innerText = `Batch: ${workshopId} (Firebase SDK unavailable)`;
                 return;
             }
 
-            // 1. Workshop node (supports exact ID or case-insensitive fallback)
-            db.ref("control_tower/workshops").once("value").then(snap => {
-                const allWs = snap.val() || {};
+            // 1. Read root 'workshops' (with fallback to 'control_tower/workshops')
+            db.ref("workshops").once("value").then(snap => {
+                let allWs = snap.val();
+                if (!allWs) {
+                    return db.ref("control_tower/workshops").once("value").then(ctSnap => ctSnap.val() || {});
+                }
+                return allWs;
+            }).then(allWs => {
                 let ws = allWs[workshopId];
                 if (!ws) {
                     const matchKey = Object.keys(allWs).find(k => k.toLowerCase() === workshopId.toLowerCase());
@@ -388,4 +388,256 @@
 
                 const wsTitle = ws.workshop_name || `Workshop (${workshopId})`;
                 document.getElementById("page-title").innerText = `${wsTitle} | Recording Link`;
-                document.getElementById("form-title-heading").innerText =
+                document.getElementById("form-title-heading").innerText = `${wsTitle} - Recording Link`;
+                document.getElementById("workshop-name-sub").innerText =
+                    `Batch: ${workshopId}${ws.workshop_language ? " • " + ws.workshop_language : ""}`;
+
+                const sections = parseCommaList(ws.section_numbers);
+                const modules = parseCommaList(ws.module_names);
+
+                populateSelectOptions(
+                    document.getElementById("f1-section"),
+                    sections.length ? sections : ["Section 1", "Section 2"],
+                    "-- Select Section --"
+                );
+                populateSelectOptions(
+                    document.getElementById("f1-module"),
+                    modules.length ? modules : ["Module 1", "Module 2", "Module 3", "Module 4"],
+                    "-- Select Module --"
+                );
+            }).catch(err => {
+                console.error("Workshop load error:", err);
+                document.getElementById("workshop-name-sub").innerText = `Batch: ${workshopId} (${err.code || "read error"})`;
+            });
+
+            // 2. Read root 'participants' (with fallback to 'control_tower/participants')
+            db.ref("participants").once("value").then(snap => {
+                let rawParticipants = snap.val();
+                if (!rawParticipants) {
+                    return db.ref("control_tower/participants").once("value").then(ctSnap => ctSnap.val() || {});
+                }
+                return rawParticipants;
+            }).then(rawParticipants => {
+                const namesSet = new Set();
+
+                Object.values(rawParticipants || {}).forEach(p => {
+                    if (!p || !p.ps_name) return;
+                    const pWs = (p.workshop_id || "").toString().trim().toUpperCase();
+                    if (!workshopId || workshopId === "DEFAULT" || !pWs || pWs === workshopId.toUpperCase() || pWs === "ALL") {
+                        namesSet.add(p.ps_name.toString().trim());
+                    }
+                });
+
+                if (namesSet.size === 0) {
+                    Object.values(rawParticipants || {}).forEach(p => {
+                        if (p && p.ps_name) namesSet.add(p.ps_name.toString().trim());
+                    });
+                }
+
+                if (forwardedUserName) namesSet.add(forwardedUserName);
+
+                const sortedNames = Array.from(namesSet).sort((a, b) => a.localeCompare(b));
+                populateSelectOptions(
+                    document.getElementById("f1-participant-name"),
+                    sortedNames,
+                    sortedNames.length ? "-- Select Your Name --" : "-- No names found --",
+                    forwardedUserName
+                );
+                updateUserStrip();
+                loadMySubmissions();
+            }).catch(err => {
+                console.error("Participants load error:", err);
+                populateSelectOptions(
+                    document.getElementById("f1-participant-name"),
+                    forwardedUserName ? [forwardedUserName] : [],
+                    "-- Select Your Name --",
+                    forwardedUserName
+                );
+                loadMySubmissions();
+            });
+        }
+
+        function cancelEdit() {
+            editingId = null;
+            document.getElementById("edit-badge").classList.add("hidden");
+            document.getElementById("btn-cancel-edit").classList.add("hidden");
+            document.getElementById("btn-save-recording").textContent = "Submit";
+            document.getElementById("form-card-heading").innerText = "Submit Recording Link";
+            document.getElementById("f1-section").value = "";
+            document.getElementById("f1-module").value = "";
+            document.getElementById("f1-recording-link").value = "";
+            if (forwardedUserName) {
+                document.getElementById("f1-participant-name").value = forwardedUserName;
+            }
+        }
+
+        function startEdit(submissionId) {
+            const rec = submissionsStore[submissionId];
+            if (!rec) return;
+            setViewMode("form");
+            editingId = submissionId;
+            document.getElementById("edit-badge").classList.remove("hidden");
+            document.getElementById("btn-cancel-edit").classList.remove("hidden");
+            document.getElementById("btn-save-recording").textContent = "Update";
+            document.getElementById("form-card-heading").innerText = "Edit Submission";
+
+            document.getElementById("f1-participant-name").value = rec.participant_name || "";
+            document.getElementById("f1-section").value = rec.section || "";
+            document.getElementById("f1-module").value = rec.module_name || "";
+            document.getElementById("f1-recording-link").value = rec.recording_link || "";
+            document.getElementById("form-section").scrollIntoView({ behavior: "smooth" });
+        }
+
+        function handleRecordingSubmit(event) {
+            event.preventDefault();
+            if (!db) return showAlert("Database connection not ready.");
+
+            const participantName = document.getElementById("f1-participant-name").value.trim();
+            const sectionVal = document.getElementById("f1-section").value.trim();
+            const moduleVal = document.getElementById("f1-module").value.trim();
+            const recordingLink = document.getElementById("f1-recording-link").value.trim();
+
+            if (!participantName) return showAlert("Please select your name.");
+            if (!sectionVal) return showAlert("Please select a section.");
+            if (!moduleVal) return showAlert("Please select a module number.");
+            if (!/^https?:\/\//i.test(recordingLink)) {
+                return showAlert("Please enter a valid link starting with http:// or https://.");
+            }
+
+            const ownerKey = params.get("uid") ? sanitizeKey(params.get("uid")) : sanitizeKey(participantName);
+            activeUserKey = ownerKey;
+
+            const statusEl = document.getElementById("form-status");
+            const saveBtn = document.getElementById("btn-save-recording");
+            saveBtn.disabled = true;
+            statusEl.textContent = editingId ? "Updating..." : "Submitting...";
+            statusEl.classList.remove("hidden");
+
+            const basePath = `form_submissions/${safeWorkshopKey}/${FORM_ID}/${ownerKey}`;
+            const nowStr = new Date().toLocaleString();
+
+            if (editingId) {
+                const existing = submissionsStore[editingId] || {};
+                const updated = {
+                    ...existing,
+                    participant_name: participantName,
+                    section: sectionVal,
+                    module_name: moduleVal,
+                    recording_link: recordingLink,
+                    updated_at: nowStr
+                };
+                db.ref(`${basePath}/${editingId}`).set(updated).then(() => {
+                    saveBtn.disabled = false;
+                    statusEl.classList.add("hidden");
+                    cancelEdit();
+                    loadMySubmissions();
+                    showAlert("Submission updated.");
+                }).catch(err => {
+                    saveBtn.disabled = false;
+                    statusEl.classList.add("hidden");
+                    showAlert("Error updating: " + err.message);
+                });
+            } else {
+                const newRef = db.ref(basePath).push();
+                const record = {
+                    submission_id: newRef.key,
+                    form_id: FORM_ID,
+                    workshop_id: workshopId,
+                    user_key: ownerKey,
+                    participant_name: participantName,
+                    section: sectionVal,
+                    module_name: moduleVal,
+                    recording_link: recordingLink,
+                    created_at: nowStr,
+                    updated_at: nowStr
+                };
+                newRef.set(record).then(() => {
+                    saveBtn.disabled = false;
+                    statusEl.classList.add("hidden");
+                    cancelEdit();
+                    loadMySubmissions();
+                    showAlert("Recording link submitted.");
+                }).catch(err => {
+                    saveBtn.disabled = false;
+                    statusEl.classList.add("hidden");
+                    showAlert("Error submitting: " + err.message);
+                });
+            }
+        }
+
+        function viewSubmission(submissionId) {
+            const rec = submissionsStore[submissionId];
+            if (!rec) return;
+            document.getElementById("view-modal-content").innerHTML = `
+                <div><strong>Name:</strong> ${rec.participant_name || "-"}</div>
+                <div><strong>Section:</strong> ${rec.section || "-"}</div>
+                <div><strong>Module:</strong> ${rec.module_name || "-"}</div>
+                <div><strong>Link:</strong> <a href="${rec.recording_link}" target="_blank" style="color:#4f46e5;text-decoration:underline;">${rec.recording_link || "-"}</a></div>
+                <div><strong>Submitted:</strong> ${rec.created_at || "-"}</div>
+            `;
+            document.getElementById("view-modal").classList.remove("hidden");
+        }
+
+        function deleteSubmission(submissionId) {
+            if (!db) return;
+            if (!confirm("Delete this submission?")) return;
+            const path = `form_submissions/${safeWorkshopKey}/${FORM_ID}/${activeUserKey}/${submissionId}`;
+            db.ref(path).remove().then(() => {
+                if (editingId === submissionId) cancelEdit();
+                loadMySubmissions();
+                showAlert("Submission deleted.");
+            }).catch(err => showAlert("Error deleting: " + err.message));
+        }
+
+        function loadMySubmissions() {
+            const tbody = document.getElementById("my-submissions-tbody");
+            const badge = document.getElementById("my-count-badge");
+            submissionsStore = {};
+
+            if (!db) return;
+
+            const path = `form_submissions/${safeWorkshopKey}/${FORM_ID}/${activeUserKey}`;
+            db.ref(path).once("value").then(snap => {
+                const data = snap.val() || {};
+                const entries = Object.keys(data).map(id => {
+                    submissionsStore[id] = data[id];
+                    return { id, ...data[id] };
+                }).reverse();
+
+                badge.textContent = entries.length;
+                if (entries.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" class="py-3 px-2 text-center text-gray-400 italic">No submissions yet.</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = "";
+                entries.forEach(item => {
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `
+                        <td class="py-1.5 px-2 font-medium">${item.participant_name || "-"}</td>
+                        <td class="py-1.5 px-2">${item.section || "-"}</td>
+                        <td class="py-1.5 px-2">${item.module_name || "-"}</td>
+                        <td class="py-1.5 px-2" style="max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                            <a href="${item.recording_link}" target="_blank" style="color:#4f46e5;text-decoration:underline;">Open</a>
+                        </td>
+                        <td class="py-1.5 px-2 text-right" style="white-space:nowrap;">
+                            <button type="button" onclick="viewSubmission('${item.id}')" title="View" style="padding:2px 5px;cursor:pointer;">👁️</button>
+                            <button type="button" onclick="startEdit('${item.id}')" title="Edit" style="padding:2px 5px;cursor:pointer;">✏️</button>
+                            <button type="button" onclick="deleteSubmission('${item.id}')" title="Delete" style="padding:2px 5px;cursor:pointer;">🗑️</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }).catch(err => {
+                console.error("Submissions load error:", err);
+                tbody.innerHTML = `<tr><td colspan="5" class="py-3 px-2 text-center text-red-500">Could not load submissions.</td></tr>`;
+            });
+        }
+
+        window.addEventListener("DOMContentLoaded", () => {
+            setViewMode(currentViewMode);
+            loadDataFromFirebase();
+        });
+    </script>
+</body>
+</html>
