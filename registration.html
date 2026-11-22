@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="page-title">Heartful Communication | Registration</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Firebase SDKs (v8 matching HC APP) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col justify-between text-xs sm:text-sm">
+
+    <!-- Persistent Global Header Logo -->
+    <div id="global-header" class="max-w-md mx-auto w-full px-3 pt-2 hidden">
+        <div class="bg-white rounded-lg shadow-sm p-0 overflow-hidden flex justify-center w-full">
+            <img id="app-logo" src="" alt="App Logo" class="w-full h-auto object-cover block" />
+        </div>
+    </div>
+
+    <!-- Main Registration Container -->
+    <main id="main-container" class="max-w-md mx-auto px-3 py-2 flex-grow w-full">
+        <div id="registration-card" class="bg-white rounded-lg shadow-md p-4 mt-1">
+            <!-- Role & Workshop Header -->
+            <div class="text-center mb-3">
+                <span id="role-badge" class="inline-block text-[10px] uppercase tracking-widest bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-full font-semibold mb-1">
+                    Registration
+                </span>
+                <h1 id="reg-heading" class="text-base sm:text-lg font-bold text-gray-800">
+                    Heartful Communication Registration
+                </h1>
+                <p id="workshop-context-label" class="text-[11px] text-gray-500 mt-0.5"></p>
+            </div>
+
+            <form id="hc-registration-form" onsubmit="handleRegistrationSubmit(event)" class="space-y-2.5">
+                <!-- First Name & Last Name -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <div>
+                        <label for="ps_firstname" class="block text-gray-700 text-[11px] font-bold mb-0.5">
+                            First Name <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" id="ps_firstname" required autocomplete="given-name" placeholder="First name"
+                            class="w-full px-2.5 py-1.5 text-xs border rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label for="ps_lastname" class="block text-gray-700 text-[11px] font-bold mb-0.5">
+                            Last Name <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" id="ps_lastname" required autocomplete="family-name" placeholder="Last name"
+                            class="w-full px-2.5 py-1.5 text-xs border rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                    </div>
+                </div>
+
+                <!-- Mobile Number -->
+                <div>
+                    <label for="ps_mob" class="block text-gray-700 text-[11px] font-bold mb-0.5">
+                        Mobile Number <span class="text-red-500">*</span>
+                    </label>
+                    <input type="tel" id="ps_mob" required autocomplete="tel" placeholder="Enter mobile number"
+                        oninput="onMobileInput()"
+                        class="w-full px-2.5 py-1.5 text-xs border rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                    <p id="mob-status-msg" class="text-[10px] text-gray-500 mt-0.5 hidden"></p>
+                </div>
+
+                <!-- Email Address + Two-Layer Verification -->
+                <div>
+                    <label for="ps_email" class="block text-gray-700 text-[11px] font-bold mb-0.5">
+                        Email Address <span class="text-red-500">*</span>
+                    </label>
+                    <div class="flex items-center gap-1.5">
+                        <input type="email" id="ps_email" required autocomplete="email" placeholder="name@example.com"
+                            oninput="onEmailInputChange()"
+                            class="w-full px-2.5 py-1.5 text-xs border rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                        <button type="button" id="btn-send-email-otp" onclick="sendRegistrationEmailCode()"
+                            class="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold py-1.5 px-2.5 rounded-md transition flex-shrink-0">
+                            Verify Email
+                        </button>
+                    </div>
+                    <p id="email-verify-status" class="text-[10px] mt-0.5 hidden"></p>
+                </div>
+
+                <!-- Country -->
+                <div>
+                    <label for="ps_country" class="block text-gray-700 text-[11px] font-bold mb-0.5">
+                        Country <span class="text-red-500">*</span>
+                    </label>
+                    <select id="ps_country" required onchange="onCountryChange()"
+                        class="w-full px-2.5 py-1.5 text-xs border rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                        <option value="India" selected>India</option>
+                    </select>
+                </div>
+
+                <!-- INDIA LOCATION BLOCK (Dropdown State + Cascading Zone + Centre) -->
+                <div id="india-location-fields" class="space-y-2.5">
+                    <div>
+                        <label for="ps_state_india" class="block text-gray-700 text-[11px] font-bold mb-0.5">
+                            State <span class="text-red-500">*</span>
+                        </label>
+                        <select id="ps_state_india" onchange="onIndiaStateChange()"
+                            class="w-full px-2.5 py-1.5 text-xs border rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                            <option value="">-- Select State --</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="ps_zone_india" class="block text-gray-700 text-[11px] font-bold mb-0.5">
+                            Zone <span class="text-red-500">*</span>
+                        </label>
+                        <select id="ps_zone_india"
+                            class="w-full px-2.5 py-1.5 text-xs border rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                            <option value="">-- Select Zone --</option>
+                        </select>
+                        <p class="text-[10px] text-gray-400 italic mt-0.5">Select a State first to view its Zones.</p>
+                    </div>
+
+                    <div>
+                        <label for="ps_centre_india" class="block text-gray-700 text-[11px] font-bold mb-0.5">
+                            Centre <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" id="ps_centre_india" placeholder="Enter your Centre"
+                            class="w-full px-2.5 py-1.5 text-xs border rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                    </div>
+                </div>
+
+                <!-- INTERNATIONAL LOCATION BLOCK (Non-mandatory free-text inputs without list restrictions) -->
+                <div id="intl-location-fields" class="space-y-2.5 hidden">
+                    <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-md px-2.5 py-1.5 text-[10px]">
+                        International registration: Feel free to enter whatever applies locally—no strict list or mandatory restriction on these fields.
+                    </div>
+
+                    <div>
+                        <label for="ps_state_intl" class="block text-gray-700 text-[11px] font-bold mb-0.5">
+                            State / Province / Region
+                        </label>
+                        <input type="text" id="ps_state_intl" placeholder="Enter State / Province / Region (optional)"
+                            class="w-full px-2.5 py-1.5 text-xs border rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                    </div>
+
+                    <div>
+                        <label for="ps_zone_intl" class="block text-gray-700 text-[11px] font-bold mb-0.5">
+                            Zone / District / City
+                        </label>
+                        <input type="text" id="ps_zone_intl" placeholder="Enter Zone / District / City (optional)"
+                            class="w-full px-2.5 py-1.5 text-xs border rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                    </div>
+
+                    <div>
+                        <label for="ps_centre_intl" class="block text-gray-700 text-[11px] font-bold mb-0.5">
+                            Centre
+                        </label>
+                        <input type="text" id="ps_centre_intl" placeholder="Enter Centre (optional)"
+                            class="w-full px-2.5 py-1.5 text-xs border rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                    </div>
+                </div>
+
+                <!-- Create Own Password -->
+                <div>
+                    <label for="reg_password" class="block text-gray-700 text-[11px] font-bold mb-0.5">
+                        Create Password (Max 10 Chars) <span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <input type="password" id="reg_password" required maxlength="10" autocomplete="new-password"
+                            placeholder="Create your password"
+                            class="w-full px-2.5 py-1.5 pr-8 text-xs border rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                        <button type="button" onclick="togglePasswordVisibility('reg_password', 'reg-eye-1')"
+                            class="absolute inset-y-0 right-0 px-2 flex items-center text-gray-500 hover:text-gray-700 focus:outline-none">
+                            <svg id="reg-eye-1" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a10.05 10.05 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Confirm Password -->
+                <div>
+                    <label for="reg_confirm_password" class="block text-gray-700 text-[11px] font-bold mb-0.5">
+                        Confirm Password <span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <input type="password" id="reg_confirm_password" required maxlength="10" autocomplete="new-password"
+                            placeholder="Re-enter your password"
+                            class="w-full px-2.5 py-1.5 pr-8 text-xs border rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                        <button type="button" onclick="togglePasswordVisibility('reg_confirm_password', 'reg-eye-2')"
+                            class="absolute inset-y-0 right-0 px-2 flex items-center text-gray-500 hover:text-gray-700 focus:outline-none">
+                            <svg id="reg-eye-2" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a10.05 10.05 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Status Message -->
+                <p id="reg-status-msg" class="text-xs text-blue-600 font-medium text-center hidden"></p>
+
+                <!-- Submit Button -->
+                <button type="submit" id="btn-submit-registration"
+                    class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-3 text-xs rounded-md transition shadow">
+                    Complete Registration
+                </button>
+            </form>
+
+            <!-- Success Screen (Hidden until registered) -->
+            <div id="registration-success-box" class="hidden text-center py-3 space-y-2.5">
+                <div class="mx-auto flex items-center justify-center h-11 w-11 rounded-full bg-green-100 text-green-600 text-xl font-bold">
+                    ✓
+                </div>
+                <h2 class="text-base font-bold text-gray-800">Registration Successful!</h2>
+                <p class="text-xs text-gray-600">
+                    Welcome to Heartful Communication. Your details have been saved.
+                </p>
+                <div class="bg-gray-50 border border-gray-200 rounded-md p-2.5 text-left text-xs space-y-1">
+                    <div><strong>Display Name:</strong> <span id="success-ps-name"></span></div>
+                    <div><strong>Generated ID:</strong> <span id="success-ps-id" class="font-mono font-semibold text-indigo-700"></span></div>
+                    <div><strong>Role:</strong> <span id="success-role"></span></div>
+                    <div><strong>Workshop ID:</strong> <span id="success-workshop-id"></span></div>
+                </div>
+                <a id="go-to-login-link" href="index.html"
+                    class="block w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-3 text-xs rounded-md transition shadow">
+                    Proceed to Login Portal
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="text-center py-2 text-[10px] text-gray-500">
+        Heartful Communication - Registration System
+    </footer>
+
+    <!-- Custom Alert Modal -->
+    <div id="custom-alert-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-3">
+        <div class="bg-white rounded-lg shadow-xl max-w-xs w-full p-4 text-center text-xs">
+            <div id="custom-alert-message" class="text-gray-800 text-xs mb-4 font-medium whitespace-pre-line"></div>
+            <button onclick="closeCustomAlert()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold py-1.5 px-4 rounded transition shadow">
+                OK
+            </button>
+        </div>
+    </div>
+
+    <!-- Email Verification Code Modal -->
+    <div id="regVerificationModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-3">
+        <div class="bg-white rounded-lg p-4 max-w-xs w-full mx-auto shadow-xl text-xs">
+            <h3 class="text-sm font-semibold text-gray-800 mb-1.5">Enter Verification Code</h3>
+            <p id="regModalMessage" class="text-[11px] text-gray-600 mb-3">
+                A 6-digit verification code has been sent to your email.
+            </p>
+            <input type="text" id="regVerificationInput" maxlength="10" placeholder="Enter 6-digit code"
+                autocomplete="off" spellcheck="false"
+                class="w-full px-2.5 py-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 mb-3 text-center tracking-widest text-sm">
+            <div class="flex justify-end space-x-1.5">
+                <button type="button" onclick="closeRegVerificationModal()"
+                    class="px-3 py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 text-xs">Cancel</button>
+                <button type="button" onclick="handleRegVerifyCodeClick()"
+                    class="px-3 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-xs">Verify</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwZwp6CgVUqLM9LUWob9FvgiioA3S5sACYHlkOD7RiopRucNaHzP8IsAcKMEARKbunH3A/exec";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAt_HbqtG_kMn41NC1wPy5KDFNsDp5HTb8",
+            authDomain: "hc-app-72298.firebaseapp.com",
+            databaseURL: "https://hc-app-72298-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "hc-app-72298",
+            storageBucket: "hc-app-72298.firebasestorage.app",
+            messagingSenderId: "1013251414152",
+            appId: "1:1013251414152:web:3e598848e31a81bb43273d"
+        };
+
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.database();
+
+        // Parse URL hash like #FT3H-PS or #FT3H-FS
+        function parseRegistrationHash() {
+            const rawHash = (window.location.hash || "").replace(/^#/, "").trim();
+            if (!rawHash) return { valid: false, reason: "Missing workshop and role in URL link." };
+
+            const upperHash = rawHash.toUpperCase();
+            let workshopId = "";
+            let role = "";
+            let roleLabel = "";
+
+            if (upperHash.endsWith("-PS")) {
+                workshopId = rawHash.slice(0, -3).trim();
+                role = "Mentee";
+                roleLabel = "Mentee Registration";
+            } else if (upperHash.endsWith("-FS")) {
+                workshopId = rawHash.slice(0, -3).trim();
+                role = "Mentor";
+                roleLabel = "Mentor Registration";
+            } else {
+                return {
+                    valid: false,
+                    reason: `Invalid registration link suffix in "${rawHash}". Expected "-PS" (Mentee) or "-FS" (Mentor).`
+                };
+            }
+
+            if (!workshopId) {
+                return { valid: false, reason: "Workshop ID is missing before the role suffix." };
+            }
+
+            return { valid: true, workshopId, role, roleLabel };
+        }
+
+        const linkInfo = parseRegistrationHash();
+        let activeWorkshopId = linkInfo.valid ? linkInfo.workshopId : "";
+        let assignedRole = linkInfo.valid ? linkInfo.role : "";
+        let zoneStateMapping = {};
+        let countryMasterList = [];
+        let isEmailVerified = false;
+        let verifiedEmailValue = "";
+        let pendingEmailForVerification = "";
+
+        function showCustomAlert(message) {
+            document.getElementById('custom-alert-message').innerText = message;
+            document.getElementById('custom-alert-modal').classList.remove('hidden');
+        }
+
+        function closeCustomAlert() {
+            document.getElementById('custom-alert-modal').classList.add('hidden');
+        }
+
+        function showLinkOrWorkshopError(title, message) {
+            document.body.innerHTML = `
+                <div class="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+                    <div class="max-w-md w-full bg-white rounded-lg shadow-lg p-6 text-center border border-red-100">
+                        <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-red-100 text-red-600 mb-3 text-xl">
+                            ⚠️
+                        </div>
+                        <h2 class="text-lg font-bold text-gray-900 mb-1.5">${title}</h2>
+                        <p class="text-gray-600 text-xs sm:text-sm">${message}</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function togglePasswordVisibility(inputId, iconId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+            if (!input || !icon) return;
+
+            if (input.type === "password") {
+                input.type = "text";
+                icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />`;
+            } else {
+                input.type = "password";
+                icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a10.05 10.05 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />`;
+            }
+        }
+
+        function initRegistrationPage() {
+            if (!linkInfo.valid) {
+                showLinkOrWorkshopError("Invalid Registration Link", linkInfo.reason);
+                return;
+            }
+
+            document.getElementById('page-title').innerText = `Heartful Communication | ${linkInfo.roleLabel} (${activeWorkshopId})`;
+            document.getElementById('role-badge').innerText = linkInfo.roleLabel;
+            document.getElementById('reg-heading').innerText = `${assignedRole} Registration`;
+            document.getElementById('workshop-context-label').innerText = `Workshop ID: ${activeWorkshopId} • Role: ${assignedRole}`;
+
+            // Validate workshop exists and is active in control_tower
+            db.ref('control_tower').once('value').then(snapshot => {
+                const towerData = snapshot.val();
+                if (!towerData) {
+                    showLinkOrWorkshopError("Database Unavailable", "No control tower records found.");
+                    return;
+                }
+
+                const workshops = towerData.workshops || {};
+                const launchedWorkshops = towerData.Launched_Workshops || {};
+                const workshopObj = workshops[activeWorkshopId] || launchedWorkshops[activeWorkshopId];
+
+                if (!workshopObj) {
+                    showLinkOrWorkshopError(
+                        "Workshop Not Found",
+                        `Workshop ID "${activeWorkshopId}" does not exist in the system.`
+                    );
+                    return;
+                }
+
+                const statusLower = (workshopObj.status || "active").toString().trim().toLowerCase();
+                if (statusLower === "inactive" || statusLower === "closed") {
+                    showLinkOrWorkshopError(
+                        "Registration Closed",
+                        `Workshop "${activeWorkshopId}" is currently inactive or closed.`
+                    );
+                    return;
+                }
+
+                if (workshopObj.workshop_name) {
+                    document.getElementById('workshop-context-label').innerText =
+                        `${workshopObj.workshop_name} (${activeWorkshopId}) • Role: ${assignedRole}`;
+                }
+
+                // Load Logo if enabled
+                const logoContainer = document.getElementById('global-header');
+                const logoElement = document.getElementById('app-logo');
+                if (workshopObj.logo_status === "ON" && workshopObj.logo_url) {
+                    logoElement.src = workshopObj.logo_url;
+                    logoContainer.classList.remove('hidden');
+                }
+
+                // Load dropdown masters
+                loadCountriesMaster(towerData.Master_List_Country);
+                loadZoneStateMaster(towerData.Master_List_Zone_State);
+                onCountryChange();
+            }).catch(err => {
+                console.error("Error initializing registration page:", err);
+                showLinkOrWorkshopError("Connection Error", "Unable to verify workshop details. Please try again.");
+            });
+        }
+
+        function loadCountriesMaster(rawData) {
+            const selectEl = document.getElementById('ps_country');
+            if (!selectEl) return;
+
+            const countriesSet = new Set(["India"]);
+            if (rawData) {
+                if (Array.isArray(rawData)) {
+                    rawData.forEach(item => {
+                        if (item && String(item).trim()) countriesSet.add(String(item).trim());
+                    });
+                } else {
+                    Object.keys(rawData).forEach(key => {
+                        const val = rawData[key];
+                        let name = "";
+                        if (typeof val === "object" && val !== null) {
+                            name = val.country || val.name || key.replace(/_/g, " ");
+                        } else if (typeof val === "string" && val.trim()) {
+                            name = val.trim();
+                        } else {
+                            name = key.replace(/_/g, " ");
+                        }
+                        if (name) countriesSet.add(name);
+                    });
+                }
+            }
+
+            countryMasterList = Array.from(countriesSet).sort((a, b) => {
+                if (a === "India") return -1;
+                if (b === "India") return 1;
+                return a.localeCompare(b);
+            });
+
+            selectEl.innerHTML = "";
+            countryMasterList.forEach(country => {
+                const opt = document.createElement('option');
+                opt.value = country;
+                opt.textContent = country;
+                if (country === "India") opt.selected = true;
+                selectEl.appendChild(opt);
+            });
+        }
+
+        function loadZoneStateMaster(rawData) {
+            zoneStateMapping = rawData || {};
+            const stateSelect = document.getElementById('ps_state_india');
+            if (!stateSelect) return;
+
+            stateSelect.innerHTML = '<option value="">-- Select State --</option>';
+            Object.keys(zoneStateMapping).sort().forEach(state => {
+                const opt = document.createElement('option');
+                opt.value = state;
+                opt.textContent = state;
+                stateSelect.appendChild(opt);
+            });
+        }
+
+        function onIndiaStateChange() {
+            const stateSelect = document.getElementById('ps_state_india');
+            const zoneSelect = document.getElementById('ps_zone_india');
+            if (!stateSelect || !zoneSelect) return;
+
+            const selectedState = stateSelect.value;
+            zoneSelect.innerHTML = '<option value="">-- Select Zone --</option>';
+
+            if (selectedState && zoneStateMapping[selectedState]) {
+                const zones = zoneStateMapping[selectedState];
+                const zoneList = Array.isArray(zones) ? zones : Object.values(zones || {});
+                zoneList.forEach(zone => {
+                    if (!zone) return;
+                    const opt = document.createElement('option');
+                    opt.value = zone;
+                    opt.textContent = zone;
+                    zoneSelect.appendChild(opt);
+                });
+            }
+        }
+
+        function onCountryChange() {
+            const countryVal = (document.getElementById('ps_country').value || "India").trim();
+            const isIndia = countryVal.toUpperCase() === "INDIA" || countryVal.toUpperCase() === "IN";
+
+            const indiaBlock = document.getElementById('india-location-fields');
+            const intlBlock = document.getElementById('intl-location-fields');
+
+            const indiaState = document.getElementById('ps_state_india');
+            const indiaZone = document.getElementById('ps_zone_india');
+            const indiaCentre = document.getElementById('ps_centre_india');
+
+            if (isIndia) {
+                indiaBlock.classList.remove('hidden');
+                intlBlock.classList.add('hidden');
+                indiaState.required = true;
+                indiaZone.required = true;
+                indiaCentre.required = true;
+            } else {
+                // International: free text, no dropdown list restrictions or mandatory blocks
+                indiaBlock.classList.add('hidden');
+                intlBlock.classList.remove('hidden');
+                indiaState.required = false;
+                indiaZone.required = false;
+                indiaCentre.required = false;
+            }
+
+            onMobileInput();
+        }
+
+        function isIndiaSelected() {
+            const countryVal = (document.getElementById('ps_country').value || "India").trim().toUpperCase();
+            return countryVal === "INDIA" || countryVal === "IN";
+        }
+
+        function validateMobileFormat(mobVal) {
+            const cleaned = (mobVal || "").trim();
+            if (!cleaned) return false;
+
+            if (isIndiaSelected()) {
+                return /^(\+91[\-\s]?)?[6-9]\d{9}$/.test(cleaned);
+            }
+            // International format check (hook ready for future SMS/WhatsApp OTP)
+            return /^[+\d][\d\s\-()]{4,19}$/.test(cleaned);
+        }
+
+        function onMobileInput() {
+            const mobInput = document.getElementById('ps_mob');
+            const msgEl = document.getElementById('mob-status-msg');
+            if (!mobInput || !msgEl) return;
+
+            const val = mobInput.value.trim();
+            if (!val) {
+                msgEl.classList.add('hidden');
+                return;
+            }
+
+            if (validateMobileFormat(val)) {
+                msgEl.textContent = "Mobile format looks valid.";
+                msgEl.className = "text-[10px] text-green-600 mt-0.5";
+                msgEl.classList.remove('hidden');
+            } else {
+                msgEl.textContent = isIndiaSelected()
+                    ? "Enter a valid 10-digit Indian mobile number starting with 6–9."
+                    : "Enter a valid contact number.";
+                msgEl.className = "text-[10px] text-amber-600 mt-0.5";
+                msgEl.classList.remove('hidden');
+            }
+        }
+
+        function validateEmailFormat(email) {
+            if (!email) return false;
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!re.test(email)) return false;
+            if (email.includes('..')) return false;
+
+            const parts = email.split('@');
+            if (parts.length !== 2) return false;
+            const [localPart, domain] = parts;
+
+            if (localPart.startsWith('.') || localPart.endsWith('.') || domain.startsWith('.') || domain.endsWith('.')) {
+                return false;
+            }
+
+            const domainParts = domain.split('.');
+            const tld = domainParts[domainParts.length - 1];
+            if (tld.length < 2 || tld.length > 10) return false;
+
+            return true;
+        }
+
+        function onEmailInputChange() {
+            const currentEmail = document.getElementById('ps_email').value.trim().toLowerCase();
+            const statusEl = document.getElementById('email-verify-status');
+
+            if (isEmailVerified && currentEmail !== verifiedEmailValue.toLowerCase()) {
+                isEmailVerified = false;
+                verifiedEmailValue = "";
+                if (statusEl) {
+                    statusEl.textContent = "Email changed—please verify this new address.";
+                    statusEl.className = "text-[10px] text-amber-600 mt-0.5";
+                    statusEl.classList.remove('hidden');
+                }
+            }
+        }
+
+        // Layer 1 + Layer 2 Email Verification
+        function sendRegistrationEmailCode() {
+            const emailInput = document.getElementById('ps_email');
+            const statusEl = document.getElementById('email-verify-status');
+            const sendBtn = document.getElementById('btn-send-email-otp');
+            const emailVal = emailInput.value.trim();
+
+            // Layer 1: Format check
+            if (!validateEmailFormat(emailVal)) {
+                showCustomAlert("Please check your email address. It does not match a valid email format.");
+                emailInput.focus();
+                return;
+            }
+
+            const firstName = document.getElementById('ps_firstname').value.trim();
+            const lastName = document.getElementById('ps_lastname').value.trim();
+            const psName = `${firstName} ${lastName}`.trim() || assignedRole;
+
+            sendBtn.disabled = true;
+            sendBtn.textContent = "Sending...";
+            statusEl.textContent = `Sending 6-digit verification code to ${emailVal}...`;
+            statusEl.className = "text-[10px] text-blue-600 mt-0.5";
+            statusEl.classList.remove('hidden');
+
+            fetch(WEB_APP_URL, {
+                method: "POST",
+                body: JSON.stringify({
+                    action: "sendEmailVerificationCode",
+                    email: emailVal,
+                    workshopId: activeWorkshopId,
+                    ps_name: psName
+                })
+            })
+            .then(res => res.json())
+            .then(result => {
+                sendBtn.disabled = false;
+                sendBtn.textContent = "Verify Email";
+
+                if (result.status === "Success") {
+                    pendingEmailForVerification = emailVal;
+                    statusEl.textContent = `Code sent to ${emailVal}. Enter it to complete verification.`;
+                    statusEl.className = "text-[10px] text-blue-600 mt-0.5";
+                    openRegVerificationModal(emailVal);
+                } else {
+                    statusEl.classList.add('hidden');
+                    showCustomAlert("Could not send verification code: " + (result.message || "Unknown error"));
+                }
+            })
+            .catch(err => {
+                sendBtn.disabled = false;
+                sendBtn.textContent = "Verify Email";
+                statusEl.classList.add('hidden');
+                showCustomAlert("Network error while sending verification code: " + err.toString());
+            });
+        }
+
+        function openRegVerificationModal(email) {
+            document.getElementById('regModalMessage').innerText =
+                `A 6-digit verification code has been sent to ${email}.\nIt is valid for 5 minutes.`;
+            document.getElementById('regVerificationInput').value = "";
+            document.getElementById('regVerificationModal').classList.remove('hidden');
+            setTimeout(() => document.getElementById('regVerificationInput').focus(), 100);
+        }
+
+        function closeRegVerificationModal() {
+            document.getElementById('regVerificationModal').classList.add('hidden');
+        }
+
+        function handleRegVerifyCodeClick() {
+            const code = document.getElementById('regVerificationInput').value.trim();
+            if (!code) {
+                showCustomAlert("Please enter the verification code.");
+                return;
+            }
+            closeRegVerificationModal();
+            verifyRegistrationCodeWithBackend(pendingEmailForVerification, code);
+        }
+
+        function verifyRegistrationCodeWithBackend(email, code) {
+            const statusEl = document.getElementById('email-verify-status');
+            statusEl.textContent = "Verifying code...";
+            statusEl.className = "text-[10px] text-blue-600 mt-0.5";
+            statusEl.classList.remove('hidden');
+
+            fetch(WEB_APP_URL, {
+                method: "POST",
+                body: JSON.stringify({
+                    action: "verifyEmailCode",
+                    email: email,
+                    code: code
+                })
+            })
+            .then(res => res.json())
+            .then(result => {
+                if (result.status === "Success") {
+                    isEmailVerified = true;
+                    verifiedEmailValue = email;
+                    statusEl.textContent = `✓ Email verified (${email})`;
+                    statusEl.className = "text-[10px] text-green-600 font-semibold mt-0.5";
+                    showCustomAlert("Email verified successfully!");
+                } else {
+                    isEmailVerified = false;
+                    statusEl.textContent = "Verification failed. Please try again.";
+                    statusEl.className = "text-[10px] text-red-600 mt-0.5";
+                    showCustomAlert("Verification Failed: " + (result.message || "Invalid code"));
+                }
+            })
+            .catch(err => {
+                isEmailVerified = false;
+                statusEl.classList.add('hidden');
+                showCustomAlert("Network error during verification: " + err.toString());
+            });
+        }
+
+        // Auto-generate ps_id using formula: "workshop_id"#count
+        function generateNextPsId(workshopId) {
+            return db.ref('control_tower/participants').once('value').then(snapshot => {
+                const participants = snapshot.val() || {};
+                const prefix = `${workshopId}#`;
+                let maxCount = 0;
+
+                Object.values(participants).forEach(person => {
+                    if (!person) return;
+                    const existingId = (person.ps_id || "").toString().trim();
+                    const existingWorkshop = (person.workshop_id || "").toString().trim();
+
+                    if (existingId.startsWith(prefix)) {
+                        const numPart = parseInt(existingId.slice(prefix.length), 10);
+                        if (!isNaN(numPart) && numPart > maxCount) {
+                            maxCount = numPart;
+                        }
+                    } else if (existingWorkshop === workshopId) {
+                        maxCount += 1;
+                    }
+                });
+
+                const nextCount = maxCount + 1;
+                return `${workshopId}#${nextCount}`;
+            });
+        }
+
+        function sanitizeFirebaseKey(idStr) {
+            return idStr.toString().trim().replace(/[.#$\[\]\/]/g, "_").replace(/\s+/g, "_");
+        }
+
+        function handleRegistrationSubmit(event) {
+            event.preventDefault();
+
+            if (!linkInfo.valid) {
+                showCustomAlert("Invalid registration link.");
+                return;
+            }
+
+            const firstName = document.getElementById('ps_firstname').value.trim();
+            const lastName = document.getElementById('ps_lastname').value.trim();
+            const mobVal = document.getElementById('ps_mob').value.trim();
+            const emailVal = document.getElementById('ps_email').value.trim();
+            const countryVal = (document.getElementById('ps_country').value || "India").trim();
+            const passwordVal = document.getElementById('reg_password').value.trim();
+            const confirmPasswordVal = document.getElementById('reg_confirm_password').value.trim();
+
+            if (!firstName || !lastName) {
+                showCustomAlert("Please enter both First Name and Last Name.");
+                return;
+            }
+
+            if (!validateMobileFormat(mobVal)) {
+                showCustomAlert(
+                    isIndiaSelected()
+                        ? "Please enter a valid 10-digit Indian mobile number starting with 6–9."
+                        : "Please enter a valid mobile/contact number."
+                );
+                document.getElementById('ps_mob').focus();
+                return;
+            }
+
+            if (!validateEmailFormat(emailVal)) {
+                showCustomAlert("Please enter a valid email address.");
+                document.getElementById('ps_email').focus();
+                return;
+            }
+
+            if (!isEmailVerified || verifiedEmailValue.toLowerCase() !== emailVal.toLowerCase()) {
+                showCustomAlert("Please verify your email address using the 'Verify Email' button before submitting.");
+                document.getElementById('btn-send-email-otp').focus();
+                return;
+            }
+
+            let stateVal = "";
+            let zoneVal = "";
+            let centreVal = "";
+
+            if (isIndiaSelected()) {
+                stateVal = document.getElementById('ps_state_india').value.trim();
+                zoneVal = document.getElementById('ps_zone_india').value.trim();
+                centreVal = document.getElementById('ps_centre_india').value.trim();
+
+                if (!stateVal || !zoneVal || !centreVal) {
+                    showCustomAlert("Please select State and Zone, and enter your Centre.");
+                    return;
+                }
+            } else {
+                // Non-mandatory free-text values for international users
+                stateVal = document.getElementById('ps_state_intl').value.trim();
+                zoneVal = document.getElementById('ps_zone_intl').value.trim();
+                centreVal = document.getElementById('ps_centre_intl').value.trim();
+            }
+
+            if (!passwordVal || passwordVal.length > 10) {
+                showCustomAlert("Please create a password (up to 10 characters).");
+                return;
+            }
+
+            if (passwordVal !== confirmPasswordVal) {
+                showCustomAlert("Password and Confirm Password do not match.");
+                return;
+            }
+
+            const psName = `${firstName} ${lastName}`;
+            const submitBtn = document.getElementById('btn-submit-registration');
+            const statusMsg = document.getElementById('reg-status-msg');
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Submitting...";
+            statusMsg.textContent = "Generating ID and saving your registration...";
+            statusMsg.classList.remove('hidden');
+
+            generateNextPsId(activeWorkshopId).then(generatedPsId => {
+                const recordKey = sanitizeFirebaseKey(generatedPsId);
+                const payload = {
+                    workshop_id: activeWorkshopId,
+                    ps_id: generatedPsId,
+                    ps_firstname: firstName,
+                    ps_lastname: lastName,
+                    ps_name: psName,
+                    ps_mob: mobVal,
+                    ps_email: emailVal,
+                    ps_centre: centreVal,
+                    ps_zone: zoneVal,
+                    ps_state: stateVal,
+                    ps_country: countryVal,
+                    personal_zoom_link: "",
+                    role: assignedRole,
+                    password: passwordVal,
+                    lastsyntimestamp: new Date().toLocaleString()
+                };
+
+                return db.ref('control_tower/participants/' + recordKey).set(payload).then(() => payload);
+            }).then(savedRecord => {
+                statusMsg.classList.add('hidden');
+                document.getElementById('hc-registration-form').classList.add('hidden');
+                document.getElementById('success-ps-name').innerText = savedRecord.ps_name;
+                document.getElementById('success-ps-id').innerText = savedRecord.ps_id;
+                document.getElementById('success-role').innerText = savedRecord.role;
+                document.getElementById('success-workshop-id').innerText = savedRecord.workshop_id;
+                document.getElementById('go-to-login-link').href = `index.html#${savedRecord.workshop_id}`;
+                document.getElementById('registration-success-box').classList.remove('hidden');
+            }).catch(err => {
+                console.error("Registration save failed:", err);
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Complete Registration";
+                statusMsg.classList.add('hidden');
+                showCustomAlert("Failed to save registration: " + err.message);
+            });
+        }
+
+        window.addEventListener('DOMContentLoaded', initRegistrationPage);
+    </script>
+</body>
+</html>
