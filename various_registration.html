@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="page-title">Heartful Communication | Recording Link Submission</title>
+    <script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"></script>
+    <script src="[https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js](https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js)"></script>
+    <script src="[https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js](https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js)"></script>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col justify-between text-xs sm:text-sm">
+
+    <main class="max-w-2xl mx-auto px-3 py-3 flex-grow w-full">
+        <!-- Header Banner -->
+        <div class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg shadow p-3 mb-3">
+            <div class="flex justify-between items-start gap-2">
+                <div>
+                    <h1 id="form-title-heading" class="text-sm sm:text-base font-bold">Google Drive Link of your Recording</h1>
+                    <p id="workshop-name-sub" class="text-[11px] text-purple-100 mt-0.5">Loading workshop details...</p>
+                </div>
+                <span id="batch-badge" class="text-[10px] bg-black/20 px-2 py-0.5 rounded font-mono flex-shrink-0"></span>
+            </div>
+            <div id="user-info-strip" class="mt-2 pt-2 border-t border-white/20 text-[11px] text-purple-100 flex flex-wrap justify-between gap-1"></div>
+        </div>
+
+        <!-- Mode Switcher (Submit Form vs My Submissions Table) -->
+        <div class="flex gap-2 mb-3">
+            <button type="button" id="tab-btn-form" onclick="setViewMode('form')"
+                class="px-3 py-1.5 rounded-md text-xs font-bold bg-indigo-600 text-white shadow-sm">
+                Submit Recording Link
+            </button>
+            <button type="button" id="tab-btn-my" onclick="setViewMode('my')"
+                class="px-3 py-1.5 rounded-md text-xs font-medium bg-white text-gray-700 border border-gray-200 hover:bg-gray-100">
+                View / Edit / Delete My Submissions
+            </button>
+        </div>
+
+        <!-- FORM 1 CARD -->
+        <div id="form-section" class="bg-white rounded-lg shadow-md border border-gray-200 p-4 mb-3">
+            <div class="flex items-center justify-between mb-3">
+                <h2 id="form-card-heading" class="text-sm font-bold text-gray-800">Submit Recording Link</h2>
+                <span id="edit-badge" class="hidden text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-semibold">
+                    Editing Submission
+                </span>
+            </div>
+
+            <form id="recording-form" onsubmit="handleRecordingSubmit(event)" class="space-y-3">
+                <!-- 1. Select Your Name -->
+                <div>
+                    <label for="f1-participant-name" class="block text-gray-700 text-[11px] font-bold mb-1">
+                        Select Your Name <span class="text-red-500">*</span>
+                    </label>
+                    <select id="f1-participant-name" required
+                        class="w-full px-2.5 py-1.5 text-xs border rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                        <option value="">-- Loading names --</option>
+                    </select>
+                </div>
+
+                <!-- 2. Section (from workshops.section_numbers) -->
+                <div>
+                    <label for="f1-section" class="block text-gray-700 text-[11px] font-bold mb-1">
+                        Select Section of the Module for which you presented <span class="text-red-500">*</span>
+                    </label>
+                    <select id="f1-section" required
+                        class="w-full px-2.5 py-1.5 text-xs border rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                        <option value="">-- Select Section --</option>
+                    </select>
+                </div>
+
+                <!-- 3. Module Number (from workshops.module_names) -->
+                <div>
+                    <label for="f1-module" class="block text-gray-700 text-[11px] font-bold mb-1">
+                        Select Module Number <span class="text-red-500">*</span>
+                    </label>
+                    <select id="f1-module" required
+                        class="w-full px-2.5 py-1.5 text-xs border rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                        <option value="">-- Select Module --</option>
+                    </select>
+                </div>
+
+                <!-- 4. Recording Link -->
+                <div>
+                    <label for="f1-recording-link" class="block text-gray-700 text-[11px] font-bold mb-1">
+                        Please provide Google Drive Link of your Recording <span class="text-red-500">*</span>
+                    </label>
+                    <input type="url" id="f1-recording-link" required placeholder="https://..."
+                        class="w-full px-2.5 py-1.5 text-xs border rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                    <p class="text-[10px] text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1 mt-1">
+                        Note: Please make sure your link/file sharing is set so anyone with the link can view/download.
+                    </p>
+                </div>
+
+                <p id="form-status" class="text-xs text-blue-600 font-medium text-center hidden"></p>
+
+                <div class="flex items-center gap-2 pt-1">
+                    <button type="submit" id="btn-save-recording"
+                        class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-3 rounded-md transition shadow text-xs">
+                        Submit
+                    </button>
+                    <button type="button" id="btn-cancel-edit" onclick="cancelEdit()"
+                        class="hidden bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-3 rounded-md transition text-xs">
+                        Cancel Edit
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- OWN SUBMISSIONS TABLE CARD (Strict Own-Response View / Edit / Delete) -->
+        <div id="submissions-section" class="bg-white rounded-lg shadow-md border border-gray-200 p-4">
+            <div class="flex items-center justify-between mb-2">
+                <h2 class="text-sm font-bold text-gray-800">My Recording Submissions</h2>
+                <span id="my-count-badge" class="text-[11px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-semibold">0</span>
+            </div>
+            <p class="text-[11px] text-gray-500 mb-3">
+                Showing only your own submissions. You can submit multiple times and view, edit, or delete your entries.
+            </p>
+
+            <div class="overflow-x-auto">
+                <table class="min-w-full border border-gray-200 text-xs text-left">
+                    <thead class="bg-gray-100 text-gray-700">
+                        <tr>
+                            <th class="py-2 px-2.5 border-b">Name</th>
+                            <th class="py-2 px-2.5 border-b">Section</th>
+                            <th class="py-2 px-2.5 border-b">Module</th>
+                            <th class="py-2 px-2.5 border-b">Recording Link</th>
+                            <th class="py-2 px-2.5 border-b">Submitted</th>
+                            <th class="py-2 px-2.5 border-b text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="my-submissions-tbody" class="divide-y divide-gray-100">
+                        <tr>
+                            <td colspan="6" class="py-3 px-2.5 text-center text-gray-400 italic">Loading your submissions...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <footer class="text-center py-2 text-[10px] text-gray-500">
+        Heartful Communication - Recording Submission Module
+    </footer>
+
+    <!-- View Entry Modal -->
+    <div id="view-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-3">
+        <div class="bg-white rounded-lg shadow-xl max-w-sm w-full p-4 text-xs">
+            <h3 class="text-sm font-bold text-gray-800 mb-2">Submission Details</h3>
+            <div id="view-modal-content" class="space-y-1.5 text-gray-700 mb-3 break-all"></div>
+            <div class="text-right">
+                <button onclick="closeViewModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1.5 px-4 rounded text-xs">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert Modal -->
+    <div id="alert-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-3">
+        <div class="bg-white rounded-lg shadow-xl max-w-xs w-full p-4 text-center text-xs">
+            <p id="alert-modal-msg" class="text-gray-800 mb-3 whitespace-pre-line font-medium"></p>
+            <button onclick="closeAlertModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1.5 px-4 rounded text-xs">
+                OK
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAt_HbqtG_kMn41NC1wPy5KDFNsDp5HTb8",
+            authDomain: "hc-app-72298.firebaseapp.com",
+            databaseURL: "[https://hc-app-72298-default-rtdb.asia-southeast1.firebasedatabase.app](https://hc-app-72298-default-rtdb.asia-southeast1.firebasedatabase.app)",
+            projectId: "hc-app-72298",
+            storageBucket: "hc-app-72298.firebasestorage.app",
+            messagingSenderId: "1013251414152",
+            appId: "1:1013251414152:web:3e598848e31a81bb43273d"
+        };
+
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.database();
+
+        const params = new URLSearchParams(window.location.search);
+        const workshopId = (params.get("wid") || window.location.hash.replace("#", "") || "DEFAULT").trim();
+        const rawUserId = (params.get("uid") || params.get("uname") || "anonymous").trim();
+        const forwardedUserName = (params.get("uname") || "").trim();
+        const forwardedRole = (params.get("role") || "").trim();
+        const viewParam = (params.get("view") || "").trim().toLowerCase();
+
+        const FORM_ID = "recording_link";
+
+        function sanitizeKey(val) {
+            return (val || "unknown").toString().trim().replace(/[.#$\[\]\/]/g, "_").replace(/\s+/g, "_");
+        }
+
+        const safeWorkshopKey = sanitizeKey(workshopId);
+        const safeUserKey = sanitizeKey(rawUserId || forwardedUserName);
+
+        let editingId = null;
+        let submissionsStore = {};
+        let currentViewMode = viewParam === "my" ? "my" : "form";
+
+        function showAlert(msg) {
+            document.getElementById("alert-modal-msg").innerText = msg;
+            document.getElementById("alert-modal").classList.remove("hidden");
+        }
+
+        function closeAlertModal() {
+            document.getElementById("alert-modal").classList.add("hidden");
+        }
+
+        function closeViewModal() {
+            document.getElementById("view-modal").classList.add("hidden");
+        }
+
+        function setViewMode(mode) {
+            currentViewMode = mode;
+            const formSec = document.getElementById("form-section");
+            const subSec = document.getElementById("submissions-section");
+            const btnForm = document.getElementById("tab-btn-form");
+            const btnMy = document.getElementById("tab-btn-my");
+
+            if (mode === "my") {
+                formSec.classList.add("hidden");
+                subSec.classList.remove("hidden");
+                btnMy.className = "px-3 py-1.5 rounded-md text-xs font-bold bg-indigo-600 text-white shadow-sm";
+                btnForm.className = "px-3 py-1.5 rounded-md text-xs font-medium bg-white text-gray-700 border border-gray-200 hover:bg-gray-100";
+            } else {
+                formSec.classList.remove("hidden");
+                subSec.classList.remove("hidden");
+                btnForm.className = "px-3 py-1.5 rounded-md text-xs font-bold bg-indigo-600 text-white shadow-sm";
+                btnMy.className = "px-3 py-1.5 rounded-md text-xs font-medium bg-white text-gray-700 border border-gray-200 hover:bg-gray-100";
+            }
+        }
+
+        function parseCommaList(rawStr) {
+            if (!rawStr) return [];
+            return rawStr.toString().split(",").map(s => s.trim()).filter(Boolean);
+        }
+
+        function populateSelectOptions(selectEl, items, placeholderText, preselectVal = "") {
+            selectEl.innerHTML = `<option value="">${placeholderText}</option>`;
+            items.forEach(item => {
+                const opt = document.createElement("option");
+                opt.value = item;
+                opt.textContent = item;
+                if (preselectVal && preselectVal.toLowerCase() === item.toLowerCase()) {
+                    opt.selected = true;
+                }
+                selectEl.appendChild(opt);
+            });
+        }
+
+        function loadWorkshopAndParticipants() {
+            document.getElementById("batch-badge").innerText = `Batch: ${workshopId}`;
+            document.getElementById("user-info-strip").innerHTML = `
+                <span><strong>Logged-in User:</strong> ${forwardedUserName || rawUserId} (${rawUserId})</span>
+                <span><strong>Role:</strong> ${forwardedRole || "Member"}</span>
+            `;
+
+            // Load active workshop for workshop_name, module_names, and section_numbers
+            db.ref(`control_tower/workshops/${workshopId}`).once("value").then(snap => {
+                const ws = snap.val() || {};
+                const wsTitle = ws.workshop_name || `Workshop (${workshopId})`;
+                document.getElementById("page-title").innerText = `${wsTitle} | Recording Link`;
+                document.getElementById("form-title-heading").innerText = `${wsTitle} - Google Drive Link of your Recording`;
+                document.getElementById("workshop-name-sub").innerText = `Batch ID: ${workshopId}${ws.workshop_language ? " • " + ws.workshop_language : ""}`;
+
+                const sections = parseCommaList(ws.section_numbers);
+                const modules = parseCommaList(ws.module_names);
+
+                populateSelectOptions(
+                    document.getElementById("f1-section"),
+                    sections.length ? sections : ["Section 1", "Section 2"],
+                    "-- Select Section --"
+                );
+                populateSelectOptions(
+                    document.getElementById("f1-module"),
+                    modules.length ? modules : ["Module 1", "Module 2"],
+                    "-- Select Module --"
+                );
+            }).catch(err => console.error("Error loading workshop:", err));
+
+            // Load participant names from control_tower/participants
+            db.ref("control_tower/participants").once("value").then(snap => {
+                const rawParticipants = snap.val() || {};
+                const namesSet = new Set();
+
+                Object.values(rawParticipants).forEach(p => {
+                    if (!p || !p.ps_name) return;
+                    const pWs = (p.workshop_id || "").toString().trim().toUpperCase();
+                    if (!workshopId || workshopId === "DEFAULT" || !pWs || pWs === workshopId.toUpperCase() || pWs === "ALL") {
+                        namesSet.add(p.ps_name.toString().trim());
+                    }
+                });
+
+                if (forwardedUserName) {
+                    namesSet.add(forwardedUserName);
+                }
+
+                const sortedNames = Array.from(namesSet).sort((a, b) => a.localeCompare(b));
+                populateSelectOptions(
+                    document.getElementById("f1-participant-name"),
+                    sortedNames,
+                    "-- Select Your Name --",
+                    forwardedUserName
+                );
+            }).catch(err => console.error("Error loading participants:", err));
+        }
+
+        function cancelEdit() {
+            editingId = null;
+            document.getElementById("edit-badge").classList.add("hidden");
+            document.getElementById("btn-cancel-edit").classList.add("hidden");
+            document.getElementById("btn-save-recording").textContent = "Submit";
+            document.getElementById("form-card-heading").innerText = "Submit Recording Link";
+            document.getElementById("f1-section").value = "";
+            document.getElementById("f1-module").value = "";
+            document.getElementById("f1-recording-link").value = "";
+            if (forwardedUserName) {
+                document.getElementById("f1-participant-name").value = forwardedUserName;
+            }
+        }
+
+        function startEdit(submissionId) {
+            const rec = submissionsStore[submissionId];
+            if (!rec) return;
+            setViewMode("form");
+            editingId = submissionId;
+            document.getElementById("edit-badge").classList.remove("hidden");
+            document.getElementById("btn-cancel-edit").classList.remove("hidden");
+            document.getElementById("btn-save-recording").textContent = "Update Submission";
+            document.getElementById("form-card-heading").innerText = "Edit Recording Submission";
+
+            document.getElementById("f1-participant-name").value = rec.participant_name || "";
+            document.getElementById("f1-section").value = rec.section || "";
+            document.getElementById("f1-module").value = rec.module_name || "";
+            document.getElementById("f1-recording-link").value = rec.recording_link || "";
+            document.getElementById("form-section").scrollIntoView({ behavior: "smooth" });
+        }
+
+        function handleRecordingSubmit(event) {
+            event.preventDefault();
+
+            const participantName = document.getElementById("f1-participant-name").value.trim();
+            const sectionVal = document.getElementById("f1-section").value.trim();
+            const moduleVal = document.getElementById("f1-module").value.trim();
+            const recordingLink = document.getElementById("f1-recording-link").value.trim();
+
+            if (!participantName) return showAlert("Please select your name.");
+            if (!sectionVal) return showAlert("Please select a section.");
+            if (!moduleVal) return showAlert("Please select a module number.");
+            if (!/^https?:\/\//i.test(recordingLink)) {
+                return showAlert("Please enter a valid link starting with http:// or https://.");
+            }
+
+            const statusEl = document.getElementById("form-status");
+            const saveBtn = document.getElementById("btn-save-recording");
+            saveBtn.disabled = true;
+            statusEl.textContent = editingId ? "Updating submission..." : "Saving submission...";
+            statusEl.classList.remove("hidden");
+
+            const basePath = `control_tower/form_submissions/${safeWorkshopKey}/${FORM_ID}/${safeUserKey}`;
+            const nowStr = new Date().toLocaleString();
+
+            if (editingId) {
+                const existing = submissionsStore[editingId] || {};
+                const updated = {
+                    ...existing,
+                    participant_name: participantName,
+                    section: sectionVal,
+                    module_name: moduleVal,
+                    recording_link: recordingLink,
+                    updated_at: nowStr
+                };
+                db.ref(`${basePath}/${editingId}`).set(updated).then(() => {
+                    saveBtn.disabled = false;
+                    statusEl.classList.add("hidden");
+                    cancelEdit();
+                    loadMySubmissions();
+                    showAlert("Your recording submission has been updated.");
+                }).catch(err => {
+                    saveBtn.disabled = false;
+                    statusEl.classList.add("hidden");
+                    showAlert("Failed to update: " + err.message);
+                });
+            } else {
+                const newRef = db.ref(basePath).push();
+                const record = {
+                    submission_id: newRef.key,
+                    form_id: FORM_ID,
+                    workshop_id: workshopId,
+                    user_key: safeUserKey,
+                    user_id: rawUserId,
+                    participant_name: participantName,
+                    section: sectionVal,
+                    module_name: moduleVal,
+                    recording_link: recordingLink,
+                    created_at: nowStr,
+                    updated_at: nowStr
+                };
+                newRef.set(record).then(() => {
+                    saveBtn.disabled = false;
+                    statusEl.classList.add("hidden");
+                    cancelEdit();
+                    loadMySubmissions();
+                    showAlert("Your recording link has been submitted.");
+                }).catch(err => {
+                    saveBtn.disabled = false;
+                    statusEl.classList.add("hidden");
+                    showAlert("Failed to submit: " + err.message);
+                });
+            }
+        }
+
+        function viewSubmission(submissionId) {
+            const rec = submissionsStore[submissionId];
+            if (!rec) return;
+            document.getElementById("view-modal-content").innerHTML = `
+                <div><strong>Name:</strong> ${rec.participant_name || "-"}</div>
+                <div><strong>Section:</strong> ${rec.section || "-"}</div>
+                <div><strong>Module:</strong> ${rec.module_name || "-"}</div>
+                <div><strong>Recording Link:</strong> <a href="${rec.recording_link}" target="_blank" class="text-indigo-600 underline">${rec.recording_link || "-"}</a></div>
+                <div><strong>Submitted:</strong> ${rec.created_at || "-"}</div>
+                ${rec.updated_at && rec.updated_at !== rec.created_at ? `<div><strong>Updated:</strong> ${rec.updated_at}</div>` : ""}
+            `;
+            document.getElementById("view-modal").classList.remove("hidden");
+        }
+
+        function deleteSubmission(submissionId) {
+            if (!confirm("Are you sure you want to delete this recording submission?")) return;
+            const path = `control_tower/form_submissions/${safeWorkshopKey}/${FORM_ID}/${safeUserKey}/${submissionId}`;
+            db.ref(path).remove().then(() => {
+                if (editingId === submissionId) cancelEdit();
+                loadMySubmissions();
+                showAlert("Submission deleted.");
+            }).catch(err => showAlert("Failed to delete: " + err.message));
+        }
+
+        function loadMySubmissions() {
+            const tbody = document.getElementById("my-submissions-tbody");
+            const badge = document.getElementById("my-count-badge");
+            submissionsStore = {};
+
+            const path = `control_tower/form_submissions/${safeWorkshopKey}/${FORM_ID}/${safeUserKey}`;
+            db.ref(path).once("value").then(snap => {
+                const data = snap.val() || {};
+                const entries = Object.keys(data).map(id => {
+                    submissionsStore[id] = data[id];
+                    return { id, ...data[id] };
+                }).reverse();
+
+                badge.textContent = entries.length;
+                if (entries.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="6" class="py-3 px-2.5 text-center text-gray-400 italic">No submissions yet.</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = "";
+                entries.forEach(item => {
+                    const tr = document.createElement("tr");
+                    tr.className = "hover:bg-gray-50";
+                    tr.innerHTML = `
+                        <td class="py-2 px-2.5 font-medium text-gray-800">${item.participant_name || "-"}</td>
+                        <td class="py-2 px-2.5 text-gray-700">${item.section || "-"}</td>
+                        <td class="py-2 px-2.5 text-gray-700">${item.module_name || "-"}</td>
+                        <td class="py-2 px-2.5 max-w-[160px] truncate">
+                            <a href="${item.recording_link}" target="_blank" class="text-indigo-600 hover:underline">${item.recording_link || "-"}</a>
+                        </td>
+                        <td class="py-2 px-2.5 text-gray-500 text-[11px] whitespace-nowrap">${item.created_at || "-"}</td>
+                        <td class="py-2 px-2.5 text-right whitespace-nowrap">
+                            <button type="button" onclick="viewSubmission('${item.id}')" title="View" class="px-1.5 py-1 text-[11px] bg-gray-100 hover:bg-gray-200 rounded mr-1">👁️</button>
+                            <button type="button" onclick="startEdit('${item.id}')" title="Edit" class="px-1.5 py-1 text-[11px] bg-amber-100 hover:bg-amber-200 text-amber-800 rounded mr-1">✏️</button>
+                            <button type="button" onclick="deleteSubmission('${item.id}')" title="Delete" class="px-1.5 py-1 text-[11px] bg-red-100 hover:bg-red-200 text-red-700 rounded">🗑️</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }).catch(err => {
+                console.error("Error loading submissions:", err);
+                tbody.innerHTML = `<tr><td colspan="6" class="py-3 px-2.5 text-center text-red-500">Error loading your submissions.</td></tr>`;
+            });
+        }
+
+        window.addEventListener("DOMContentLoaded", () => {
+            setViewMode(currentViewMode);
+            loadWorkshopAndParticipants();
+            loadMySubmissions();
+        });
+    </script>
+</body>
+</html>
