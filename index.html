@@ -60,60 +60,61 @@
                 <input type="text" id="selected-participant-display" readonly class="w-full px-2.5 py-1 text-xs bg-gray-100 border rounded-md text-gray-600">
             </div>
 
-            <div class="mb-3 relative">
-                <label class="block text-gray-700 text-[11px] font-bold mb-0.5">Password:</label>
-                <div class="relative">
-                    <input type="password" id="login-password" autocomplete="new-password" placeholder="Enter password" class="w-full px-2.5 py-1 text-xs pr-8 border rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500">
-                    <button type="button" onclick="togglePasswordVisibility('login-password', 'login-eye-icon')" class="absolute inset-y-0 right-0 px-2 flex items-center text-gray-500 hover:text-gray-700 focus:outline-none">
-                        <svg id="login-eye-icon" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a10.05 10.05 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                        </svg>
-                    </button>
+            <!-- Returning User Password Box (Hidden when pw_changed is FALSE) -->
+            <div id="returning-user-login-box">
+                <div class="mb-3 relative">
+                    <label class="block text-gray-700 text-[11px] font-bold mb-0.5">Password:</label>
+                    <div class="relative">
+                        <input type="password" id="login-password" autocomplete="new-password" placeholder="Enter password" class="w-full px-2.5 py-1 text-xs pr-8 border rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                        <button type="button" onclick="togglePasswordVisibility('login-password', 'login-eye-icon')" class="absolute inset-y-0 right-0 px-2 flex items-center text-gray-500 hover:text-gray-700 focus:outline-none">
+                            <svg id="login-eye-icon" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a10.05 10.05 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
-            </div>
 
-            <button onclick="handleLogin()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1.5 px-3 text-xs rounded-md transition mb-2">
-                Login
-            </button>
+                <button onclick="handleLogin()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1.5 px-3 text-xs rounded-md transition mb-2">
+                    Login
+                </button>
 
-            <div class="flex justify-between items-center text-[11px] px-0.5">
-                <a href="#" onclick="navToChangePassword(event)" class="text-indigo-600 hover:underline font-medium">Change Password</a>
-                <a href="#" onclick="navToResetPassword(event)" class="text-indigo-600 hover:underline font-medium">Reset Password</a>
+                <div class="flex justify-between items-center text-[11px] px-0.5">
+                    <a href="#" onclick="navToChangePassword(event)" class="text-indigo-600 hover:underline font-medium">Change Password</a>
+                    <a href="#" onclick="navToResetPassword(event)" class="text-indigo-600 hover:underline font-medium">Reset Password</a>
+                </div>
             </div>
         </div>
 
-        <!-- SCREEN 1B: FIRST-TIME LOGIN (EMAIL VERIFICATION + FORCED PASSWORD SETUP) -->
+        <!-- SCREEN 1B: FIRST-TIME LOGIN (EMAIL VERIFICATION + PASSWORD REGISTRATION) -->
         <div id="first-login-screen" class="bg-white rounded-lg shadow-md p-3 sm:p-4 mt-1 hidden text-xs">
             <div class="text-center mb-2">
                 <span class="text-[10px] uppercase tracking-wider bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-bold">First-Time Account Setup</span>
-                <h2 class="text-base font-bold text-gray-800 mt-1">Verify Email & Set Your Password</h2>
+                <h2 class="text-base font-bold text-gray-800 mt-1">Email Verification & Password Registration</h2>
                 <p id="fl-welcome-name" class="text-[11px] text-indigo-700 font-semibold mt-0.5"></p>
             </div>
 
-            <p class="text-[11px] text-gray-600 bg-blue-50 border border-blue-100 rounded p-2 mb-3">
-                For your security, please verify your email address and set a personal password before accessing workshop resources.
-            </p>
-
             <!-- Step 1: Confirm or Edit Email -->
-            <div class="mb-3">
-                <label class="block text-gray-700 text-[11px] font-bold mb-1">Registered Email Address:</label>
-                <div class="flex items-center space-x-1.5">
-                    <input type="email" id="fl-email-input" autocomplete="off" disabled placeholder="No email on file - click Edit"
-                        oninput="onFirstLoginEmailInput()"
-                        class="w-full bg-gray-100 border rounded-md px-2.5 py-1.5 text-xs text-gray-700 cursor-not-allowed">
-                    <button type="button" id="fl-btn-edit-email" onclick="toggleFirstLoginEmailEdit()"
-                        class="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold py-1.5 px-3 rounded-md transition flex-shrink-0">
-                        Edit
+            <div id="fl-email-step">
+                <div class="mb-2.5">
+                    <label class="block text-gray-700 text-[11px] font-bold mb-1">Your Email ID:</label>
+                    <div class="flex items-center space-x-1.5">
+                        <input type="email" id="fl-email-input" autocomplete="off" disabled placeholder="Click Edit to enter email"
+                            oninput="onFirstLoginEmailInput()"
+                            class="w-full bg-gray-100 border rounded-md px-2.5 py-1.5 text-xs text-gray-700 cursor-not-allowed">
+                        <button type="button" id="fl-btn-edit-email" onclick="toggleFirstLoginEmailEdit()"
+                            class="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold py-1.5 px-2.5 rounded-md transition flex-shrink-0">
+                            Edit
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Send Verification Code Button -->
+                <div id="fl-send-code-wrap" class="mb-2.5">
+                    <button type="button" id="fl-btn-send-code" onclick="sendFirstLoginVerificationCode()"
+                        class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-3 rounded-md transition text-xs leading-snug">
+                        My email id is okay, send verification code at this email id
                     </button>
                 </div>
-            </div>
-
-            <!-- Send Verification Code Button -->
-            <div id="fl-send-code-wrap" class="mb-3">
-                <button type="button" id="fl-btn-send-code" onclick="sendFirstLoginVerificationCode()"
-                    class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-3 rounded-md transition text-xs leading-snug">
-                    My email id is okay. Click here to send verification code
-                </button>
             </div>
 
             <p id="fl-status-msg" class="text-[11px] text-blue-600 font-medium text-center mb-2 hidden"></p>
@@ -126,21 +127,21 @@
                         class="w-full bg-white border border-gray-300 rounded-md px-2.5 py-1.5 text-center tracking-widest font-bold text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500">
                     <button type="button" id="fl-btn-verify-code" onclick="verifyFirstLoginCode()"
                         class="bg-green-600 hover:bg-green-700 text-white text-[11px] font-bold py-1.5 px-3 rounded-md transition flex-shrink-0">
-                        Verify Code
+                        Verify
                     </button>
                 </div>
             </div>
 
-            <!-- Step 3: Set New Password (Shown after email code is verified) -->
+            <!-- Step 3: Password Registration Screen (Shown ONLY after email code is verified) -->
             <div id="fl-password-section" class="space-y-2.5 pt-2 border-t border-gray-200 hidden">
-                <div class="text-[11px] text-green-700 font-semibold bg-green-50 border border-green-200 rounded px-2 py-1">
-                    ✓ Email verified! Please create your new password below.
+                <div class="text-[11px] text-green-700 font-semibold bg-green-50 border border-green-200 rounded px-2 py-1 text-center">
+                    ✓ Email Verified! Now please register your password below.
                 </div>
 
                 <div>
-                    <label class="block text-gray-700 text-[11px] font-bold mb-0.5">Enter Your New Password (Max 10 Chars):</label>
+                    <label class="block text-gray-700 text-[11px] font-bold mb-0.5">Enter Password (Max 10 Chars):</label>
                     <div class="relative">
-                        <input type="password" id="fl-new-password" maxlength="10" autocomplete="new-password" placeholder="Enter new password"
+                        <input type="password" id="fl-new-password" maxlength="10" autocomplete="new-password" placeholder="Enter your password"
                             class="w-full px-2.5 py-1.5 pr-8 border rounded-md text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500">
                         <button type="button" onclick="togglePasswordVisibility('fl-new-password', 'fl-eye-1')" class="absolute inset-y-0 right-0 px-2 flex items-center text-gray-500 hover:text-gray-700 focus:outline-none">
                             <svg id="fl-eye-1" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -151,9 +152,9 @@
                 </div>
 
                 <div>
-                    <label class="block text-gray-700 text-[11px] font-bold mb-0.5">Confirm New Password:</label>
+                    <label class="block text-gray-700 text-[11px] font-bold mb-0.5">Confirm Password:</label>
                     <div class="relative">
-                        <input type="password" id="fl-confirm-password" maxlength="10" autocomplete="new-password" placeholder="Confirm new password"
+                        <input type="password" id="fl-confirm-password" maxlength="10" autocomplete="new-password" placeholder="Re-enter your password"
                             class="w-full px-2.5 py-1.5 pr-8 border rounded-md text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500">
                         <button type="button" onclick="togglePasswordVisibility('fl-confirm-password', 'fl-eye-2')" class="absolute inset-y-0 right-0 px-2 flex items-center text-gray-500 hover:text-gray-700 focus:outline-none">
                             <svg id="fl-eye-2" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -165,12 +166,12 @@
 
                 <button type="button" id="fl-btn-save-password" onclick="completeFirstLoginSetup()"
                     class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-3 rounded-md transition text-xs">
-                    Save Password & Continue to Dashboard
+                    Register Password & View Resources
                 </button>
             </div>
 
             <button type="button" onclick="logout()" class="w-full mt-3 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-1.5 px-3 rounded-md transition text-xs">
-                Cancel / Back to Login
+                Back to Name Selection
             </button>
         </div>
 
@@ -255,7 +256,7 @@
                 <input type="text" id="rp-selected-display" readonly autocomplete="off" class="w-full px-2.5 py-1 bg-gray-100 border rounded-md text-gray-600" placeholder="Selected name">
             </div>
             <button onclick="submitResetPassword()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1.5 px-3 rounded-md transition mb-2">
-                Reset Password to Daaji@2809
+                Reset Password (Re-verify Email on Next Login)
             </button>
             <button onclick="showLoginScreen()" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-1.5 px-3 rounded-md transition">
                 Back to Login
@@ -922,1019 +923,4 @@
             const checklistContainer = document.getElementById('ts-sessions-checklist');
             for (let i = 1; i <= 4; i++) {
                 let titleVal = workshop[`session_${i}_title`] || `Session ${i}`;
-                let dateVal = workshop[`session_${i}_date`] ? new Date(workshop[`session_${i}_date`]).toLocaleDateString() : "Date TBA";
-                let rowDiv = document.createElement('div');
-                rowDiv.className = "flex items-center justify-between p-2 bg-gray-50 rounded border border-gray-100";
-                rowDiv.innerHTML = `
-                    <div class="flex items-center gap-2">
-                        <input type="checkbox" checked id="include_session_${i}" class="rounded text-indigo-600 focus:ring-indigo-500">
-                        <span class="font-medium text-gray-800">${titleVal}</span>
-                    </div>
-                    <span class="text-gray-500 italic bg-white px-2 py-0.5 rounded border border-gray-200">${dateVal}</span>
-                `;
-                checklistContainer.appendChild(rowDiv);
-            }
-        }
-
-        function togglePasswordVisibility(inputId, iconId) {
-            const input = document.getElementById(inputId);
-            const icon = document.getElementById(iconId);
-            if (input.type === "password") {
-                input.type = "text";
-                icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />`;
-            } else {
-                input.type = "password";
-                icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a10.05 10.05 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />`;
-            }
-        }
-
-        function selectParticipant(key, data) {
-            selectedParticipantKey = key;
-            db.ref('control_tower/participants/' + key).once('value').then(snapshot => {
-                if (snapshot.exists()) allParticipants[key] = snapshot.val();
-            });
-            document.getElementById('search-name').value = data.ps_name;
-            document.getElementById('selected-participant-display').value = data.ps_name;
-            document.getElementById('selected-participant-container').classList.remove('hidden');
-            document.getElementById('search-results').classList.add('hidden');
-        }
-
-        function isPasswordAlreadyChanged(userObj) {
-            const flag = (userObj.pw_changed ?? "").toString().trim().toUpperCase();
-            return flag === "TRUE";
-        }
-
-        function handleLogin() {
-            const passwordInput = document.getElementById('login-password').value;
-            if (!selectedParticipantKey || !allParticipants[selectedParticipantKey]) {
-                showCustomAlert("Please search and select a valid name from the list.");
-                return;
-            }
-            let user = allParticipants[selectedParticipantKey];
-            if (!matchesPortalRole(user)) {
-                showCustomAlert("This account belongs to a different portal role. Please use the appropriate login link.");
-                return;
-            }
-
-            let storedPassword = user.password ? user.password.toString() : "Daaji@2809";
-            if (passwordInput === storedPassword) {
-                currentActiveUser = user;
-                if (!isPasswordAlreadyChanged(user)) {
-                    openFirstTimeLoginScreen();
-                } else {
-                    renderDashboard();
-                }
-            } else {
-                showCustomAlert("Incorrect password. Please try again.");
-            }
-        }
-
-        /* =========================================================
-           FIRST-TIME LOGIN (EMAIL VERIFICATION + PASSWORD SETUP)
-           ========================================================= */
-        function updateFirstLoginSendButtonText() {
-            const emailVal = (document.getElementById('fl-email-input').value || "").trim();
-            const btn = document.getElementById('fl-btn-send-code');
-            if (!btn) return;
-            if (emailVal) {
-                btn.textContent = `My email id is okay. Click here to send verification code to ${emailVal}`;
-            } else {
-                btn.textContent = "Please click Edit above to enter your email id first";
-            }
-        }
-
-        function openFirstTimeLoginScreen() {
-            resetInactivityTimer();
-            flVerifiedEmail = "";
-
-            document.getElementById('login-screen').classList.add('hidden');
-            document.getElementById('dashboard-screen').classList.add('hidden');
-            document.getElementById('app-header').classList.add('hidden');
-            document.getElementById('change-password-screen').classList.add('hidden');
-            document.getElementById('reset-password-screen').classList.add('hidden');
-            document.getElementById('first-login-screen').classList.remove('hidden');
-
-            document.getElementById('fl-welcome-name').innerText = `Welcome, ${currentActiveUser.ps_name || ""}`;
-
-            const emailInput = document.getElementById('fl-email-input');
-            const editBtn = document.getElementById('fl-btn-edit-email');
-            emailInput.value = (currentActiveUser.ps_email || "").toString().trim();
-            emailInput.disabled = true;
-            emailInput.classList.add('bg-gray-100', 'cursor-not-allowed');
-            emailInput.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
-
-            editBtn.textContent = "Edit";
-            editBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
-            editBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
-
-            document.getElementById('fl-code-input').value = "";
-            document.getElementById('fl-new-password').value = "";
-            document.getElementById('fl-confirm-password').value = "";
-            document.getElementById('fl-code-section').classList.add('hidden');
-            document.getElementById('fl-password-section').classList.add('hidden');
-
-            const statusEl = document.getElementById('fl-status-msg');
-            statusEl.classList.add('hidden');
-            statusEl.textContent = "";
-
-            updateFirstLoginSendButtonText();
-        }
-
-        function onFirstLoginEmailInput() {
-            updateFirstLoginSendButtonText();
-        }
-
-        function toggleFirstLoginEmailEdit() {
-            const emailInput = document.getElementById('fl-email-input');
-            const editBtn = document.getElementById('fl-btn-edit-email');
-
-            if (emailInput.disabled) {
-                emailInput.disabled = false;
-                emailInput.classList.remove('bg-gray-100', 'cursor-not-allowed');
-                emailInput.classList.add('bg-white', 'ring-2', 'ring-indigo-500');
-                emailInput.focus();
-                editBtn.textContent = "Done";
-                editBtn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
-                editBtn.classList.add('bg-green-600', 'hover:bg-green-700');
-
-                // Reset verification state if user edits email
-                flVerifiedEmail = "";
-                document.getElementById('fl-code-section').classList.add('hidden');
-                document.getElementById('fl-password-section').classList.add('hidden');
-            } else {
-                const val = emailInput.value.trim();
-                if (!validateEmailFormat(val)) {
-                    showCustomAlert("Please enter a valid email address (e.g. name@example.com).");
-                    emailInput.focus();
-                    return;
-                }
-                emailInput.disabled = true;
-                emailInput.classList.add('bg-gray-100', 'cursor-not-allowed');
-                emailInput.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
-                editBtn.textContent = "Edit";
-                editBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
-                editBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
-                updateFirstLoginSendButtonText();
-            }
-        }
-
-        function sendFirstLoginVerificationCode() {
-            const emailInput = document.getElementById('fl-email-input');
-            const emailVal = (emailInput.value || "").trim();
-
-            if (!emailInput.disabled) {
-                showCustomAlert("Please click 'Done' next to your email address first.");
-                emailInput.focus();
-                return;
-            }
-            if (!validateEmailFormat(emailVal)) {
-                showCustomAlert("Please click 'Edit' and enter a valid email address first.");
-                return;
-            }
-
-            const sendBtn = document.getElementById('fl-btn-send-code');
-            const statusEl = document.getElementById('fl-status-msg');
-            sendBtn.disabled = true;
-            statusEl.textContent = `Sending verification code to ${emailVal}... Please wait.`;
-            statusEl.classList.remove('hidden', 'text-red-600', 'text-green-600');
-            statusEl.classList.add('text-blue-600');
-
-            fetch(WEB_APP_URL, {
-                method: "POST",
-                body: JSON.stringify({
-                    action: "sendEmailVerificationCode",
-                    email: emailVal,
-                    workshopId: activeWorkshopId,
-                    ps_name: currentActiveUser?.ps_name || "Participant"
-                })
-            })
-            .then(response => response.json())
-            .then(result => {
-                sendBtn.disabled = false;
-                if (result.status === "Success") {
-                    statusEl.textContent = `Verification code sent to ${emailVal}! Please check your inbox (and spam folder).`;
-                    statusEl.classList.remove('text-blue-600', 'text-red-600');
-                    statusEl.classList.add('text-green-600');
-                    document.getElementById('fl-code-section').classList.remove('hidden');
-                    document.getElementById('fl-code-input').focus();
-                } else {
-                    statusEl.textContent = "Error: " + (result.message || "Could not send code.");
-                    statusEl.classList.remove('text-blue-600', 'text-green-600');
-                    statusEl.classList.add('text-red-600');
-                }
-            })
-            .catch(err => {
-                sendBtn.disabled = false;
-                statusEl.textContent = "Network error while sending verification code.";
-                statusEl.classList.remove('text-blue-600', 'text-green-600');
-                statusEl.classList.add('text-red-600');
-            });
-        }
-
-        function verifyFirstLoginCode() {
-            const emailVal = (document.getElementById('fl-email-input').value || "").trim();
-            const codeVal = (document.getElementById('fl-code-input').value || "").trim();
-            if (!codeVal) {
-                showCustomAlert("Please enter the verification code sent to your email.");
-                return;
-            }
-
-            const verifyBtn = document.getElementById('fl-btn-verify-code');
-            const statusEl = document.getElementById('fl-status-msg');
-            verifyBtn.disabled = true;
-            statusEl.textContent = "Verifying code...";
-            statusEl.classList.remove('hidden', 'text-red-600', 'text-green-600');
-            statusEl.classList.add('text-blue-600');
-
-            fetch(WEB_APP_URL, {
-                method: "POST",
-                body: JSON.stringify({
-                    action: "verifyEmailCode",
-                    email: emailVal,
-                    code: codeVal
-                })
-            })
-            .then(response => response.json())
-            .then(result => {
-                verifyBtn.disabled = false;
-                if (result.status === "Success") {
-                    flVerifiedEmail = emailVal;
-                    statusEl.classList.add('hidden');
-                    document.getElementById('fl-code-section').classList.add('hidden');
-                    document.getElementById('fl-password-section').classList.remove('hidden');
-                    document.getElementById('fl-new-password').focus();
-                } else {
-                    statusEl.textContent = "Verification failed: " + (result.message || "Invalid code.");
-                    statusEl.classList.remove('text-blue-600', 'text-green-600');
-                    statusEl.classList.add('text-red-600');
-                }
-            })
-            .catch(err => {
-                verifyBtn.disabled = false;
-                statusEl.textContent = "Network error during verification.";
-                statusEl.classList.remove('text-blue-600', 'text-green-600');
-                statusEl.classList.add('text-red-600');
-            });
-        }
-
-        function completeFirstLoginSetup() {
-            if (!flVerifiedEmail) {
-                showCustomAlert("Please verify your email address first.");
-                return;
-            }
-            const newPass = document.getElementById('fl-new-password').value.trim();
-            const confirmPass = document.getElementById('fl-confirm-password').value.trim();
-
-            if (!newPass || !confirmPass) {
-                showCustomAlert("Please enter and confirm your new password.");
-                return;
-            }
-            if (newPass.length < 4) {
-                showCustomAlert("Please choose a password with at least 4 characters.");
-                return;
-            }
-            if (newPass !== confirmPass) {
-                showCustomAlert("New password and confirm password do not match.");
-                return;
-            }
-
-            const saveBtn = document.getElementById('fl-btn-save-password');
-            saveBtn.disabled = true;
-
-            const oldEmail = (currentActiveUser.ps_email || "").toString().trim();
-            const updatedFields = ["password", "pw_changed"];
-            if (flVerifiedEmail !== oldEmail) {
-                updatedFields.push("ps_email");
-            }
-
-            const payload = {
-                password: newPass,
-                ps_email: flVerifiedEmail,
-                pw_changed: "TRUE",
-                fieldupdated: updatedFields.join(", "),
-                lastsyntimestamp: new Date().toLocaleString()
-            };
-
-            db.ref('control_tower/participants/' + selectedParticipantKey).update(payload).then(() => {
-                saveBtn.disabled = false;
-                currentActiveUser.password = newPass;
-                currentActiveUser.ps_email = flVerifiedEmail;
-                currentActiveUser.pw_changed = "TRUE";
-                if (allParticipants[selectedParticipantKey]) {
-                    allParticipants[selectedParticipantKey].password = newPass;
-                    allParticipants[selectedParticipantKey].ps_email = flVerifiedEmail;
-                    allParticipants[selectedParticipantKey].pw_changed = "TRUE";
-                }
-                showCustomAlert("Email verified and password updated successfully!");
-                renderDashboard();
-            }).catch(err => {
-                saveBtn.disabled = false;
-                showCustomAlert("Failed to save password: " + err.message);
-            });
-        }
-
-        function filterChangePasswordParticipants() {
-            const queryInput = document.getElementById('cp-search-name');
-            const query = queryInput ? queryInput.value.toLowerCase().trim() : "";
-            const rawQuery = queryInput ? queryInput.value.trim() : "";
-            const resultsBox = document.getElementById('cp-search-results');
-            const msgDiv = document.getElementById('cp-name-not-found-msg');
-
-            if (msgDiv) msgDiv.classList.add('hidden');
-            resultsBox.innerHTML = '';
-            if (query.length < 3) {
-                resultsBox.classList.add('hidden');
-                return;
-            }
-
-            let matches = [];
-            for (let key in allParticipants) {
-                let p = allParticipants[key];
-                let pWorkshopId = p.workshop_id ? p.workshop_id.toString().trim().toUpperCase() : "";
-                let pRole = p.role ? p.role.toString().trim().toUpperCase() : "";
-                let isGlobalAdmin = (pWorkshopId === "ALL" || pRole === "T&S" || pRole === "TRUST & SAFETY");
-                if (!isGlobalAdmin && pWorkshopId !== activeWorkshopId) continue;
-                if (!matchesPortalRole(p)) continue;
-
-                if ((p.ps_name || "").toLowerCase().includes(query)) matches.push({ key: key, data: p });
-            }
-
-            if (matches.length > 0) {
-                resultsBox.classList.remove('hidden');
-                if (msgDiv) msgDiv.classList.add('hidden');
-                matches.forEach(m => {
-                    let div = document.createElement('div');
-                    div.className = "px-4 py-2 hover:bg-indigo-50 cursor-pointer text-sm border-b bg-white";
-                    let nameStr = m.data.ps_name || "";
-                    let centreStr = m.data.ps_centre ? ` (${m.data.ps_centre})` : "";
-                    div.innerText = nameStr + centreStr;
-                    div.onclick = () => {
-                        cpSelectedKey = m.key;
-                        let fullDisplayVal = nameStr + centreStr;
-                        document.getElementById('cp-search-name').value = fullDisplayVal;
-                        let displayElem = document.getElementById('cp-selected-display');
-                        if (displayElem) displayElem.value = fullDisplayVal;
-                        resultsBox.classList.add('hidden');
-                        if (msgDiv) msgDiv.classList.add('hidden');
-                    };
-                    resultsBox.appendChild(div);
-                });
-            } else {
-                resultsBox.classList.add('hidden');
-                if (query.length >= 3 && msgDiv) {
-                    msgDiv.textContent = `We couldn't find a record for name "${rawQuery}"... Kindly connect with the HC Admin Team for support.`;
-                    msgDiv.classList.remove('hidden');
-                }
-            }
-        }
-
-        function submitChangePassword() {
-            if (!cpSelectedKey || !allParticipants[cpSelectedKey]) {
-                const typedName = document.getElementById('cp-search-name').value.trim().toLowerCase();
-                for (let key in allParticipants) {
-                    let pName = allParticipants[key].ps_name ? allParticipants[key].ps_name.toLowerCase() : "";
-                    if (pName && typedName.includes(pName) && matchesPortalRole(allParticipants[key])) { cpSelectedKey = key; break; }
-                }
-            }
-            if (!cpSelectedKey || !allParticipants[cpSelectedKey]) {
-                showCustomAlert("Please search and select a valid name.");
-                return;
-            }
-            const currentPass = document.getElementById('cp-current-password').value.trim();
-            const newPass = document.getElementById('cp-new-password').value.trim();
-            const confirmPass = document.getElementById('cp-confirm-password').value.trim();
-            if (!currentPass || !newPass || !confirmPass) return showCustomAlert("Please fill in all password fields.");
-            if (newPass !== confirmPass) return showCustomAlert("New password and confirm password do not match.");
-
-            let user = allParticipants[cpSelectedKey];
-            let storedPass = user.password ? user.password.toString() : "Daaji@2809";
-            if (currentPass !== storedPass) return showCustomAlert("Current password is incorrect.");
-
-            let payload = {
-                password: newPass,
-                pw_changed: "TRUE",
-                fieldupdated: "password, pw_changed",
-                lastsyntimestamp: new Date().toLocaleString()
-            };
-            db.ref('control_tower/participants/' + cpSelectedKey).update(payload).then(() => {
-                showCustomAlert("Password successfully updated!");
-                allParticipants[cpSelectedKey].password = newPass;
-                allParticipants[cpSelectedKey].pw_changed = "TRUE";
-                showLoginScreen();
-            }).catch(err => showCustomAlert("Failed to update password: " + err));
-        }
-
-        function filterResetPasswordParticipants() {
-            const queryInput = document.getElementById('rp-search-name');
-            const query = queryInput ? queryInput.value.toLowerCase().trim() : "";
-            const rawQuery = queryInput ? queryInput.value.trim() : "";
-            const resultsBox = document.getElementById('rp-search-results');
-            const msgDiv = document.getElementById('rp-name-not-found-msg');
-
-            if (msgDiv) msgDiv.classList.add('hidden');
-            resultsBox.innerHTML = '';
-            if (query.length < 3) {
-                resultsBox.classList.add('hidden');
-                return;
-            }
-
-            let matches = [];
-            for (let key in allParticipants) {
-                let p = allParticipants[key];
-                let pWorkshopId = p.workshop_id ? p.workshop_id.toString().trim().toUpperCase() : "";
-                let pRole = p.role ? p.role.toString().trim().toUpperCase() : "";
-                let isGlobalAdmin = (pWorkshopId === "ALL" || pRole === "T&S" || pRole === "TRUST & SAFETY");
-                if (!isGlobalAdmin && pWorkshopId !== activeWorkshopId) continue;
-                if (!matchesPortalRole(p)) continue;
-
-                if ((p.ps_name || "").toLowerCase().includes(query)) matches.push({ key: key, data: p });
-            }
-
-            if (matches.length > 0) {
-                resultsBox.classList.remove('hidden');
-                if (msgDiv) msgDiv.classList.add('hidden');
-                matches.forEach(m => {
-                    let div = document.createElement('div');
-                    div.className = "px-4 py-2 hover:bg-indigo-50 cursor-pointer text-sm border-b bg-white";
-                    let nameStr = m.data.ps_name || "";
-                    let centreStr = m.data.ps_centre ? ` (${m.data.ps_centre})` : "";
-                    div.innerText = nameStr + centreStr;
-                    div.onclick = () => {
-                        rpSelectedKey = m.key;
-                        let fullDisplayVal = nameStr + centreStr;
-                        document.getElementById('rp-search-name').value = fullDisplayVal;
-                        let displayElem = document.getElementById('rp-selected-display');
-                        if (displayElem) displayElem.value = fullDisplayVal;
-                        resultsBox.classList.add('hidden');
-                        if (msgDiv) msgDiv.classList.add('hidden');
-                    };
-                    resultsBox.appendChild(div);
-                });
-            } else {
-                resultsBox.classList.add('hidden');
-                if (query.length >= 3 && msgDiv) {
-                    msgDiv.textContent = `We couldn't find a record for name "${rawQuery}"... Kindly connect with the HC Admin Team for support.`;
-                    msgDiv.classList.remove('hidden');
-                }
-            }
-        }
-
-        function submitResetPassword() {
-            if (!rpSelectedKey || !allParticipants[rpSelectedKey]) {
-                const typedName = document.getElementById('rp-search-name').value.trim().toLowerCase();
-                for (let key in allParticipants) {
-                    let pName = allParticipants[key].ps_name ? allParticipants[key].ps_name.toLowerCase() : "";
-                    if (pName && typedName.includes(pName) && matchesPortalRole(allParticipants[key])) { rpSelectedKey = key; break; }
-                }
-            }
-            if (!rpSelectedKey || !allParticipants[rpSelectedKey]) {
-                showCustomAlert("Please search and select a valid name.");
-                return;
-            }
-            let payload = {
-                password: "Daaji@2809",
-                pw_changed: "FALSE",
-                fieldupdated: "password, pw_changed",
-                lastsyntimestamp: new Date().toLocaleString()
-            };
-            db.ref('control_tower/participants/' + rpSelectedKey).update(payload).then(() => {
-                showCustomAlert("Password reset to Daaji@2809. Email verification & new password setup will be required on next login.");
-                allParticipants[rpSelectedKey].password = "Daaji@2809";
-                allParticipants[rpSelectedKey].pw_changed = "FALSE";
-                showLoginScreen();
-            }).catch(err => showCustomAlert("Failed to reset password: " + err));
-        }
-
-        function maskMobile(mob) {
-            if (!mob) return "***";
-            let s = mob.toString().trim();
-            if (s.length <= 4) return "****";
-            return s.substring(0, 2) + "****" + s.substring(s.length - 2);
-        }
-
-        function maskEmail(email) {
-            if (!email || !email.includes("@")) return "***@***.com";
-            let parts = email.toString().trim().split("@");
-            let maskedName = parts[0].length > 2 ? parts[0].substring(0, 2) + "***" : "***";
-            return maskedName + "@" + parts[1];
-        }
-
-        function showChangePasswordScreen() {
-            document.getElementById('login-screen').classList.add('hidden');
-            document.getElementById('first-login-screen').classList.add('hidden');
-            document.getElementById('change-password-screen').classList.remove('hidden');
-            document.getElementById('reset-password-screen').classList.add('hidden');
-            if (window.location.hash) history.replaceState(null, null, window.location.search + window.location.hash);
-            clearForms();
-        }
-
-        function showResetPasswordScreen() {
-            document.getElementById('login-screen').classList.add('hidden');
-            document.getElementById('first-login-screen').classList.add('hidden');
-            document.getElementById('change-password-screen').classList.add('hidden');
-            document.getElementById('reset-password-screen').classList.remove('hidden');
-            if (window.location.hash) history.replaceState(null, null, window.location.search + window.location.hash);
-            clearForms();
-        }
-
-        function showLoginScreen() {
-            document.getElementById('login-screen').classList.remove('hidden');
-            document.getElementById('first-login-screen').classList.add('hidden');
-            document.getElementById('change-password-screen').classList.add('hidden');
-            document.getElementById('reset-password-screen').classList.add('hidden');
-            document.getElementById('dashboard-screen').classList.add('hidden');
-            document.getElementById('app-header').classList.add('hidden');
-            if (window.location.hash) history.replaceState(null, null, window.location.search + window.location.hash);
-            clearForms();
-        }
-
-        function logout() {
-            currentActiveUser = null;
-            selectedParticipantKey = null;
-            flVerifiedEmail = "";
-            let profileScreen = document.getElementById('update-profile-screen');
-            if (profileScreen) profileScreen.classList.add('hidden');
-            showLoginScreen();
-        }
-
-        function clearForms() {
-            ['search-name', 'login-password', 'selected-participant-display', 'cp-search-name', 'cp-selected-display', 'cp-current-password', 'cp-new-password', 'cp-confirm-password', 'rp-search-name', 'rp-selected-display'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.value = '';
-            });
-            const selCont = document.getElementById('selected-participant-container');
-            if (selCont) selCont.classList.add('hidden');
-            selectedParticipantKey = null;
-            cpSelectedKey = null;
-            rpSelectedKey = null;
-        }
-
-        function showCustomAlert(message) {
-            document.getElementById('custom-alert-message').innerText = message;
-            document.getElementById('custom-alert-modal').classList.remove('hidden');
-        }
-
-        function closeCustomAlert() {
-            document.getElementById('custom-alert-modal').classList.add('hidden');
-        }
-
-        function openUpdateProfileModal() {
-            if (!currentActiveUser) return;
-            let userCountry = (currentActiveUser.ps_country || currentActiveUser.country || "India").toString().trim();
-            fetchCountryMaster(userCountry);
-
-            let isIndia = (userCountry.toUpperCase() === "INDIA" || userCountry.toUpperCase() === "IN");
-            let stateDropdown = document.getElementById('update-profile-state');
-            let stateTextInput = document.getElementById('update-profile-state-text');
-
-            if (isIndia) {
-                if (stateDropdown) {
-                    stateDropdown.classList.remove('hidden');
-                    stateDropdown.disabled = true;
-                    stateDropdown.classList.add('bg-gray-100', 'cursor-not-allowed');
-                    stateDropdown.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
-                    stateDropdown.value = currentActiveUser.ps_state || "";
-                }
-                if (stateTextInput) stateTextInput.classList.add('hidden');
-                fetchZoneStateMaster();
-            } else {
-                if (stateDropdown) stateDropdown.classList.add('hidden');
-                if (stateTextInput) {
-                    stateTextInput.classList.remove('hidden');
-                    stateTextInput.disabled = true;
-                    stateTextInput.classList.add('bg-gray-100', 'cursor-not-allowed');
-                    stateTextInput.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
-                    stateTextInput.value = currentActiveUser.ps_state || "";
-                }
-            }
-
-            document.getElementById('update-profile-name').value = currentActiveUser.ps_name || "";
-            document.getElementById('update-profile-id').value = currentActiveUser.ps_id || "";
-            document.getElementById('update-profile-mob').value = currentActiveUser.ps_mob || "";
-            document.getElementById('update-profile-email').value = currentActiveUser.ps_email || "";
-            document.getElementById('update-profile-centre').value = currentActiveUser.ps_centre || "";
-
-            document.getElementById('dashboard-screen').classList.add('hidden');
-            document.getElementById('update-profile-screen').classList.remove('hidden');
-        }
-
-        function closeUpdateProfileModal() {
-            document.getElementById('update-profile-screen').classList.add('hidden');
-            document.getElementById('dashboard-screen').classList.remove('hidden');
-        }
-
-        let zoneStateMapping = {};
-
-        function fetchZoneStateMaster() {
-            db.ref('control_tower/Master_List_Zone_State').once('value').then(snapshot => {
-                if (snapshot.val()) {
-                    zoneStateMapping = snapshot.val();
-                    populateStateDropdown();
-                }
-            }).catch(error => console.error("Error fetching zone-state master:", error));
-        }
-
-        function populateStateDropdown() {
-            let stateSelect = document.getElementById('update-profile-state');
-            if (!stateSelect) return;
-            let currentValue = stateSelect.value || (currentActiveUser ? currentActiveUser.ps_state : "");
-            stateSelect.innerHTML = '<option value="">Select State</option>';
-            Object.keys(zoneStateMapping).forEach(state => {
-                let option = document.createElement('option');
-                option.value = state;
-                option.textContent = state;
-                if (state === currentValue) option.selected = true;
-                stateSelect.appendChild(option);
-            });
-            onStateSelected();
-        }
-
-        function onStateSelected() {
-            let stateSelect = document.getElementById('update-profile-state');
-            let zoneSelect = document.getElementById('update-profile-zone');
-            if (!stateSelect || !zoneSelect) return;
-            let selectedState = stateSelect.value;
-            let currentZoneValue = zoneSelect.value || (currentActiveUser ? currentActiveUser.ps_zone : "");
-            zoneSelect.innerHTML = '<option value="">Select Zone</option>';
-            if (selectedState && zoneStateMapping[selectedState]) {
-                zoneStateMapping[selectedState].forEach(zone => {
-                    let option = document.createElement('option');
-                    option.value = zone;
-                    option.textContent = zone;
-                    if (zone === currentZoneValue) option.selected = true;
-                    zoneSelect.appendChild(option);
-                });
-            }
-        }
-
-        function saveProfileChanges() {
-            if (!currentActiveUser) return;
-            let emailInput = document.getElementById('update-profile-email');
-            if (emailInput && !emailInput.disabled) {
-                showCustomAlert("Please lock/verify your email address before saving changes.");
-                emailInput.focus();
-                return;
-            }
-            let participantKey = currentActiveUser.ps_id ? currentActiveUser.ps_id.toString().trim().replace(/[\.\#\$\[\]\/]/g, "_").replace(/\s+/g, "_") : "";
-            if (!participantKey) return showCustomAlert("Invalid Participant ID.");
-
-            let newMob = document.getElementById('update-profile-mob').value.trim();
-            let newEmail = emailInput.value.trim();
-            let newCentre = document.getElementById('update-profile-centre').value.trim();
-            let newCountry = document.getElementById('update-profile-country').value.trim();
-            let isIndia = (newCountry.toUpperCase() === "INDIA" || newCountry.toUpperCase() === "IN");
-            let newState = isIndia
-                ? (document.getElementById('update-profile-state')?.value.trim() || "")
-                : (document.getElementById('update-profile-state-text')?.value.trim() || "");
-
-            let payload = {};
-            let updatedFieldsList = [];
-            if (newMob !== (currentActiveUser.ps_mob || "")) { payload.ps_mob = newMob; updatedFieldsList.push("ps_mob"); }
-            if (newEmail !== (currentActiveUser.ps_email || "")) { payload.ps_email = newEmail; updatedFieldsList.push("ps_email"); }
-            if (newCentre !== (currentActiveUser.ps_centre || "")) { payload.ps_centre = newCentre; updatedFieldsList.push("ps_centre"); }
-            if (newCountry !== (currentActiveUser.ps_country || currentActiveUser.country || "")) { payload.ps_country = newCountry; updatedFieldsList.push("ps_country"); }
-            if (newState !== (currentActiveUser.ps_state || "")) { payload.ps_state = newState; updatedFieldsList.push("ps_state"); }
-
-            if (Object.keys(payload).length === 0) return showCustomAlert("No changes detected to save.");
-
-            payload.fieldupdated = updatedFieldsList.join(", ");
-            payload.lastsyntimestamp = new Date().toLocaleString();
-
-            let statusDiv = document.getElementById('profile-update-status');
-            if (statusDiv) {
-                statusDiv.innerText = "Your Profile is being updated.... Please wait.....";
-                statusDiv.classList.remove('hidden');
-            }
-
-            db.ref('control_tower/participants/' + participantKey).update(payload).then(() => {
-                currentActiveUser.ps_mob = newMob;
-                currentActiveUser.ps_email = newEmail;
-                currentActiveUser.ps_centre = newCentre;
-                currentActiveUser.ps_country = newCountry;
-                currentActiveUser.ps_state = newState;
-                if (statusDiv) statusDiv.classList.add('hidden');
-                showCustomAlert("Profile updated successfully!");
-                closeUpdateProfileModal();
-                renderDashboard();
-            }).catch(err => {
-                if (statusDiv) statusDiv.classList.add('hidden');
-                showCustomAlert("Firebase update error: " + err);
-            });
-        }
-
-        function enableField(fieldType) {
-            let inputElem = document.getElementById('update-profile-' + fieldType);
-            if (fieldType === 'state') {
-                let dropdown = document.getElementById('update-profile-state');
-                let textInput = document.getElementById('update-profile-state-text');
-                if (dropdown && !dropdown.classList.contains('hidden')) inputElem = dropdown;
-                else if (textInput && !textInput.classList.contains('hidden')) inputElem = textInput;
-            }
-            let btnElem = document.getElementById('btn-' + fieldType);
-            if (!inputElem || !btnElem) return;
-
-            if (inputElem.disabled) {
-                inputElem.disabled = false;
-                inputElem.classList.remove('bg-gray-100', 'cursor-not-allowed');
-                inputElem.classList.add('bg-white', 'ring-2', 'ring-indigo-500');
-                inputElem.focus();
-                btnElem.textContent = "Done";
-                btnElem.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
-                btnElem.classList.add('bg-green-600', 'hover:bg-green-700');
-
-                let saveBtn = document.getElementById('save-profile-btn');
-                if (saveBtn) {
-                    saveBtn.disabled = true;
-                    saveBtn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700', 'text-white', 'cursor-pointer');
-                    saveBtn.classList.add('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
-                }
-            } else {
-                let val = inputElem.value.trim();
-                if (fieldType === 'email') {
-                    if (!validateEmailFormat(val)) {
-                        showCustomAlert("Please check the email entered by you. It does not have a proper format (missing '@' or domain).");
-                        inputElem.focus();
-                        return;
-                    }
-                    inputElem.disabled = true;
-                    inputElem.classList.add('bg-gray-100', 'cursor-not-allowed');
-                    inputElem.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
-                    btnElem.textContent = "Edit";
-                    btnElem.classList.remove('bg-green-600', 'hover:bg-green-700');
-                    btnElem.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
-                    triggerEmailVerification(val, currentActiveUser?.ps_name || "Participant");
-                } else if (fieldType === 'mob') {
-                    let countryVal = document.getElementById('update-profile-country')?.value.trim().toUpperCase() || (currentActiveUser.ps_country || currentActiveUser.country || "India").toString().trim().toUpperCase();
-                    let isIndia = (countryVal === "INDIA" || countryVal === "IN");
-                    if (isIndia && !/^(\+91[\-\s]?)?[6-9]\d{9}$/.test(val)) {
-                        showCustomAlert("Please enter a valid 10-digit Indian mobile number starting with digits 6 through 9.");
-                        inputElem.focus();
-                        return;
-                    }
-                    if (!isIndia && (!val || val.length < 5)) {
-                        showCustomAlert("Please enter a valid contact number.");
-                        inputElem.focus();
-                        return;
-                    }
-                    inputElem.disabled = true;
-                    inputElem.classList.add('bg-gray-100', 'cursor-not-allowed');
-                    inputElem.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
-                    btnElem.textContent = "Edit";
-                    btnElem.classList.remove('bg-green-600', 'hover:bg-green-700');
-                    btnElem.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
-                    unlockSaveProfileBtn();
-                } else if (fieldType === 'country') {
-                    if (!val) { showCustomAlert("Country cannot be empty."); inputElem.focus(); return; }
-                    inputElem.disabled = true;
-                    inputElem.classList.add('bg-gray-100', 'cursor-not-allowed');
-                    inputElem.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
-                    btnElem.textContent = "Edit";
-                    btnElem.classList.remove('bg-green-600', 'hover:bg-green-700');
-                    btnElem.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
-                    onCountrySelected();
-                    unlockSaveProfileBtn();
-                } else {
-                    inputElem.disabled = true;
-                    inputElem.classList.add('bg-gray-100', 'cursor-not-allowed');
-                    inputElem.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
-                    btnElem.textContent = "Edit";
-                    btnElem.classList.remove('bg-green-600', 'hover:bg-green-700');
-                    btnElem.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
-                    unlockSaveProfileBtn();
-                }
-            }
-        }
-
-        function unlockSaveProfileBtn() {
-            let saveBtn = document.getElementById('save-profile-btn');
-            if (saveBtn) {
-                saveBtn.disabled = false;
-                saveBtn.classList.remove('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
-                saveBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700', 'text-white', 'cursor-pointer');
-            }
-        }
-
-        function triggerEmailVerification(emailVal, userName) {
-            let statusElem = document.getElementById('profile-update-status');
-            statusElem.textContent = "Sending verification code to " + emailVal + "... Please wait.";
-            statusElem.classList.remove('hidden', 'text-red-600', 'text-green-600');
-            statusElem.classList.add('text-blue-600');
-
-            fetch(WEB_APP_URL, {
-                method: "POST",
-                body: JSON.stringify({ action: "sendEmailVerificationCode", email: emailVal, workshopId: activeWorkshopId, ps_name: userName || "Participant" })
-            })
-            .then(response => response.json())
-            .then(result => {
-                if (result.status === "Success") {
-                    statusElem.textContent = "Verification code sent successfully! Please check your inbox.";
-                    statusElem.classList.remove('text-blue-600');
-                    statusElem.classList.add('text-green-600');
-                    setTimeout(() => openVerificationPopup(emailVal), 600);
-                } else {
-                    statusElem.classList.add('hidden');
-                    showCustomAlert("Error: " + result.message);
-                    let emailInput = document.getElementById('update-profile-email');
-                    if (emailInput) emailInput.disabled = false;
-                }
-            })
-            .catch(error => {
-                statusElem.classList.add('hidden');
-                showCustomAlert("Network error while sending code: " + error.toString());
-                let emailInput = document.getElementById('update-profile-email');
-                if (emailInput) emailInput.disabled = false;
-            });
-        }
-
-        function validateEmailFormat(email) {
-            if (!email || email.includes('..')) return false;
-            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return false;
-            let parts = email.split('@');
-            if (parts.length !== 2) return false;
-            let [localPart, domain] = parts;
-            if (localPart.startsWith('.') || localPart.endsWith('.') || domain.startsWith('.') || domain.endsWith('.')) return false;
-            let tld = domain.split('.').pop();
-            return tld.length >= 2 && tld.length <= 10;
-        }
-
-        let currentVerificationEmail = "";
-
-        function openVerificationPopup(email) {
-            currentVerificationEmail = email;
-            document.getElementById("modalMessage").innerText = `A 6-digit verification code has been sent to ${email}.\nIt is valid for 5 minutes.`;
-            document.getElementById("verificationInput").value = "";
-            document.getElementById("customVerificationModal").classList.remove("hidden");
-        }
-
-        function closeVerificationModal() {
-            document.getElementById("customVerificationModal").classList.add("hidden");
-        }
-
-        function handleVerifyCodeClick() {
-            let enteredCode = document.getElementById("verificationInput").value;
-            if (!enteredCode || enteredCode.trim() === "") { alert("Please enter the verification code."); return; }
-            document.getElementById("customVerificationModal").classList.add("hidden");
-            verifyCodeWithBackend(currentVerificationEmail, enteredCode.trim());
-        }
-
-        function verifyCodeWithBackend(email, code) {
-            let statusElem = document.getElementById('profile-update-status');
-            statusElem.textContent = "Verifying code...";
-            statusElem.classList.remove('hidden');
-
-            fetch(WEB_APP_URL, {
-                method: "POST",
-                body: JSON.stringify({ action: "verifyEmailCode", email: email, code: code })
-            })
-            .then(response => response.json())
-            .then(result => {
-                statusElem.classList.add('hidden');
-                if (result.status === "Success") {
-                    showCustomAlert("Email verified successfully! You can now click 'Save Changes'.");
-                    let emailInput = document.getElementById('update-profile-email');
-                    emailInput.disabled = true;
-                    emailInput.classList.add('bg-gray-100', 'cursor-not-allowed');
-                    emailInput.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
-                    unlockSaveProfileBtn();
-                } else {
-                    showCustomAlert("Verification Failed: " + result.message);
-                }
-            })
-            .catch(error => {
-                statusElem.classList.add('hidden');
-                showCustomAlert("Network error during code verification: " + error.toString());
-            });
-        }
-
-        function navToChangePassword(event) {
-            event.preventDefault();
-            showChangePasswordScreen();
-        }
-
-        function navToResetPassword(event) {
-            event.preventDefault();
-            showResetPasswordScreen();
-        }
-
-        function showWorkshopNotFoundError(message) {
-            let timeLeft = 10;
-            document.body.innerHTML = `
-                <div class="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-                    <div class="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center border border-red-100">
-                        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-100 text-red-600 mb-4 text-2xl">⚠️</div>
-                        <h2 class="text-xl font-bold text-gray-900 mb-2">Workshop Not Found</h2>
-                        <p class="text-gray-600 text-sm mb-4">${message}</p>
-                        <p class="text-xs text-gray-400">Redirecting to main website in <span id="countdown-timer">${timeLeft}</span> seconds...</p>
-                    </div>
-                </div>
-            `;
-            const timerInterval = setInterval(() => {
-                timeLeft--;
-                const el = document.getElementById('countdown-timer');
-                if (el) el.innerText = timeLeft;
-                if (timeLeft <= 0) {
-                    clearInterval(timerInterval);
-                    window.location.href = "https://heartfulness.org/heartful-communication/";
-                }
-            }, 1000);
-        }
-
-        function showWorkshopInactiveError(message) {
-            let timeLeft = 10;
-            const mainContainer = document.getElementById('main-container');
-            if (mainContainer) mainContainer.style.display = 'none';
-            document.body.innerHTML = `
-                <div class="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-                    <div class="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center border border-amber-100">
-                        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-100 text-amber-600 mb-4 text-2xl">🔒</div>
-                        <h2 class="text-xl font-bold text-gray-900 mb-2">Workshop Closed</h2>
-                        <p class="text-gray-600 text-sm mb-4">${message}</p>
-                        <p class="text-xs text-gray-400">Redirecting to main website in <span id="countdown-timer-inactive">${timeLeft}</span> seconds...</p>
-                    </div>
-                </div>
-            `;
-            const timerInterval = setInterval(() => {
-                timeLeft--;
-                const el = document.getElementById('countdown-timer-inactive');
-                if (el) el.innerText = timeLeft;
-                if (timeLeft <= 0) {
-                    clearInterval(timerInterval);
-                    window.location.href = "https://heartfulness.org/heartful-communication/";
-                }
-            }, 1000);
-        }
-
-        function parseCustomDateString(dateStr) {
-            if (!dateStr) return new Date(0);
-            return new Date(dateStr);
-        }
-
-        function evaluateWorkshopAccess(workshop) {
-            let now = new Date();
-            let startDate = parseCustomDateString(workshop.from_date);
-            let endDate = parseCustomDateString(workshop.to_date);
-            let gracePeriodEnd = new Date(endDate.getTime() + (24 * 60 * 60 * 1000));
-            let accessStatus = { resourcesUnlocked: false, workshopActive: true };
-            if (now >= startDate) accessStatus.resourcesUnlocked = true;
-            if (now > gracePeriodEnd) { accessStatus.workshopActive = false; accessStatus.resourcesUnlocked = false; }
-            return accessStatus;
-        }
-
-        let countryMasterList = [];
-
-        function fetchCountryMaster(targetCountry = "") {
-            db.ref('control_tower/Master_List_Country').once('value').then(snapshot => {
-                const data = snapshot.val();
-                let countryDropdown = document.getElementById('update-profile-country');
-                if (!countryDropdown) return;
-                countryDropdown.innerHTML = '<option value="">Select Country</option>';
-                countryMasterList = [];
-                if (data) {
-                    if (Array.isArray(data)) {
-                        countryMasterList = data.filter(Boolean);
-                    } else {
-                        Object.keys(data).forEach(key => {
-                            let val = data[key];
-                            let name = typeof val === 'object' && val !== null
-                                ? (val.country || val.name || key.replace(/_/g, " "))
-                                : (typeof val === 'string' && val.trim() !== "" ? val : key.replace(/_/g, " "));
-                            if (name) countryMasterList.push(name);
-                        });
-                    }
-                    countryMasterList.sort();
-                    countryMasterList.forEach(c => {
-                        let opt = document.createElement('option');
-                        opt.value = c;
-                        opt.textContent = c;
-                        countryDropdown.appendChild(opt);
-                    });
-                }
-                countryDropdown.value = targetCountry || countryDropdown.value || "India";
-                countryDropdown.disabled = true;
-                countryDropdown.classList.add('bg-gray-100', 'cursor-not-allowed');
-                countryDropdown.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
-            }).catch(error => console.error("Error fetching country master:", error));
-        }
-
-        function onCountrySelected() {
-            let countryDropdown = document.getElementById('update-profile-country');
-            if (!countryDropdown) return;
-            let isIndia = ["INDIA", "IN"].includes(countryDropdown.value.trim().toUpperCase());
-            let stateDropdown = document.getElementById('update-profile-state');
-            let stateTextInput = document.getElementById('update-profile-state-text');
-            if (isIndia) {
-                if (stateDropdown) stateDropdown.classList.remove('hidden');
-                if (stateTextInput) stateTextInput.classList.add('hidden');
-                if (Object.keys(zoneStateMapping).length === 0) fetchZoneStateMaster();
-            } else {
-                if (stateDropdown) stateDropdown.classList.add('hidden');
-                if (stateTextInput) {
-                    stateTextInput.classList.remove('hidden');
-                    if (!stateTextInput.value) stateTextInput.value = "";
-                }
-            }
-            if (!document.getElementById('update-profile-country').disabled) unlockSaveProfileBtn();
-        }
-    </script>
-</body>
-</html>
+                let dateVal = workshop
