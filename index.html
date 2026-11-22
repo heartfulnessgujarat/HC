@@ -60,61 +60,60 @@
                 <input type="text" id="selected-participant-display" readonly class="w-full px-2.5 py-1 text-xs bg-gray-100 border rounded-md text-gray-600">
             </div>
 
-            <!-- Returning User Password Box (Hidden when pw_changed is FALSE) -->
-            <div id="returning-user-login-box">
-                <div class="mb-3 relative">
-                    <label class="block text-gray-700 text-[11px] font-bold mb-0.5">Password:</label>
-                    <div class="relative">
-                        <input type="password" id="login-password" autocomplete="new-password" placeholder="Enter password" class="w-full px-2.5 py-1 text-xs pr-8 border rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500">
-                        <button type="button" onclick="togglePasswordVisibility('login-password', 'login-eye-icon')" class="absolute inset-y-0 right-0 px-2 flex items-center text-gray-500 hover:text-gray-700 focus:outline-none">
-                            <svg id="login-eye-icon" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a10.05 10.05 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                            </svg>
-                        </button>
-                    </div>
+            <div class="mb-3 relative">
+                <label class="block text-gray-700 text-[11px] font-bold mb-0.5">Password:</label>
+                <div class="relative">
+                    <input type="password" id="login-password" autocomplete="new-password" placeholder="Enter password" class="w-full px-2.5 py-1 text-xs pr-8 border rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                    <button type="button" onclick="togglePasswordVisibility('login-password', 'login-eye-icon')" class="absolute inset-y-0 right-0 px-2 flex items-center text-gray-500 hover:text-gray-700 focus:outline-none">
+                        <svg id="login-eye-icon" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a10.05 10.05 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                        </svg>
+                    </button>
                 </div>
+            </div>
 
-                <button onclick="handleLogin()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1.5 px-3 text-xs rounded-md transition mb-2">
-                    Login
-                </button>
+            <button onclick="handleLogin()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1.5 px-3 text-xs rounded-md transition mb-2">
+                Login
+            </button>
 
-                <div class="flex justify-between items-center text-[11px] px-0.5">
-                    <a href="#" onclick="navToChangePassword(event)" class="text-indigo-600 hover:underline font-medium">Change Password</a>
-                    <a href="#" onclick="navToResetPassword(event)" class="text-indigo-600 hover:underline font-medium">Reset Password</a>
-                </div>
+            <div class="flex justify-between items-center text-[11px] px-0.5">
+                <a href="#" onclick="navToChangePassword(event)" class="text-indigo-600 hover:underline font-medium">Change Password</a>
+                <a href="#" onclick="navToResetPassword(event)" class="text-indigo-600 hover:underline font-medium">Reset Password</a>
             </div>
         </div>
 
-        <!-- SCREEN 1B: FIRST-TIME LOGIN (EMAIL VERIFICATION + PASSWORD REGISTRATION) -->
+        <!-- SCREEN 1B: FIRST-TIME LOGIN (EMAIL VERIFICATION + FORCED PASSWORD SETUP) -->
         <div id="first-login-screen" class="bg-white rounded-lg shadow-md p-3 sm:p-4 mt-1 hidden text-xs">
             <div class="text-center mb-2">
                 <span class="text-[10px] uppercase tracking-wider bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-bold">First-Time Account Setup</span>
-                <h2 class="text-base font-bold text-gray-800 mt-1">Email Verification & Password Registration</h2>
+                <h2 class="text-base font-bold text-gray-800 mt-1">Verify Email & Set Your Password</h2>
                 <p id="fl-welcome-name" class="text-[11px] text-indigo-700 font-semibold mt-0.5"></p>
             </div>
 
-            <!-- Step 1: Confirm or Edit Email -->
-            <div id="fl-email-step">
-                <div class="mb-2.5">
-                    <label class="block text-gray-700 text-[11px] font-bold mb-1">Your Email ID:</label>
-                    <div class="flex items-center space-x-1.5">
-                        <input type="email" id="fl-email-input" autocomplete="off" disabled placeholder="Click Edit to enter email"
-                            oninput="onFirstLoginEmailInput()"
-                            class="w-full bg-gray-100 border rounded-md px-2.5 py-1.5 text-xs text-gray-700 cursor-not-allowed">
-                        <button type="button" id="fl-btn-edit-email" onclick="toggleFirstLoginEmailEdit()"
-                            class="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold py-1.5 px-2.5 rounded-md transition flex-shrink-0">
-                            Edit
-                        </button>
-                    </div>
-                </div>
+            <p class="text-[11px] text-gray-600 bg-blue-50 border border-blue-100 rounded p-2 mb-3">
+                For your security, please verify your email address and set a personal password before accessing workshop resources.
+            </p>
 
-                <!-- Send Verification Code Button -->
-                <div id="fl-send-code-wrap" class="mb-2.5">
-                    <button type="button" id="fl-btn-send-code" onclick="sendFirstLoginVerificationCode()"
-                        class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-3 rounded-md transition text-xs leading-snug">
-                        My email id is okay, send verification code at this email id
+            <!-- Step 1: Confirm or Edit Email -->
+            <div class="mb-3">
+                <label class="block text-gray-700 text-[11px] font-bold mb-1">Registered Email Address:</label>
+                <div class="flex items-center space-x-1.5">
+                    <input type="email" id="fl-email-input" autocomplete="off" disabled placeholder="No email on file - click Edit"
+                        oninput="onFirstLoginEmailInput()"
+                        class="w-full bg-gray-100 border rounded-md px-2.5 py-1.5 text-xs text-gray-700 cursor-not-allowed">
+                    <button type="button" id="fl-btn-edit-email" onclick="toggleFirstLoginEmailEdit()"
+                        class="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold py-1.5 px-3 rounded-md transition flex-shrink-0">
+                        Edit
                     </button>
                 </div>
+            </div>
+
+            <!-- Send Verification Code Button -->
+            <div id="fl-send-code-wrap" class="mb-3">
+                <button type="button" id="fl-btn-send-code" onclick="sendFirstLoginVerificationCode()"
+                    class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-3 rounded-md transition text-xs leading-snug">
+                    My email id is okay. Click here to send verification code
+                </button>
             </div>
 
             <p id="fl-status-msg" class="text-[11px] text-blue-600 font-medium text-center mb-2 hidden"></p>
@@ -127,21 +126,21 @@
                         class="w-full bg-white border border-gray-300 rounded-md px-2.5 py-1.5 text-center tracking-widest font-bold text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500">
                     <button type="button" id="fl-btn-verify-code" onclick="verifyFirstLoginCode()"
                         class="bg-green-600 hover:bg-green-700 text-white text-[11px] font-bold py-1.5 px-3 rounded-md transition flex-shrink-0">
-                        Verify
+                        Verify Code
                     </button>
                 </div>
             </div>
 
-            <!-- Step 3: Password Registration Screen (Shown ONLY after email code is verified) -->
+            <!-- Step 3: Set New Password (Shown after email code is verified) -->
             <div id="fl-password-section" class="space-y-2.5 pt-2 border-t border-gray-200 hidden">
-                <div class="text-[11px] text-green-700 font-semibold bg-green-50 border border-green-200 rounded px-2 py-1 text-center">
-                    ✓ Email Verified! Now please register your password below.
+                <div class="text-[11px] text-green-700 font-semibold bg-green-50 border border-green-200 rounded px-2 py-1">
+                    ✓ Email verified! Please create your new password below.
                 </div>
 
                 <div>
-                    <label class="block text-gray-700 text-[11px] font-bold mb-0.5">Enter Password (Max 10 Chars):</label>
+                    <label class="block text-gray-700 text-[11px] font-bold mb-0.5">Enter Your New Password (Max 10 Chars):</label>
                     <div class="relative">
-                        <input type="password" id="fl-new-password" maxlength="10" autocomplete="new-password" placeholder="Enter your password"
+                        <input type="password" id="fl-new-password" maxlength="10" autocomplete="new-password" placeholder="Enter new password"
                             class="w-full px-2.5 py-1.5 pr-8 border rounded-md text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500">
                         <button type="button" onclick="togglePasswordVisibility('fl-new-password', 'fl-eye-1')" class="absolute inset-y-0 right-0 px-2 flex items-center text-gray-500 hover:text-gray-700 focus:outline-none">
                             <svg id="fl-eye-1" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -152,9 +151,9 @@
                 </div>
 
                 <div>
-                    <label class="block text-gray-700 text-[11px] font-bold mb-0.5">Confirm Password:</label>
+                    <label class="block text-gray-700 text-[11px] font-bold mb-0.5">Confirm New Password:</label>
                     <div class="relative">
-                        <input type="password" id="fl-confirm-password" maxlength="10" autocomplete="new-password" placeholder="Re-enter your password"
+                        <input type="password" id="fl-confirm-password" maxlength="10" autocomplete="new-password" placeholder="Confirm new password"
                             class="w-full px-2.5 py-1.5 pr-8 border rounded-md text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500">
                         <button type="button" onclick="togglePasswordVisibility('fl-confirm-password', 'fl-eye-2')" class="absolute inset-y-0 right-0 px-2 flex items-center text-gray-500 hover:text-gray-700 focus:outline-none">
                             <svg id="fl-eye-2" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -166,12 +165,12 @@
 
                 <button type="button" id="fl-btn-save-password" onclick="completeFirstLoginSetup()"
                     class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-3 rounded-md transition text-xs">
-                    Register Password & View Resources
+                    Save Password & Continue to Dashboard
                 </button>
             </div>
 
             <button type="button" onclick="logout()" class="w-full mt-3 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-1.5 px-3 rounded-md transition text-xs">
-                Back to Name Selection
+                Cancel / Back to Login
             </button>
         </div>
 
@@ -256,7 +255,7 @@
                 <input type="text" id="rp-selected-display" readonly autocomplete="off" class="w-full px-2.5 py-1 bg-gray-100 border rounded-md text-gray-600" placeholder="Selected name">
             </div>
             <button onclick="submitResetPassword()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1.5 px-3 rounded-md transition mb-2">
-                Reset Password (Re-verify Email on Next Login)
+                Reset Password to Daaji@2809
             </button>
             <button onclick="showLoginScreen()" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-1.5 px-3 rounded-md transition">
                 Back to Login
@@ -445,43 +444,65 @@
         // First-time login state
         let flVerifiedEmail = "";
 
+        function applyWorkshopLogo(workshop) {
+            const logoContainer = document.getElementById('global-header');
+            const logoElement = document.getElementById('app-logo');
+            if (!logoContainer || !logoElement) return;
+            const logoUrl = (workshop && (workshop.logo_url || workshop.logo_link || "")).toString().trim();
+            const status = (workshop && workshop.logo_status ? workshop.logo_status.toString().trim().toUpperCase() : "");
+            if (workshop && logoUrl && (status === "ON" || status === "ACTIVE" || status === "TRUE" || status === "")) {
+                logoElement.src = logoUrl;
+                logoContainer.classList.remove('hidden');
+            } else {
+                logoContainer.classList.add('hidden');
+            }
+        }
+
         function loadFirebaseData() {
-            db.ref('control_tower').once('value').then(snapshot => {
-                const data = snapshot.val();
-                if (data) {
-                    allParticipants = data.participants || {};
-                    allWorkshops = data.workshops || {};
+            Promise.all([
+                db.ref('control_tower').once('value').catch(() => null),
+                db.ref('workshops').once('value').catch(() => null),
+                db.ref('participants').once('value').catch(() => null)
+            ]).then(([ctSnap, rootWsSnap, rootPsSnap]) => {
+                const ctData = (ctSnap && ctSnap.val()) || {};
+                const rootWs = (rootWsSnap && rootWsSnap.val()) || {};
+                const rootPs = (rootPsSnap && rootPsSnap.val()) || {};
 
-                    const targetWorkshop = allWorkshops[activeWorkshopId];
-                    if (!validateWorkshopExists(targetWorkshop)) return;
+                allParticipants = Object.assign({}, rootPs, ctData.participants || {});
+                allWorkshops = Object.assign({}, rootWs, ctData.workshops || {});
 
-                    if (targetWorkshop.status === "Inactive" || targetWorkshop.status === "Closed") {
-                        showWorkshopInactiveError(`Workshop ID "${activeWorkshopId}" has concluded or is currently inactive. Access is closed.`);
-                        return;
-                    }
+                const targetWorkshop = allWorkshops[activeWorkshopId] ||
+                    Object.values(allWorkshops).find(w => w && (w.workshop_id || "").toString().trim().toUpperCase() === activeWorkshopId.toUpperCase());
 
-                    updateLoginWorkshopBadge();
-                } else {
-                    showWorkshopNotFoundError("No control tower records found in the database.");
+                if (!validateWorkshopExists(targetWorkshop)) return;
+
+                if (targetWorkshop.status === "Inactive" || targetWorkshop.status === "Closed") {
+                    showWorkshopInactiveError(`Workshop ID "${activeWorkshopId}" has concluded or is currently inactive. Access is closed.`);
+                    return;
                 }
+
+                applyWorkshopLogo(targetWorkshop);
+                updateLoginWorkshopBadge(targetWorkshop);
             }).catch(err => console.error("Error fetching data from Firebase:", err));
 
-            db.ref('control_tower/workshops/' + activeWorkshopId).on('value', (snapshot) => {
-                const workshop = snapshot.val();
-                const logoContainer = document.getElementById('global-header');
-                const logoElement = document.getElementById('app-logo');
-                if (workshop && workshop.logo_status === "ON" && workshop.logo_url) {
-                    logoElement.src = workshop.logo_url;
-                    logoContainer.classList.remove('hidden');
-                } else {
-                    logoContainer.classList.add('hidden');
+            // Keep logo synced with workshops/<id>
+            db.ref('workshops/' + activeWorkshopId).on('value', (snapshot) => {
+                if (snapshot.exists()) {
+                    allWorkshops[activeWorkshopId] = Object.assign({}, allWorkshops[activeWorkshopId] || {}, snapshot.val());
+                    applyWorkshopLogo(allWorkshops[activeWorkshopId]);
+                    updateLoginWorkshopBadge(allWorkshops[activeWorkshopId]);
                 }
             });
         }
-        window.onload = loadFirebaseData;
 
-        function updateLoginWorkshopBadge() {
-            let currentWorkshop = allWorkshops[activeWorkshopId];
+        if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", loadFirebaseData);
+        } else {
+            loadFirebaseData();
+        }
+
+        function updateLoginWorkshopBadge(wsOverride = null) {
+            let currentWorkshop = wsOverride || allWorkshops[activeWorkshopId];
             if (currentWorkshop && currentWorkshop.workshop_name) {
                 document.getElementById('login-workshop-name').innerText = currentWorkshop.workshop_name;
                 document.getElementById('login-workshop-badge').classList.remove('hidden');
@@ -522,7 +543,7 @@
                 let pRole = p.role ? p.role.toString().trim().toUpperCase() : "";
                 let isGlobalAdmin = (pWorkshopId === "ALL" || pRole === "T&S" || pRole === "TRUST & SAFETY");
 
-                if (!isGlobalAdmin && pWorkshopId !== activeWorkshopId) continue;
+                if (!isGlobalAdmin && pWorkshopId !== activeWorkshopId.toUpperCase()) continue;
                 if (!matchesPortalRole(p)) continue;
 
                 let pName = (p.ps_name || "").toLowerCase();
@@ -923,4 +944,150 @@
             const checklistContainer = document.getElementById('ts-sessions-checklist');
             for (let i = 1; i <= 4; i++) {
                 let titleVal = workshop[`session_${i}_title`] || `Session ${i}`;
-                let dateVal = workshop
+                let dateVal = workshop[`session_${i}_date`] ? new Date(workshop[`session_${i}_date`]).toLocaleDateString() : "Date TBA";
+                let rowDiv = document.createElement('div');
+                rowDiv.className = "flex items-center justify-between p-2 bg-gray-50 rounded border border-gray-100";
+                rowDiv.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <input type="checkbox" checked id="include_session_${i}" class="rounded text-indigo-600 focus:ring-indigo-500">
+                        <span class="font-medium text-gray-800">${titleVal}</span>
+                    </div>
+                    <span class="text-gray-500 italic bg-white px-2 py-0.5 rounded border border-gray-200">${dateVal}</span>
+                `;
+                checklistContainer.appendChild(rowDiv);
+            }
+        }
+
+        function togglePasswordVisibility(inputId, iconId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+            if (input.type === "password") {
+                input.type = "text";
+                icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />`;
+            } else {
+                input.type = "password";
+                icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a10.05 10.05 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />`;
+            }
+        }
+
+        function selectParticipant(key, data) {
+            selectedParticipantKey = key;
+            db.ref('control_tower/participants/' + key).once('value').then(snapshot => {
+                if (snapshot.exists()) allParticipants[key] = snapshot.val();
+            });
+            document.getElementById('search-name').value = data.ps_name;
+            document.getElementById('selected-participant-display').value = data.ps_name;
+            document.getElementById('selected-participant-container').classList.remove('hidden');
+            document.getElementById('search-results').classList.add('hidden');
+        }
+
+        function isPasswordAlreadyChanged(userObj) {
+            const flag = (userObj.pw_changed ?? "").toString().trim().toUpperCase();
+            return flag === "TRUE";
+        }
+
+        function handleLogin() {
+            const passwordInput = document.getElementById('login-password').value;
+            if (!selectedParticipantKey || !allParticipants[selectedParticipantKey]) {
+                showCustomAlert("Please search and select a valid name from the list.");
+                return;
+            }
+            let user = allParticipants[selectedParticipantKey];
+            if (!matchesPortalRole(user)) {
+                showCustomAlert("This account belongs to a different portal role. Please use the appropriate login link.");
+                return;
+            }
+
+            let storedPassword = user.password ? user.password.toString() : "Daaji@2809";
+            if (passwordInput === storedPassword) {
+                currentActiveUser = user;
+                if (!isPasswordAlreadyChanged(user)) {
+                    openFirstTimeLoginScreen();
+                } else {
+                    renderDashboard();
+                }
+            } else {
+                showCustomAlert("Incorrect password. Please try again.");
+            }
+        }
+
+        /* =========================================================
+           FIRST-TIME LOGIN (EMAIL VERIFICATION + PASSWORD SETUP)
+           ========================================================= */
+        function updateFirstLoginSendButtonText() {
+            const emailVal = (document.getElementById('fl-email-input').value || "").trim();
+            const btn = document.getElementById('fl-btn-send-code');
+            if (!btn) return;
+            if (emailVal) {
+                btn.textContent = `My email id is okay. Click here to send verification code to ${emailVal}`;
+            } else {
+                btn.textContent = "Please click Edit above to enter your email id first";
+            }
+        }
+
+        function openFirstTimeLoginScreen() {
+            resetInactivityTimer();
+            flVerifiedEmail = "";
+
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('dashboard-screen').classList.add('hidden');
+            document.getElementById('app-header').classList.add('hidden');
+            document.getElementById('change-password-screen').classList.add('hidden');
+            document.getElementById('reset-password-screen').classList.add('hidden');
+            document.getElementById('first-login-screen').classList.remove('hidden');
+
+            document.getElementById('fl-welcome-name').innerText = `Welcome, ${currentActiveUser.ps_name || ""}`;
+
+            const emailInput = document.getElementById('fl-email-input');
+            const editBtn = document.getElementById('fl-btn-edit-email');
+            emailInput.value = (currentActiveUser.ps_email || "").toString().trim();
+            emailInput.disabled = true;
+            emailInput.classList.add('bg-gray-100', 'cursor-not-allowed');
+            emailInput.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
+
+            editBtn.textContent = "Edit";
+            editBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+            editBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
+
+            document.getElementById('fl-code-input').value = "";
+            document.getElementById('fl-new-password').value = "";
+            document.getElementById('fl-confirm-password').value = "";
+            document.getElementById('fl-code-section').classList.add('hidden');
+            document.getElementById('fl-password-section').classList.add('hidden');
+
+            const statusEl = document.getElementById('fl-status-msg');
+            statusEl.classList.add('hidden');
+            statusEl.textContent = "";
+
+            updateFirstLoginSendButtonText();
+        }
+
+        function onFirstLoginEmailInput() {
+            updateFirstLoginSendButtonText();
+        }
+
+        function toggleFirstLoginEmailEdit() {
+            const emailInput = document.getElementById('fl-email-input');
+            const editBtn = document.getElementById('fl-btn-edit-email');
+
+            if (emailInput.disabled) {
+                emailInput.disabled = false;
+                emailInput.classList.remove('bg-gray-100', 'cursor-not-allowed');
+                emailInput.classList.add('bg-white', 'ring-2', 'ring-indigo-500');
+                emailInput.focus();
+                editBtn.textContent = "Done";
+                editBtn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
+                editBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+
+                flVerifiedEmail = "";
+                document.getElementById('fl-code-section').classList.add('hidden');
+                document.getElementById('fl-password-section').classList.add('hidden');
+            } else {
+                const val = emailInput.value.trim();
+                if (!validateEmailFormat(val)) {
+                    showCustomAlert("Please enter a valid email address (e.g. name@example.com).");
+                    emailInput.focus();
+                    return;
+                }
+                emailInput.disabled = true;
+                emailInput.classList.add('bg-gray-100', '
