@@ -1815,4 +1815,150 @@
                 statusElem.classList.add('hidden');
                 if (result.status === "Success") {
                     showCustomAlert("Email verified successfully! You can now click 'Save Changes'.");
-                    let emailInput
+                    let emailInput = document.getElementById('update-profile-email');
+                    emailInput.disabled = true;
+                    emailInput.classList.add('bg-gray-100', 'cursor-not-allowed');
+                    emailInput.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
+                    unlockSaveProfileBtn();
+                } else {
+                    showCustomAlert("Verification Failed: " + result.message);
+                }
+            })
+            .catch(error => {
+                statusElem.classList.add('hidden');
+                showCustomAlert("Network error during code verification: " + error.toString());
+            });
+        }
+
+        function navToChangePassword(event) {
+            event.preventDefault();
+            showChangePasswordScreen();
+        }
+
+        function navToResetPassword(event) {
+            event.preventDefault();
+            showResetPasswordScreen();
+        }
+
+        function showWorkshopNotFoundError(message) {
+            let timeLeft = 10;
+            document.body.innerHTML = `
+                <div class="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+                    <div class="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center border border-red-100">
+                        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-100 text-red-600 mb-4 text-2xl">⚠️</div>
+                        <h2 class="text-xl font-bold text-gray-900 mb-2">Workshop Not Found</h2>
+                        <p class="text-gray-600 text-sm mb-4">${message}</p>
+                        <p class="text-xs text-gray-400">Redirecting to main website in <span id="countdown-timer">${timeLeft}</span> seconds...</p>
+                    </div>
+                </div>
+            `;
+            const timerInterval = setInterval(() => {
+                timeLeft--;
+                const el = document.getElementById('countdown-timer');
+                if (el) el.innerText = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    window.location.href = "https://heartfulness.org/heartful-communication/";
+                }
+            }, 1000);
+        }
+
+        function showWorkshopInactiveError(message) {
+            let timeLeft = 10;
+            const mainContainer = document.getElementById('main-container');
+            if (mainContainer) mainContainer.style.display = 'none';
+            document.body.innerHTML = `
+                <div class="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+                    <div class="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center border border-amber-100">
+                        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-100 text-amber-600 mb-4 text-2xl">🔒</div>
+                        <h2 class="text-xl font-bold text-gray-900 mb-2">Workshop Closed</h2>
+                        <p class="text-gray-600 text-sm mb-4">${message}</p>
+                        <p class="text-xs text-gray-400">Redirecting to main website in <span id="countdown-timer-inactive">${timeLeft}</span> seconds...</p>
+                    </div>
+                </div>
+            `;
+            const timerInterval = setInterval(() => {
+                timeLeft--;
+                const el = document.getElementById('countdown-timer-inactive');
+                if (el) el.innerText = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    window.location.href = "https://heartfulness.org/heartful-communication/";
+                }
+            }, 1000);
+        }
+
+        function parseCustomDateString(dateStr) {
+            if (!dateStr) return new Date(0);
+            return new Date(dateStr);
+        }
+
+        function evaluateWorkshopAccess(workshop) {
+            let now = new Date();
+            let startDate = parseCustomDateString(workshop.from_date);
+            let endDate = parseCustomDateString(workshop.to_date);
+            let gracePeriodEnd = new Date(endDate.getTime() + (24 * 60 * 60 * 1000));
+            let accessStatus = { resourcesUnlocked: false, workshopActive: true };
+            if (now >= startDate) accessStatus.resourcesUnlocked = true;
+            if (now > gracePeriodEnd) { accessStatus.workshopActive = false; accessStatus.resourcesUnlocked = false; }
+            return accessStatus;
+        }
+
+        let countryMasterList = [];
+
+        function fetchCountryMaster(targetCountry = "") {
+            db.ref('control_tower/Master_List_Country').once('value').then(snapshot => {
+                const data = snapshot.val();
+                let countryDropdown = document.getElementById('update-profile-country');
+                if (!countryDropdown) return;
+                countryDropdown.innerHTML = '<option value="">Select Country</option>';
+                countryMasterList = [];
+                if (data) {
+                    if (Array.isArray(data)) {
+                        countryMasterList = data.filter(Boolean);
+                    } else {
+                        Object.keys(data).forEach(key => {
+                            let val = data[key];
+                            let name = typeof val === 'object' && val !== null
+                                ? (val.country || val.name || key.replace(/_/g, " "))
+                                : (typeof val === 'string' && val.trim() !== "" ? val : key.replace(/_/g, " "));
+                            if (name) countryMasterList.push(name);
+                        });
+                    }
+                    countryMasterList.sort();
+                    countryMasterList.forEach(c => {
+                        let opt = document.createElement('option');
+                        opt.value = c;
+                        opt.textContent = c;
+                        countryDropdown.appendChild(opt);
+                    });
+                }
+                countryDropdown.value = targetCountry || countryDropdown.value || "India";
+                countryDropdown.disabled = true;
+                countryDropdown.classList.add('bg-gray-100', 'cursor-not-allowed');
+                countryDropdown.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
+            }).catch(error => console.error("Error fetching country master:", error));
+        }
+
+        function onCountrySelected() {
+            let countryDropdown = document.getElementById('update-profile-country');
+            if (!countryDropdown) return;
+            let isIndia = ["INDIA", "IN"].includes(countryDropdown.value.trim().toUpperCase());
+            let stateDropdown = document.getElementById('update-profile-state');
+            let stateTextInput = document.getElementById('update-profile-state-text');
+            if (isIndia) {
+                if (stateDropdown) stateDropdown.classList.remove('hidden');
+                if (stateTextInput) stateTextInput.classList.add('hidden');
+                if (Object.keys(zoneStateMapping).length === 0) fetchZoneStateMaster();
+            } else {
+                if (stateDropdown) stateDropdown.classList.add('hidden');
+                if (stateTextInput) {
+                    stateTextInput.classList.remove('hidden');
+                    if (!stateTextInput.value) stateTextInput.value = "";
+                }
+            }
+            if (!document.getElementById('update-profile-country').disabled) unlockSaveProfileBtn();
+        }
+    </script>
+</body>
+</html>
