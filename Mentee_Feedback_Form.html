@@ -554,10 +554,13 @@
                 </div>
             </div>
 
-            <!-- Submit Button -->
-            <div class="pt-2">
+            <!-- Submit Button + Back to Main Screen -->
+            <div class="pt-2 space-y-2">
                 <button type="button" id="btn-submit-form" onclick="handleFormSubmit()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-4 rounded-lg shadow transition text-sm">
                     Submit Self-Evaluation Feedback
+                </button>
+                <button type="button" onclick="goBackToMainScreen()" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg transition text-xs">
+                    Back to Main Screen
                 </button>
             </div>
         </div>
@@ -584,6 +587,12 @@
 
             <div id="submissions-list-container" class="space-y-3">
                 <div class="text-center text-gray-400 py-6">Loading submitted evaluations...</div>
+            </div>
+
+            <div class="pt-2">
+                <button type="button" onclick="goBackToMainScreen()" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg transition text-xs">
+                    Back to Main Screen
+                </button>
             </div>
         </div>
     </main>
@@ -1087,9 +1096,6 @@
             }
         }
 
-        /* =========================================================
-           FIREBASE LISTENER & 1-DAY AUTO-LOCK CHECKER
-           ========================================================= */
         function listenToWorkshopSubmissions() {
             const refPath = `control_tower/mentee_feedback/${activeWorkshopId.toUpperCase()}`;
             db.ref(refPath).on("value", snap => {
@@ -1202,9 +1208,6 @@
             .catch(err => console.error("Error sending self-eval notification emails:", err));
         }
 
-        /* =========================================================
-           FORM VALIDATION & SUBMISSION
-           ========================================================= */
         function getRadioValue(name) {
             const checked = document.querySelector(`input[name="${name}"]:checked`);
             return checked ? checked.value : "";
@@ -1318,9 +1321,7 @@
                         cancelEditMode();
                         resetFormFields();
                         showCustomAlert(
-                            "Your draft self-evaluation has been updated!
-
-Reminder: You can still Edit or Delete it until the 1-day window ends, or click 'Lock & Submit for Mentors to Review' whenever you are ready.",
+                            "Your draft self-evaluation has been updated!\n\nReminder: You can still Edit or Delete it until the 1-day window ends, or click 'Lock & Submit for Mentors to Review' whenever you are ready.",
                             "Draft Updated"
                         );
                         switchTab("records");
@@ -1343,15 +1344,10 @@ Reminder: You can still Edit or Delete it until the 1-day window ends, or click 
                         btn.innerText = "Submit Self-Evaluation Feedback";
                         resetFormFields();
                         showCustomAlert(
-                            "Your Self-Evaluation Feedback has been saved!
-
-" +
-                            "IMPORTANT NOTICE:
-" +
-                            "• You have 1 day (24 hours) to Edit or Delete this response.
-" +
-                            "• Once you are ready, click 'Lock & Submit for Mentors to Review' on your submission.
-" +
+                            "Your Self-Evaluation Feedback has been saved!\n\n" +
+                            "IMPORTANT NOTICE:\n" +
+                            "• You have 1 day (24 hours) to Edit or Delete this response.\n" +
+                            "• Once you are ready, click 'Lock & Submit for Mentors to Review' on your submission.\n" +
                             "• If you do not click that button within 1 day, it will automatically be locked after 24 hours and an email notification will be sent to all mentors (with a confirmation email to you).",
                             "Submission Saved (1-Day Edit Window)"
                         );
@@ -1432,9 +1428,6 @@ Reminder: You can still Edit or Delete it until the 1-day window ends, or click 
             resetFormFields();
         }
 
-        /* =========================================================
-           LOCK & DELETE ACTIONS WITH CONFIRMATION CHECKPOINTS
-           ========================================================= */
         function confirmLockRecord(recId) {
             const rec = workshopSubmissions[recId];
             if (!rec) return;
@@ -1444,9 +1437,7 @@ Reminder: You can still Edit or Delete it until the 1-day window ends, or click 
 
             openConfirmModal(
                 "Lock & Submit for Mentors to Review?",
-                "Are you sure you want to lock and submit this evaluation?
-
-" +
+                "Are you sure you want to lock and submit this evaluation?\n\n" +
                 "⚠️ WARNING: Once you click 'Yes', you will NOT be able to edit or delete this evaluation anymore. " +
                 "An email notification will immediately be sent to all mentors (and a confirmation email to you), and Print/Download will be enabled.",
                 () => {
@@ -1461,9 +1452,7 @@ Reminder: You can still Edit or Delete it until the 1-day window ends, or click 
                     db.ref(`control_tower/mentee_feedback/${wsKey}/${recId}`).update(updates).then(() => {
                         triggerLockEmailNotifications(recId, { ...rec, ...updates });
                         showCustomAlert(
-                            "Your Self-Evaluation has been locked and submitted for mentors to review!
-
-Email notifications have been sent to all mentors and a confirmation copy has been sent to you.",
+                            "Your Self-Evaluation has been locked and submitted for mentors to review!\n\nEmail notifications have been sent to all mentors and a confirmation copy has been sent to you.",
                             "Locked & Submitted"
                         );
                     }).catch(err => showCustomAlert("Failed to lock evaluation: " + err.message));
@@ -1490,9 +1479,6 @@ Email notifications have been sent to all mentors and a confirmation copy has be
             );
         }
 
-        /* =========================================================
-           SUBMISSIONS LIST RENDERING & ROLE-BASED PERMISSIONS
-           ========================================================= */
         function populateMentorMenteeFilter() {
             const filterEl = document.getElementById("mentor-mentee-filter");
             if (!filterEl) return;
@@ -1624,9 +1610,6 @@ Email notifications have been sent to all mentors and a confirmation copy has be
             });
         }
 
-        /* =========================================================
-           VIEW, PRINT & DOWNLOAD HELPERS
-           ========================================================= */
         function buildRecordReportHtml(rec) {
             const locked = isRecordLocked(rec);
             return `
@@ -1652,29 +1635,25 @@ Email notifications have been sent to all mentors and a confirmation copy has be
                     <div class="border rounded p-2.5 space-y-1">
                         <div class="font-bold text-indigo-900">4. Video / Audio Clarity (Presentation)</div>
                         <div>Presenting within the frame: <strong>${rec.va_within_frame || "-"}</strong> &bull; Visible &amp; audible clearly: <strong>${rec.va_visible_audible || "-"}</strong></div>
-                        <div class="bg-gray-50 p-2 rounded border mt-1 whitespace-pre-line"><strong>OFNR Feedback:</strong>
-${rec.ofnr_video_audio || "-"}</div>
+                        <div class="bg-gray-50 p-2 rounded border mt-1 whitespace-pre-line"><strong>OFNR Feedback:</strong>\n${rec.ofnr_video_audio || "-"}</div>
                     </div>
 
                     <div class="border rounded p-2.5 space-y-1">
                         <div class="font-bold text-indigo-900">5. "Technical Capability" (Presentation)</div>
                         <div>Multitasking (screen share/chat/emoticons): <strong>${rec.tech_multitask || "-"}</strong> &bull; Working knowledge of pptx: <strong>${rec.tech_pptx || "-"}</strong></div>
-                        <div class="bg-gray-50 p-2 rounded border mt-1 whitespace-pre-line"><strong>OFNR Feedback:</strong>
-${rec.ofnr_tech_capability || "-"}</div>
+                        <div class="bg-gray-50 p-2 rounded border mt-1 whitespace-pre-line"><strong>OFNR Feedback:</strong>\n${rec.ofnr_tech_capability || "-"}</div>
                     </div>
 
                     <div class="border rounded p-2.5 space-y-1">
                         <div class="font-bold text-indigo-900">6. "Responsiveness to chat" (Presentation)</div>
                         <div>Self-Evaluation Rating: <strong>Curve Point ${rec.cp_chat ?? "-"}</strong> (out of 3)</div>
-                        <div class="bg-gray-50 p-2 rounded border mt-1 whitespace-pre-line"><strong>OFNR Feedback:</strong>
-${rec.ofnr_chat || "-"}</div>
+                        <div class="bg-gray-50 p-2 rounded border mt-1 whitespace-pre-line"><strong>OFNR Feedback:</strong>\n${rec.ofnr_chat || "-"}</div>
                     </div>
 
                     <div class="border rounded p-2.5 space-y-1">
                         <div class="font-bold text-indigo-900">7. "Concept Clarity" (Presentation)</div>
                         <div>Self-Evaluation Rating: <strong>Curve Point ${rec.cp_concept ?? "-"}</strong> (out of 5)</div>
-                        <div class="bg-gray-50 p-2 rounded border mt-1 whitespace-pre-line"><strong>OFNR Feedback:</strong>
-${rec.ofnr_concept || "-"}</div>
+                        <div class="bg-gray-50 p-2 rounded border mt-1 whitespace-pre-line"><strong>OFNR Feedback:</strong>\n${rec.ofnr_concept || "-"}</div>
                     </div>
 
                     <div class="border rounded p-2.5 space-y-1">
@@ -1685,8 +1664,7 @@ ${rec.ofnr_concept || "-"}</div>
                     <div class="border rounded p-2.5 space-y-1">
                         <div class="font-bold text-indigo-900">9. "Time Management" (Presentation)</div>
                         <div>Kept check on time &amp; preserved core focus: <strong>${rec.tm_check_focus || "No"}</strong> &bull; Requested agreement for adjustments: <strong>${rec.tm_check_agreement || "No"}</strong></div>
-                        <div class="bg-gray-50 p-2 rounded border mt-1 whitespace-pre-line"><strong>OFNR Feedback:</strong>
-${rec.ofnr_time_management || "-"}</div>
+                        <div class="bg-gray-50 p-2 rounded border mt-1 whitespace-pre-line"><strong>OFNR Feedback:</strong>\n${rec.ofnr_time_management || "-"}</div>
                     </div>
                 </div>
             `;
@@ -1770,9 +1748,6 @@ ${buildRecordReportHtml(rec)}
             URL.revokeObjectURL(url);
         }
 
-        /* =========================================================
-           TAB SWITCHING & MODALS
-           ========================================================= */
         function switchTab(tab) {
             const btnForm = document.getElementById("tab-btn-form");
             const btnRecords = document.getElementById("tab-btn-records");
