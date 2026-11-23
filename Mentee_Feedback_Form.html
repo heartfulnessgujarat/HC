@@ -38,18 +38,12 @@
 
 <body class="bg-gray-50 min-h-screen flex flex-col justify-between text-xs sm:text-sm text-gray-800">
 
-    <!-- Top Banner (Same concept as Form 1: gradient banner, no top image, no duplicate workshop ID) -->
+    <!-- Top Banner (Top participant details block removed) -->
     <header id="context-header" class="max-w-3xl mx-auto w-full px-3 pt-2.5 no-print">
         <div class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg shadow p-3">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                <div>
-                    <h1 id="form-title-heading" class="text-sm sm:text-base font-bold leading-snug">Mentee Self-Evaluation &amp; Feedback Form</h1>
-                    <p id="workshop-name-sub" class="text-[11px] text-purple-100 mt-0.5">Loading workshop details...</p>
-                </div>
-                <div id="user-info-right" class="bg-black/20 rounded px-2.5 py-1.5 text-[11px] leading-snug text-right">
-                    <div><strong>Participant:</strong> <span id="ctx-user-name">--</span></div>
-                    <div><strong>ID:</strong> <span id="ctx-user-id">--</span> &bull; <strong>Role:</strong> <span id="ctx-user-role">--</span></div>
-                </div>
+            <div>
+                <h1 id="form-title-heading" class="text-sm sm:text-base font-bold leading-snug">Mentee Self-Evaluation &amp; Feedback Form</h1>
+                <p id="workshop-name-sub" class="text-[11px] text-purple-100 mt-0.5">Loading workshop details...</p>
             </div>
         </div>
     </header>
@@ -936,8 +930,8 @@
                 };
             } else if (effectiveUid || effectiveUname || effectiveEmail) {
                 currentUser = {
-                    ps_id: effectiveUid || "--",
-                    ps_name: effectiveUname || "--",
+                    ps_id: effectiveUid || "",
+                    ps_name: effectiveUname || "",
                     ps_email: effectiveEmail || "",
                     role: effectiveRole || "Participant",
                     workshop_id: activeWorkshopId
@@ -949,9 +943,6 @@
 
         function applyUserContextUI() {
             isMentorViewer = isMentorRole(currentUser.role);
-            document.getElementById("ctx-user-name").innerText = currentUser.ps_name || "--";
-            document.getElementById("ctx-user-id").innerText = currentUser.ps_id || "--";
-            document.getElementById("ctx-user-role").innerText = currentUser.role || (isMentorViewer ? "Mentor / Facilitator" : "Participant");
 
             if (isMentorViewer) {
                 document.getElementById("tab-btn-form").classList.add("hidden");
