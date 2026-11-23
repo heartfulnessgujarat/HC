@@ -461,6 +461,55 @@
         // First-time login state
         let flVerifiedEmail = "";
 
+        const SESSION_STORAGE_KEY = "hc_portal_active_session";
+
+        function persistActiveSession() {
+            if (!currentActiveUser) return;
+            try {
+                const payload = {
+                    workshopId: activeWorkshopId,
+                    portalRole: portalRoleParam || (isFacilitatorPortal ? "facilitator" : "participant"),
+                    participantKey: selectedParticipantKey || "",
+                    user: currentActiveUser
+                };
+                sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(payload));
+            } catch (_) {}
+        }
+
+        function clearPersistedSession() {
+            try {
+                sessionStorage.removeItem(SESSION_STORAGE_KEY);
+            } catch (_) {}
+        }
+
+        function tryRestoreSessionFromStorage() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const returnMode = (urlParams.get("return") || "").trim().toLowerCase();
+            const qUid = (urlParams.get("uid") || "").trim();
+            const qUname = (urlParams.get("uname") || "").trim();
+
+            try {
+                const raw = sessionStorage.getItem(SESSION_STORAGE_KEY);
+                if (!raw) return false;
+                const saved = JSON.parse(raw);
+                if (!saved || !saved.user) return false;
+
+                const savedWs = (saved.workshopId || "").toString().trim().toUpperCase();
+                if (savedWs && savedWs !== activeWorkshopId.toUpperCase()) return false;
+
+                if (qUid && saved.user.ps_id && String(saved.user.ps_id).trim().toLowerCase() !== qUid.toLowerCase()) return false;
+                if (!qUid && qUname && saved.user.ps_name && String(saved.user.ps_name).trim().toLowerCase() !== qUname.toLowerCase()) return false;
+
+                if (returnMode === "dashboard" || qUid || qUname) {
+                    currentActiveUser = saved.user;
+                    selectedParticipantKey = saved.participantKey || null;
+                    renderDashboard();
+                    return true;
+                }
+            } catch (_) {}
+            return false;
+        }
+
         function applyWorkshopLogo(workshop) {
             const logoContainer = document.getElementById('global-header');
             const logoElement = document.getElementById('app-logo');
@@ -508,11 +557,16 @@
                 applyPortalRoleLabels();
                 applyWorkshopLogo(targetWorkshop);
                 updateLoginWorkshopBadge(targetWorkshop);
+
+                if (currentActiveUser) {
+                    renderDashboard();
+                }
             }).catch(err => console.error("Error fetching data from Firebase:", err));
         }
 
         window.addEventListener("DOMContentLoaded", () => {
             applyPortalRoleLabels();
+            tryRestoreSessionFromStorage();
             loadFirebaseData();
         });
 
@@ -603,14 +657,12 @@
             document.getElementById('selected-participant-container').classList.remove('hidden');
             document.getElementById('search-results').classList.add('hidden');
 
-            // Fetch latest record from Firebase to ensure pw_changed is completely up to date
             db.ref(`${participantsBasePath}/${key}`).once('value').then(snap => {
                 const latestUser = snap.exists() ? snap.val() : data;
                 allParticipants[key] = latestUser;
                 currentActiveUser = latestUser;
 
                 if (isPasswordAlreadyChanged(latestUser)) {
-                    // Returning user (pw_changed === TRUE): show password input
                     document.getElementById('returning-user-password-section').classList.remove('hidden');
                     const pwInput = document.getElementById('login-password');
                     if (pwInput) {
@@ -618,7 +670,6 @@
                         pwInput.focus();
                     }
                 } else {
-                    // First-time user (pw_changed === FALSE): go directly to email verification & password setup
                     document.getElementById('returning-user-password-section').classList.add('hidden');
                     openFirstTimeLoginScreen();
                 }
@@ -904,13 +955,27 @@
 
         function appendUserContextToUrl(rawUrl) {
             try {
-                if (!rawUrl.includes("various_registration.html")) return rawUrl;
+                const lowerUrl = (rawUrl || "").toLowerCase();
+                if (
+                    !lowerUrl.includes("various_registration.html") &&
+                    !lowerUrl.includes("recordinglink.html") &&
+                    !lowerUrl.includes("mentee_feedback_form.html")
+                ) {
+                    return rawUrl;
+                }
                 const u = new URL(rawUrl, window.location.href);
                 if (currentActiveUser?.ps_name && !u.searchParams.get("uname")) {
                     u.searchParams.set("uname", currentActiveUser.ps_name.toString().trim());
                 }
                 if (currentActiveUser?.ps_id && !u.searchParams.get("uid")) {
                     u.searchParams.set("uid", currentActiveUser.ps_id.toString().trim());
+                }
+                if (currentActiveUser?.role && !u.searchParams.get("role")) {
+                    u.searchParams.set("role", currentActiveUser.role.toString().trim());
+                }
+                const wId = (currentActiveUser?.workshop_id || activeWorkshopId || "").toString().trim();
+                if (wId && !u.searchParams.get("wid")) {
+                    u.searchParams.set("wid", wId);
                 }
                 return u.toString();
             } catch (e) {
@@ -950,7 +1015,7 @@
                     const finalLink = appendUserContextToUrl(linkVal);
                     row.innerHTML = `
                        <div class="text-gray-900 font-medium text-xs sm:text-sm leading-tight">
-                           <a href="${finalLink}" target="_blank" class="text-indigo-600 hover:underline font-semibold">${label}</a>
+                           <a href="${finalLink}" class="text-indigo-600 hover:underline font-semibold">${label}</a>
                        </div>
                     `;
                 } else {
@@ -966,6 +1031,7 @@
 
         function renderDashboard() {
             resetInactivityTimer();
+            persistActiveSession();
 
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('first-login-screen').classList.add('hidden');
@@ -1011,6 +1077,10 @@
                     : (allWorkshops[wId] || allWorkshops[activeWorkshopId] || {});
             } else {
                 workshop = allWorkshops[wId] || allWorkshops[activeWorkshopId] || {};
+            }
+
+            if (workshop && (workshop.logo_status === "ON" && workshop.logo_url)) {
+                applyWorkshopLogo(workshop);
             }
 
             let workshopName = workshop.workshop_name || "Workshop Name Not Available";
@@ -1202,15 +1272,18 @@
                     let currentDateVal = input.value;
                     let currentNum = parseInt(input.getAttribute('data-session-num'));
                     if (!currentDateVal) return showCustomAlert(`Please enter a date for Session ${currentNum}.`);
-                    if (currentDateVal < todayFormatted) return showCustomAlert(`Date Interlock Error:\nSession ${currentNum} date cannot be in the past.`);
-                    if (previousDateVal && currentDateVal < previousDateVal) return showCustomAlert(`Date Interlock Error:\nSession ${currentNum} date cannot be earlier than Session ${previousSessionNum} date.`);
+                    if (currentDateVal < todayFormatted) return showCustomAlert(`Date Interlock Error:
+Session ${currentNum} date cannot be in the past.`);
+                    if (previousDateVal && currentDateVal < previousDateVal) return showCustomAlert(`Date Interlock Error:
+Session ${currentNum} date cannot be earlier than Session ${previousSessionNum} date.`);
                     previousDateVal = currentDateVal;
                     previousSessionNum = currentNum;
                 }
 
                 firebase.database().ref('control_tower/Launched_Workshops/' + customBatchId).once('value').then(snapshot => {
                     if (snapshot.exists()) {
-                        showCustomAlert(`Duplicate Error:\nThe Batch ID "${customBatchId}" already exists in Launched Workshops. Please choose a unique Batch ID.`);
+                        showCustomAlert(`Duplicate Error:
+The Batch ID "${customBatchId}" already exists in Launched Workshops. Please choose a unique Batch ID.`);
                         return;
                     }
                     let template = masterWorkshopsData[selectedTemplateKey];
@@ -1231,7 +1304,9 @@
                     }
                     firebase.database().ref('control_tower/Launched_Workshops/' + customBatchId).set(newBatchData)
                         .then(() => {
-                            showCustomAlert(`🎉 Success!\n\nWorkshop "${newBatchData.workshop_name}" has been successfully launched with Batch ID: ${customBatchId}.`);
+                            showCustomAlert(`🎉 Success!
+
+Workshop "${newBatchData.workshop_name}" has been successfully launched with Batch ID: ${customBatchId}.`);
                             renderTshHub(currentActiveUser);
                         })
                         .catch(error => showCustomAlert("Failed to save workshop: " + error.message));
@@ -1519,6 +1594,7 @@
             currentActiveUser = null;
             selectedParticipantKey = null;
             flVerifiedEmail = "";
+            clearPersistedSession();
             let profileScreen = document.getElementById('update-profile-screen');
             if (profileScreen) profileScreen.classList.add('hidden');
             showLoginScreen();
@@ -1830,7 +1906,8 @@
 
         function openVerificationPopup(email) {
             currentVerificationEmail = email;
-            document.getElementById("modalMessage").innerText = `A 6-digit verification code has been sent to ${email}.\nIt is valid for 5 minutes.`;
+            document.getElementById("modalMessage").innerText = `A 6-digit verification code has been sent to ${email}.
+It is valid for 5 minutes.`;
             document.getElementById("verificationInput").value = "";
             document.getElementById("customVerificationModal").classList.remove("hidden");
         }
