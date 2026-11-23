@@ -754,50 +754,83 @@
             });
         }
 
+        function extractUserFromAnyValue(val) {
+            if (!val) return null;
+            if (typeof val === "object") {
+                const name = val.ps_name || val.uname || val.name || val.userName || val.fullName || val.displayName || val.participant_name || "";
+                const id = val.ps_id || val.uid || val.id || val.userId || val.participant_id || val.key || "";
+                const role = val.role || val.user_role || val.userRole || val.participant_role || "";
+                const email = val.ps_email || val.email || val.userEmail || "";
+                if (name || id) {
+                    return {
+                        ps_name: String(name || "").trim(),
+                        ps_id: String(id || "").trim(),
+                        role: String(role || "").trim(),
+                        ps_email: String(email || "").trim()
+                    };
+                }
+                for (const nestedKey of ["user", "profile", "data", "session", "participant", "currentUser"]) {
+                    if (val[nestedKey] && typeof val[nestedKey] === "object") {
+                        const found = extractUserFromAnyValue(val[nestedKey]);
+                        if (found) return found;
+                    }
+                }
+            }
+            return null;
+        }
+
         function readStoredSessionContext() {
-            const keysToCheck = [
-                "hc_user", "hcUser", "loggedInUser", "logged_in_user",
-                "currentUser", "current_user", "userSession", "user_session",
-                "portalUser", "portal_user", "participant", "authUser"
-            ];
             const storages = [sessionStorage, localStorage];
 
             for (const st of storages) {
                 try {
-                    for (const k of keysToCheck) {
+                    for (let i = 0; i < st.length; i++) {
+                        const k = st.key(i);
+                        if (!k) continue;
                         const raw = st.getItem(k);
                         if (!raw) continue;
-                        try {
-                            const obj = JSON.parse(raw);
-                            if (obj && typeof obj === "object") {
-                                const name = obj.ps_name || obj.uname || obj.name || obj.userName || obj.fullName || "";
-                                const id = obj.ps_id || obj.uid || obj.id || obj.userId || "";
-                                const role = obj.role || obj.user_role || obj.userRole || "";
-                                const email = obj.ps_email || obj.email || "";
-                                if (name || id) {
-                                    return {
-                                        ps_name: String(name || "").trim(),
-                                        ps_id: String(id || "").trim(),
-                                        role: String(role || "").trim(),
-                                        ps_email: String(email || "").trim()
-                                    };
+                        const trimmed = raw.trim();
+                        if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+                            try {
+                                const parsed = JSON.parse(trimmed);
+                                if (Array.isArray(parsed)) {
+                                    for (const item of parsed) {
+                                        const found = extractUserFromAnyValue(item);
+                                        if (found) return found;
+                                    }
+                                } else {
+                                    const found = extractUserFromAnyValue(parsed);
+                                    if (found) return found;
                                 }
-                            }
-                        } catch (_) {}
+                            } catch (_) {}
+                        }
                     }
-                    const directName = st.getItem("uname") || st.getItem("ps_name") || "";
-                    const directId = st.getItem("uid") || st.getItem("ps_id") || "";
-                    const directRole = st.getItem("role") || "";
+
+                    const directName = st.getItem("uname") || st.getItem("ps_name") || st.getItem("user_name") || st.getItem("name") || "";
+                    const directId = st.getItem("uid") || st.getItem("ps_id") || st.getItem("user_id") || st.getItem("id") || "";
+                    const directRole = st.getItem("role") || st.getItem("user_role") || "";
+                    const directEmail = st.getItem("email") || st.getItem("ps_email") || "";
                     if (directName || directId) {
                         return {
                             ps_name: String(directName).trim(),
                             ps_id: String(directId).trim(),
                             role: String(directRole).trim(),
-                            ps_email: ""
+                            ps_email: String(directEmail).trim()
                         };
                     }
                 } catch (_) {}
             }
+
+            try {
+                if (window.name) {
+                    const wName = window.name.trim();
+                    if (wName.startsWith("{")) {
+                        const found = extractUserFromAnyValue(JSON.parse(wName));
+                        if (found) return found;
+                    }
+                }
+            } catch (_) {}
+
             return null;
         }
 
@@ -852,6 +885,38 @@
             });
         }
 
+        function findParticipantRecord(uidVal, unameVal, emailVal) {
+            const uidClean = (uidVal || "").toString().trim().toLowerCase();
+            const unameClean = (unameVal || "").toString().trim().toLowerCase();
+            const emailClean = (emailVal || "").toString().trim().toLowerCase();
+            const wsUpper = activeWorkshopId.toUpperCase();
+
+            let fallbackMatch = null;
+
+            for (const [key, p] of Object.entries(allParticipants || {})) {
+                if (!p || typeof p !== "object") continue;
+                const pId = (p.ps_id || p.uid || p.id || key || "").toString().trim();
+                const pName = (p.ps_name || p.uname || p.name || "").toString().trim();
+                const pEmail = (p.ps_email || p.email || "").toString().trim();
+                const pWId = (p.workshop_id || p.wid || "").toString().trim().toUpperCase();
+                const matchesWs = !pWId || pWId === wsUpper || pWId === "ALL" || activeWorkshopId === "DEFAULT";
+
+                if (uidClean && (pId.toLowerCase() === uidClean || key.toString().trim().toLowerCase() === uidClean)) {
+                    if (matchesWs) return p;
+                    if (!fallbackMatch) fallbackMatch = p;
+                }
+                if (emailClean && pEmail.toLowerCase() === emailClean) {
+                    if (matchesWs) return p;
+                    if (!fallbackMatch) fallbackMatch = p;
+                }
+                if (unameClean && pName.toLowerCase() === unameClean) {
+                    if (matchesWs) return p;
+                    if (!fallbackMatch) fallbackMatch = p;
+                }
+            }
+            return fallbackMatch;
+        }
+
         function resolveLoggedInUser() {
             const stored = readStoredSessionContext();
             const effectiveUid = paramUid || (stored && stored.ps_id) || "";
@@ -859,37 +924,20 @@
             const effectiveRole = paramRole || (stored && stored.role) || "";
             const effectiveEmail = paramEmail || (stored && stored.ps_email) || "";
 
-            let matched = null;
-            for (const key in allParticipants) {
-                const p = allParticipants[key];
-                if (!p || typeof p !== "object") continue;
-                const pId = (p.ps_id || "").toString().trim();
-                const pName = (p.ps_name || "").toString().trim();
-                const pWId = (p.workshop_id || p.wid || "").toString().trim().toUpperCase();
-
-                if (effectiveUid && pId.toLowerCase() === effectiveUid.toLowerCase()) {
-                    matched = p;
-                    break;
-                }
-                if (!effectiveUid && effectiveUname && pName.toLowerCase() === effectiveUname.toLowerCase() &&
-                    (!pWId || pWId === activeWorkshopId.toUpperCase() || pWId === "ALL")) {
-                    matched = p;
-                    break;
-                }
-            }
+            const matched = findParticipantRecord(effectiveUid, effectiveUname, effectiveEmail);
 
             if (matched) {
                 currentUser = {
-                    ps_id: (matched.ps_id || effectiveUid || "").toString().trim(),
-                    ps_name: (matched.ps_name || effectiveUname || "").toString().trim(),
-                    ps_email: (matched.ps_email || effectiveEmail || "").toString().trim(),
-                    role: (matched.role || effectiveRole || "Participant").toString().trim(),
+                    ps_id: (matched.ps_id || matched.uid || matched.id || effectiveUid || "").toString().trim(),
+                    ps_name: (matched.ps_name || matched.uname || matched.name || effectiveUname || "").toString().trim(),
+                    ps_email: (matched.ps_email || matched.email || effectiveEmail || "").toString().trim(),
+                    role: (matched.role || matched.user_role || effectiveRole || "Participant").toString().trim(),
                     workshop_id: activeWorkshopId
                 };
-            } else if (effectiveUid || effectiveUname) {
+            } else if (effectiveUid || effectiveUname || effectiveEmail) {
                 currentUser = {
-                    ps_id: effectiveUid || "UNKNOWN",
-                    ps_name: effectiveUname || "Participant",
+                    ps_id: effectiveUid || "--",
+                    ps_name: effectiveUname || "--",
                     ps_email: effectiveEmail || "",
                     role: effectiveRole || "Participant",
                     workshop_id: activeWorkshopId
