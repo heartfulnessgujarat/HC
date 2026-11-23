@@ -16,6 +16,22 @@
             color: #1f2937;
             font-size: 13px;
         }
+        #fixed-top-shell {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 40;
+            background-color: #f9fafb;
+            border-bottom: 1px solid #e5e7eb;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+        .fixed-inner {
+            max-width: 448px;
+            margin: 0 auto;
+            padding: 8px 12px;
+            box-sizing: border-box;
+        }
         .app-shell {
             max-width: 448px;
             margin: 0 auto;
@@ -29,14 +45,6 @@
             padding: 12px;
             margin-bottom: 12px;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-        }
-        .banner-box {
-            background: linear-gradient(90deg, #9333ea 0%, #4f46e5 100%);
-            color: #ffffff;
-            border-radius: 8px;
-            padding: 12px;
-            margin-bottom: 10px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
         }
         .field-input, .field-select {
             width: 100%;
@@ -111,23 +119,31 @@
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col justify-between text-xs">
 
-    <main class="max-w-md mx-auto px-3 py-2 flex-grow w-full app-shell">
-        <!-- Banner (Participant details strip removed) -->
-        <div class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg shadow p-3 mb-2.5 banner-box">
-            <div class="flex justify-between items-start gap-2">
-                <div>
-                    <h1 id="form-title-heading" class="text-sm font-bold leading-snug">Google Drive Link of your Recording</h1>
-                    <p id="workshop-name-sub" class="text-[11px] text-purple-100 mt-0.5">Loading workshop details...</p>
+    <!-- Fixed Top Banner Image + Participant Profile Card + Back to Main Screen -->
+    <div id="fixed-top-shell">
+        <div class="fixed-inner space-y-1.5">
+            <div id="fixed-banner-wrap" class="bg-white rounded-lg shadow-sm overflow-hidden flex justify-center w-full hidden">
+                <img id="fixed-app-logo" src="" alt="App Logo" class="w-full h-auto object-cover block" style="max-height: 84px;" />
+            </div>
+            <div class="bg-blue-50 border border-blue-200 text-blue-900 shadow-sm rounded-lg p-2 flex items-start justify-between gap-2">
+                <div id="fixed-profile-info" class="text-[11px] leading-snug overflow-hidden">
+                    <!-- Populated dynamically via JS -->
                 </div>
-                <span id="batch-badge" class="text-[10px] bg-black/20 px-2 py-0.5 rounded font-mono flex-shrink-0"></span>
+                <div class="flex flex-shrink-0 flex-col gap-1">
+                    <button type="button" onclick="goBackToMainScreen()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-bold py-1.5 px-2 rounded transition shadow leading-tight text-center">
+                        Back to<br>Main Screen
+                    </button>
+                </div>
             </div>
         </div>
+    </div>
 
+    <main id="main-content" class="max-w-md mx-auto px-3 py-2 flex-grow w-full app-shell" style="padding-top: 195px;">
         <!-- Mode Switcher -->
         <div class="flex gap-2 mb-2.5">
             <button type="button" id="tab-btn-form" onclick="setViewMode('form')"
                 class="flex-1 py-1.5 px-2 rounded-md text-xs font-bold bg-indigo-600 text-white btn-primary">
-                Submit Form
+                Fill Recording Link Form
             </button>
             <button type="button" id="tab-btn-my" onclick="setViewMode('my')"
                 class="flex-1 py-1.5 px-2 rounded-md text-xs font-semibold bg-white text-gray-700 border border-gray-200 btn-secondary">
@@ -145,16 +161,6 @@
             </div>
 
             <form id="recording-form" onsubmit="handleRecordingSubmit(event)" class="space-y-2.5">
-                <div>
-                    <label for="f1-participant-name" class="block text-gray-700 text-[11px] font-bold mb-1">
-                        Select Your Name <span class="text-red-500">*</span>
-                    </label>
-                    <select id="f1-participant-name" required onchange="onParticipantNameChange()"
-                        class="w-full px-2.5 py-1.5 text-xs border rounded-md bg-white field-select">
-                        <option value="">-- Loading names --</option>
-                    </select>
-                </div>
-
                 <div>
                     <label for="f1-section" class="block text-gray-700 text-[11px] font-bold mb-1">
                         Select Section of the Module for which you presented <span class="text-red-500">*</span>
@@ -281,19 +287,119 @@
         const params = new URLSearchParams(window.location.search);
         const workshopId = (params.get("wid") || window.location.hash.replace("#", "") || "DEFAULT").trim();
         const forwardedUserName = (params.get("uname") || "").trim();
+        const forwardedUserId = (params.get("uid") || "").trim();
+        const forwardedRole = (params.get("role") || "").trim();
         const viewParam = (params.get("view") || "").trim().toLowerCase();
         const FORM_ID = "recording_link";
+        const SESSION_STORAGE_KEY = "hc_portal_active_session";
 
         function sanitizeKey(val) {
             return (val || "unknown").toString().trim().replace(/[.#$\[\]\/]/g, "_").replace(/\s+/g, "_");
         }
 
         const safeWorkshopKey = sanitizeKey(workshopId);
-        let activeUserKey = sanitizeKey(params.get("uid") || forwardedUserName || "guest");
+        let currentProfile = {
+            ps_name: forwardedUserName,
+            ps_id: forwardedUserId,
+            ps_mob: "",
+            ps_email: "",
+            ps_centre: "",
+            ps_state: "",
+            ps_country: "",
+            role: forwardedRole || "Participant"
+        };
+        let activeUserKey = sanitizeKey(forwardedUserId || forwardedUserName || "guest");
 
         let editingId = null;
         let submissionsStore = {};
         let currentViewMode = viewParam === "my" ? "my" : "form";
+
+        function syncFixedHeaderOffset() {
+            const fixedEl = document.getElementById("fixed-top-shell");
+            const mainEl = document.getElementById("main-content");
+            if (fixedEl && mainEl) {
+                mainEl.style.paddingTop = (fixedEl.offsetHeight + 8) + "px";
+            }
+        }
+
+        function maskMobile(mob) {
+            if (!mob) return "***";
+            let s = mob.toString().trim();
+            if (s.length <= 4) return "****";
+            return s.substring(0, 2) + "****" + s.substring(s.length - 2);
+        }
+
+        function maskEmail(email) {
+            if (!email || !email.includes("@")) return "***@***.com";
+            let parts = email.toString().trim().split("@");
+            let maskedName = parts[0].length > 2 ? parts[0].substring(0, 2) + "***" : "***";
+            return maskedName + "@" + parts[1];
+        }
+
+        function renderFixedProfileCard() {
+            const infoEl = document.getElementById("fixed-profile-info");
+            if (!infoEl) return;
+            const pName = currentProfile.ps_name || "Participant";
+            const pId = currentProfile.ps_id || "N/A";
+            const pMob = maskMobile(currentProfile.ps_mob);
+            const pEmail = maskEmail(currentProfile.ps_email);
+            const pCentre = currentProfile.ps_centre || "N/A";
+            const pState = currentProfile.ps_state || "N/A";
+            const pCountry = currentProfile.ps_country || "N/A";
+
+            infoEl.innerHTML = `
+                <div><strong>Name:</strong> ${pName}</div>
+                <div><strong>Unique ID Number:</strong> ${pId}</div>
+                <div><strong>Mobile Number:</strong> ${pMob}</div>
+                <div><strong>Email Address:</strong> ${pEmail}</div>
+                <div><strong>Centre:</strong> ${pCentre}</div>
+                <div><strong>State / Province:</strong> ${pState}</div>
+                <div><strong>Country:</strong> ${pCountry}</div>
+            `;
+            syncFixedHeaderOffset();
+        }
+
+        function applyFixedBannerLogo(wsObj) {
+            const wrap = document.getElementById("fixed-banner-wrap");
+            const img = document.getElementById("fixed-app-logo");
+            if (!wrap || !img) return;
+            if (wsObj && wsObj.logo_status === "ON" && wsObj.logo_url) {
+                img.onload = syncFixedHeaderOffset;
+                img.src = wsObj.logo_url;
+                wrap.classList.remove("hidden");
+            } else {
+                wrap.classList.add("hidden");
+            }
+            syncFixedHeaderOffset();
+        }
+
+        function goBackToMainScreen() {
+            let portalRole = (forwardedRole || currentProfile.role || "participant").toString().trim().toLowerCase();
+            if (portalRole.includes("facilitator") || portalRole.includes("mentor")) {
+                portalRole = "facilitator";
+            } else {
+                portalRole = "participant";
+            }
+            try {
+                const raw = sessionStorage.getItem(SESSION_STORAGE_KEY);
+                const parsed = raw ? JSON.parse(raw) : {};
+                const mergedUser = { ...(parsed.user || {}), ...currentProfile };
+                sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify({
+                    ...parsed,
+                    workshopId: workshopId,
+                    portalRole: portalRole,
+                    user: mergedUser
+                }));
+            } catch (_) {}
+
+            const q = new URLSearchParams();
+            q.set("role", portalRole);
+            q.set("return", "dashboard");
+            if (currentProfile.ps_id) q.set("uid", currentProfile.ps_id);
+            if (currentProfile.ps_name) q.set("uname", currentProfile.ps_name);
+            const hashPart = workshopId && workshopId !== "DEFAULT" ? `#${encodeURIComponent(workshopId)}` : "";
+            window.location.href = `index.html?${q.toString()}${hashPart}`;
+        }
 
         function showAlert(msg) {
             document.getElementById("alert-modal-msg").innerText = msg;
@@ -346,33 +452,36 @@
             });
         }
 
-        function syncActiveUserKey() {
-            const nameSelect = document.getElementById("f1-participant-name");
-            const chosenName = (nameSelect && nameSelect.value) || forwardedUserName || "";
-            if (!params.get("uid") && chosenName) {
-                activeUserKey = sanitizeKey(chosenName);
-            }
+        function hydrateSessionUserFromStorage() {
+            try {
+                const raw = sessionStorage.getItem(SESSION_STORAGE_KEY);
+                if (!raw) return;
+                const parsed = JSON.parse(raw);
+                if (parsed && parsed.user) {
+                    currentProfile = { ...currentProfile, ...parsed.user };
+                }
+            } catch (_) {}
         }
 
-        function onParticipantNameChange() {
-            syncActiveUserKey();
-            loadMySubmissions();
+        function syncActiveUserKey() {
+            const identifier = currentProfile.ps_id || forwardedUserId || currentProfile.ps_name || forwardedUserName || "guest";
+            activeUserKey = sanitizeKey(identifier);
         }
 
         function loadDataFromFirebase() {
-            document.getElementById("batch-badge").innerText = workshopId;
+            hydrateSessionUserFromStorage();
+            renderFixedProfileCard();
             syncActiveUserKey();
 
             if (!db) {
-                document.getElementById("workshop-name-sub").innerText = `Batch: ${workshopId} (Firebase SDK unavailable)`;
                 return;
             }
 
-            // 1. Read root 'workshops' (with fallback to 'control_tower/workshops')
-            db.ref("workshops").once("value").then(snap => {
+            // 1. Read workshops (control_tower/workshops with fallback to workshops)
+            db.ref("control_tower/workshops").once("value").then(snap => {
                 let allWs = snap.val();
-                if (!allWs) {
-                    return db.ref("control_tower/workshops").once("value").then(ctSnap => ctSnap.val() || {});
+                if (!allWs || Object.keys(allWs).length === 0) {
+                    return db.ref("workshops").once("value").then(fbSnap => fbSnap.val() || {});
                 }
                 return allWs;
             }).then(allWs => {
@@ -383,11 +492,10 @@
                 }
                 ws = ws || {};
 
+                applyFixedBannerLogo(ws);
+
                 const wsTitle = ws.workshop_name || `Workshop (${workshopId})`;
                 document.getElementById("page-title").innerText = `${wsTitle} | Recording Link`;
-                document.getElementById("form-title-heading").innerText = `${wsTitle} - Recording Link`;
-                document.getElementById("workshop-name-sub").innerText =
-                    `Batch: ${workshopId}${ws.workshop_language ? " • " + ws.workshop_language : ""}`;
 
                 const sections = parseCommaList(ws.section_numbers);
                 const modules = parseCommaList(ws.module_names);
@@ -404,52 +512,33 @@
                 );
             }).catch(err => {
                 console.error("Workshop load error:", err);
-                document.getElementById("workshop-name-sub").innerText = `Batch: ${workshopId} (${err.code || "read error"})`;
             });
 
-            // 2. Read root 'participants' (with fallback to 'control_tower/participants')
-            db.ref("participants").once("value").then(snap => {
+            // 2. Read participants (control_tower/participants with fallback to participants) to populate full profile details
+            db.ref("control_tower/participants").once("value").then(snap => {
                 let rawParticipants = snap.val();
-                if (!rawParticipants) {
-                    return db.ref("control_tower/participants").once("value").then(ctSnap => ctSnap.val() || {});
+                if (!rawParticipants || Object.keys(rawParticipants).length === 0) {
+                    return db.ref("participants").once("value").then(fbSnap => fbSnap.val() || {});
                 }
                 return rawParticipants;
             }).then(rawParticipants => {
-                const namesSet = new Set();
+                const targetId = (currentProfile.ps_id || forwardedUserId || "").toString().trim().toLowerCase();
+                const targetName = (currentProfile.ps_name || forwardedUserName || "").toString().trim().toLowerCase();
 
-                Object.values(rawParticipants || {}).forEach(p => {
-                    if (!p || !p.ps_name) return;
-                    const pWs = (p.workshop_id || "").toString().trim().toUpperCase();
-                    if (!workshopId || workshopId === "DEFAULT" || !pWs || pWs === workshopId.toUpperCase() || pWs === "ALL") {
-                        namesSet.add(p.ps_name.toString().trim());
+                for (const [key, p] of Object.entries(rawParticipants || {})) {
+                    if (!p || typeof p !== "object") continue;
+                    const pId = (p.ps_id || "").toString().trim().toLowerCase();
+                    const pName = (p.ps_name || "").toString().trim().toLowerCase();
+                    if ((targetId && pId === targetId) || (!targetId && targetName && pName === targetName)) {
+                        currentProfile = { ...currentProfile, ...p };
+                        break;
                     }
-                });
-
-                if (namesSet.size === 0) {
-                    Object.values(rawParticipants || {}).forEach(p => {
-                        if (p && p.ps_name) namesSet.add(p.ps_name.toString().trim());
-                    });
                 }
-
-                if (forwardedUserName) namesSet.add(forwardedUserName);
-
-                const sortedNames = Array.from(namesSet).sort((a, b) => a.localeCompare(b));
-                populateSelectOptions(
-                    document.getElementById("f1-participant-name"),
-                    sortedNames,
-                    sortedNames.length ? "-- Select Your Name --" : "-- No names found --",
-                    forwardedUserName
-                );
+                renderFixedProfileCard();
                 syncActiveUserKey();
                 loadMySubmissions();
             }).catch(err => {
                 console.error("Participants load error:", err);
-                populateSelectOptions(
-                    document.getElementById("f1-participant-name"),
-                    forwardedUserName ? [forwardedUserName] : [],
-                    "-- Select Your Name --",
-                    forwardedUserName
-                );
                 loadMySubmissions();
             });
         }
@@ -463,9 +552,6 @@
             document.getElementById("f1-section").value = "";
             document.getElementById("f1-module").value = "";
             document.getElementById("f1-recording-link").value = "";
-            if (forwardedUserName) {
-                document.getElementById("f1-participant-name").value = forwardedUserName;
-            }
         }
 
         function startEdit(submissionId) {
@@ -478,7 +564,6 @@
             document.getElementById("btn-save-recording").textContent = "Update";
             document.getElementById("form-card-heading").innerText = "Edit Submission";
 
-            document.getElementById("f1-participant-name").value = rec.participant_name || "";
             document.getElementById("f1-section").value = rec.section || "";
             document.getElementById("f1-module").value = rec.module_name || "";
             document.getElementById("f1-recording-link").value = rec.recording_link || "";
@@ -489,19 +574,19 @@
             event.preventDefault();
             if (!db) return showAlert("Database connection not ready.");
 
-            const participantName = document.getElementById("f1-participant-name").value.trim();
+            const participantName = (currentProfile.ps_name || forwardedUserName || "").toString().trim();
             const sectionVal = document.getElementById("f1-section").value.trim();
             const moduleVal = document.getElementById("f1-module").value.trim();
             const recordingLink = document.getElementById("f1-recording-link").value.trim();
 
-            if (!participantName) return showAlert("Please select your name.");
+            if (!participantName) return showAlert("Participant details not found. Please open from your portal screen.");
             if (!sectionVal) return showAlert("Please select a section.");
             if (!moduleVal) return showAlert("Please select a module number.");
             if (!/^https?:\/\//i.test(recordingLink)) {
                 return showAlert("Please enter a valid link starting with http:// or https://.");
             }
 
-            const ownerKey = params.get("uid") ? sanitizeKey(params.get("uid")) : sanitizeKey(participantName);
+            const ownerKey = sanitizeKey(currentProfile.ps_id || forwardedUserId || participantName);
             activeUserKey = ownerKey;
 
             const statusEl = document.getElementById("form-status");
@@ -517,6 +602,7 @@
                 const existing = submissionsStore[editingId] || {};
                 const updated = {
                     ...existing,
+                    participant_id: currentProfile.ps_id || forwardedUserId || existing.participant_id || "",
                     participant_name: participantName,
                     section: sectionVal,
                     module_name: moduleVal,
@@ -541,6 +627,7 @@
                     form_id: FORM_ID,
                     workshop_id: workshopId,
                     user_key: ownerKey,
+                    participant_id: currentProfile.ps_id || forwardedUserId || "",
                     participant_name: participantName,
                     section: sectionVal,
                     module_name: moduleVal,
@@ -631,9 +718,11 @@
             });
         }
 
+        window.addEventListener("resize", syncFixedHeaderOffset);
         window.addEventListener("DOMContentLoaded", () => {
             setViewMode(currentViewMode);
             loadDataFromFirebase();
+            syncFixedHeaderOffset();
         });
     </script>
 </body>
