@@ -236,6 +236,13 @@
                 </table>
             </div>
         </div>
+
+        <!-- Back to Main Screen Button at Bottom -->
+        <div class="pt-1 pb-2">
+            <button type="button" onclick="goBackToMainScreen()" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg transition text-xs btn-secondary">
+                Back to Main Screen
+            </button>
+        </div>
     </main>
 
     <footer class="text-center py-2 text-[10px] text-gray-500">
@@ -477,7 +484,6 @@
                 return;
             }
 
-            // 1. Read workshops (control_tower/workshops with fallback to workshops)
             db.ref("control_tower/workshops").once("value").then(snap => {
                 let allWs = snap.val();
                 if (!allWs || Object.keys(allWs).length === 0) {
@@ -514,7 +520,6 @@
                 console.error("Workshop load error:", err);
             });
 
-            // 2. Read participants (control_tower/participants with fallback to participants) to populate full profile details
             db.ref("control_tower/participants").once("value").then(snap => {
                 let rawParticipants = snap.val();
                 if (!rawParticipants || Object.keys(rawParticipants).length === 0) {
