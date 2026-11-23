@@ -1,0 +1,1585 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="page-title">Heartful Communication | Mentee Self-Evaluation Form</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <style>
+        @media print {
+            body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                font-size: 11pt !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+            #print-area {
+                display: block !important;
+                box-shadow: none !important;
+                border: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 min-h-screen flex flex-col justify-between text-xs sm:text-sm text-gray-800">
+
+    <!-- Persistent Global Header Logo -->
+    <div id="global-header" class="max-w-3xl mx-auto w-full px-3 pt-2 hidden no-print">
+        <div class="bg-white rounded-lg shadow-sm overflow-hidden flex justify-center w-full">
+            <img id="app-logo" src="" alt="Workshop Logo" class="w-full h-auto object-cover block" />
+        </div>
+    </div>
+
+    <!-- Top Context Bar -->
+    <header id="context-header" class="max-w-3xl mx-auto w-full px-3 pt-2 no-print">
+        <div class="bg-indigo-900 text-white rounded-lg shadow-sm p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div>
+                <div class="text-[11px] uppercase tracking-wider text-indigo-200 font-semibold" id="workshop-badge">Workshop: --</div>
+                <h1 class="text-sm sm:text-base font-bold leading-snug">Mentee Self-Evaluation & Feedback Form</h1>
+            </div>
+            <div class="bg-indigo-800/80 border border-indigo-700 rounded px-2.5 py-1.5 text-[11px] leading-tight">
+                <div><span class="text-indigo-200">Logged in as:</span> <strong id="ctx-user-name">--</strong></div>
+                <div><span class="text-indigo-200">ID:</span> <span id="ctx-user-id">--</span> &bull; <span class="text-indigo-200">Role:</span> <span id="ctx-user-role" class="font-semibold">--</span></div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-3xl mx-auto w-full px-3 py-3 flex-grow space-y-4 no-print">
+
+        <!-- Fallback User Selector (Only shown if opened directly without ?uid= URL params) -->
+        <div id="fallback-user-card" class="bg-amber-50 border border-amber-200 rounded-lg p-3 hidden">
+            <label class="block text-xs font-bold text-amber-900 mb-1">Select Your Name (Opened outside portal link):</label>
+            <select id="fallback-user-select" onchange="onFallbackUserSelected()" class="w-full p-2 border border-amber-300 rounded bg-white text-xs">
+                <option value="">-- Select Participant / Mentor --</option>
+            </select>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="flex border-b border-gray-200 bg-white rounded-t-lg shadow-sm overflow-hidden">
+            <button id="tab-btn-form" onclick="switchTab('form')" class="flex-1 py-2.5 px-3 text-xs sm:text-sm font-bold text-indigo-700 border-b-2 border-indigo-600 bg-indigo-50/60 transition">
+                Submit / Edit Self-Evaluation
+            </button>
+            <button id="tab-btn-records" onclick="switchTab('records')" class="flex-1 py-2.5 px-3 text-xs sm:text-sm font-bold text-gray-600 hover:text-indigo-600 border-b-2 border-transparent transition">
+                Submitted Evaluations <span id="records-count-badge" class="ml-1 bg-gray-200 text-gray-700 text-[10px] px-1.5 py-0.5 rounded-full">0</span>
+            </button>
+        </div>
+
+        <!-- =========================================================
+             TAB 1: SEQUENTIAL MENTEE SELF-EVALUATION FORM
+             ========================================================= -->
+        <div id="panel-form" class="bg-white rounded-b-lg shadow-md p-4 sm:p-6 space-y-5">
+
+            <!-- Edit Mode Banner -->
+            <div id="edit-mode-banner" class="hidden bg-amber-50 border border-amber-300 text-amber-900 rounded-md p-2.5 flex items-center justify-between text-xs">
+                <div>
+                    <strong>Editing Draft Submission</strong> &mdash; Make your updates below and click <em>Update Draft</em>.
+                </div>
+                <button type="button" onclick="cancelEditMode()" class="bg-amber-200 hover:bg-amber-300 text-amber-900 font-bold px-2.5 py-1 rounded text-[11px]">
+                    Cancel Edit
+                </button>
+            </div>
+
+            <!-- Introductory Note on Learning Curve -->
+            <div class="bg-blue-50 border-l-4 border-indigo-600 p-3 rounded-r-md text-xs text-gray-700 leading-relaxed space-y-1.5">
+                <p class="font-bold text-indigo-900">About This Self-Evaluation (Learning Curve Standpoint):</p>
+                <p>
+                    Inspiration is taken from the word <strong>“learning curve”</strong>, which literally means the trajectory of learning and growth over time. We are trying to ascertain where you are in your journey of becoming an HC facilitator and where you need to be.
+                </p>
+                <p>
+                    It is <strong>not a judging or rating parameter</strong>, but a specific measure of your progress standpoint. It gives a clear understanding of the expectations of the mentoring process and helps both you and your mentors reflect constructively on your growth.
+                </p>
+            </div>
+
+            <!-- 1. Date of the Session -->
+            <div class="border border-gray-200 rounded-lg p-3.5 bg-gray-50/40">
+                <label for="session-date" class="block font-bold text-gray-800 mb-1">
+                    1. Date of the session <span class="text-red-600">*</span>
+                </label>
+                <input type="date" id="session-date" class="w-full sm:w-64 px-3 py-1.5 border border-gray-300 rounded-md bg-white text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+
+            <!-- 2. Section of the Module -->
+            <div class="border border-gray-200 rounded-lg p-3.5 bg-gray-50/40">
+                <label class="block font-bold text-gray-800 mb-2">
+                    2. Select Section of the Module for which you presented <span class="text-red-600">*</span>
+                </label>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2" id="module-section-options">
+                    <!-- Populated via JS: Section A to Section H -->
+                </div>
+            </div>
+
+            <!-- 3. Module Number -->
+            <div class="border border-gray-200 rounded-lg p-3.5 bg-gray-50/40">
+                <label class="block font-bold text-gray-800 mb-2">
+                    3. Select Module Number <span class="text-red-600">*</span>
+                </label>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2" id="module-number-options">
+                    <!-- Populated via JS: Module # 1 to Module # 8 -->
+                </div>
+            </div>
+
+            <!-- 4. Video/Audio Clarity (Presentation) -->
+            <div class="border border-gray-200 rounded-lg p-3.5 space-y-3">
+                <h2 class="font-bold text-sm text-indigo-900 border-b border-gray-100 pb-1.5">
+                    4. Video / Audio Clarity (Presentation) <span class="text-red-600">*</span>
+                </h2>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-xs border-collapse">
+                        <thead>
+                            <tr class="bg-gray-100 text-gray-700">
+                                <th class="text-left p-2 border border-gray-200">Checkpoints</th>
+                                <th class="text-center p-2 border border-gray-200 w-20">Yes</th>
+                                <th class="text-center p-2 border border-gray-200 w-20">No</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="p-2 border border-gray-200">Was I presenting within the frame?</td>
+                                <td class="p-2 border border-gray-200 text-center"><input type="radio" name="va_within_frame" value="Yes" class="h-4 w-4 text-indigo-600"></td>
+                                <td class="p-2 border border-gray-200 text-center"><input type="radio" name="va_within_frame" value="No" class="h-4 w-4 text-indigo-600"></td>
+                            </tr>
+                            <tr class="bg-gray-50/50">
+                                <td class="p-2 border border-gray-200">Was I visible and audible clearly?</td>
+                                <td class="p-2 border border-gray-200 text-center"><input type="radio" name="va_visible_audible" value="Yes" class="h-4 w-4 text-indigo-600"></td>
+                                <td class="p-2 border border-gray-200 text-center"><input type="radio" name="va_visible_audible" value="No" class="h-4 w-4 text-indigo-600"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div>
+                    <label for="ofnr-video-audio" class="block font-bold text-gray-800 mb-1">
+                        Detail Feedback in OFNR on <strong>Video/Audio Clarity</strong> (Presentation) <span class="text-red-600">*</span>
+                    </label>
+                    <textarea id="ofnr-video-audio" rows="3" placeholder="Share your observations, feelings, needs, and requests (OFNR)..." class="w-full p-2.5 border border-gray-300 rounded-md text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                </div>
+            </div>
+
+            <!-- 5. Technical Capability (Presentation) -->
+            <div class="border border-gray-200 rounded-lg p-3.5 space-y-3">
+                <h2 class="font-bold text-sm text-indigo-900 border-b border-gray-100 pb-1.5">
+                    5. "Technical Capability" (Presentation) <span class="text-red-600">*</span>
+                </h2>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-xs border-collapse">
+                        <thead>
+                            <tr class="bg-gray-100 text-gray-700">
+                                <th class="text-left p-2 border border-gray-200">Checkpoints</th>
+                                <th class="text-center p-2 border border-gray-200 w-20">Yes</th>
+                                <th class="text-center p-2 border border-gray-200 w-20">No</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="p-2 border border-gray-200">I was able to multitask - sharing screen, using chat, sharing emoticons while presenting.</td>
+                                <td class="p-2 border border-gray-200 text-center"><input type="radio" name="tech_multitask" value="Yes" class="h-4 w-4 text-indigo-600"></td>
+                                <td class="p-2 border border-gray-200 text-center"><input type="radio" name="tech_multitask" value="No" class="h-4 w-4 text-indigo-600"></td>
+                            </tr>
+                            <tr class="bg-gray-50/50">
+                                <td class="p-2 border border-gray-200">I possess working knowledge of pptx - making slides (if required), downloading and then presenting slides on full screen.</td>
+                                <td class="p-2 border border-gray-200 text-center"><input type="radio" name="tech_pptx" value="Yes" class="h-4 w-4 text-indigo-600"></td>
+                                <td class="p-2 border border-gray-200 text-center"><input type="radio" name="tech_pptx" value="No" class="h-4 w-4 text-indigo-600"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div>
+                    <label for="ofnr-tech-capability" class="block font-bold text-gray-800 mb-1">
+                        Detail Feedback in OFNR on <strong>"Technical Capability"</strong> (Presentation) <span class="text-red-600">*</span>
+                    </label>
+                    <textarea id="ofnr-tech-capability" rows="3" placeholder="Share your detailed feedback in OFNR..." class="w-full p-2.5 border border-gray-300 rounded-md text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                </div>
+            </div>
+
+            <!-- 6. Responsiveness to Chat (Presentation) -->
+            <div class="border border-gray-200 rounded-lg p-3.5 space-y-3">
+                <h2 class="font-bold text-sm text-indigo-900 border-b border-gray-100 pb-1.5">
+                    6. "Responsiveness to chat" (Presentation) <span class="text-red-600">*</span>
+                </h2>
+
+                <ul class="list-disc pl-5 text-[11px] text-gray-700 space-y-0.5 bg-amber-50/60 p-2.5 rounded border border-amber-100">
+                    <li>Reacting to and calling out chat responses.</li>
+                    <li>Taking them individually if required and fostering participation in the process.</li>
+                    <li>Ability to quickly grasp any key themes that emerge in the chat responses and reflect this to participants (useful when multiple responses pour in and it is not practical or connecting to read them all out).</li>
+                </ul>
+
+                <!-- Native HTML Rubric Table -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-[11px] border-collapse border border-amber-300">
+                        <thead>
+                            <tr class="bg-amber-100 text-gray-900">
+                                <th class="p-2 border border-amber-300 text-center w-20">Curve Point</th>
+                                <th class="p-2 border border-amber-300 text-left">Description (Responsiveness to chat)</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-amber-50/40">
+                            <tr>
+                                <td class="p-2 border border-amber-300 text-center font-bold text-sm">3</td>
+                                <td class="p-2 border border-amber-300">
+                                    <ul class="list-disc pl-4 space-y-0.5">
+                                        <li>I <strong>respond promptly and consistently</strong> to messages or queries.</li>
+                                        <li>Responses are <strong>clear, thoughtful, and show active engagement</strong> with the discussion.</li>
+                                        <li><strong>Paraphrased</strong> the participant's question OR tried to <strong>empathise</strong> with the participants sensing into their feelings and needs when the situation was very alive in the participant.</li>
+                                        <li>I ask <strong>follow-up questions</strong> and provide relevant input (whenever required).</li>
+                                    </ul>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="p-2 border border-amber-300 text-center font-bold text-sm">2</td>
+                                <td class="p-2 border border-amber-300">
+                                    <ul class="list-disc pl-4 space-y-0.5">
+                                        <li>I respond within a reasonable timeframe, but there may be occasional delays or <strong>incomplete</strong> responses.</li>
+                                        <li>My contributions are generally relevant, though sometimes <strong>they lack depth</strong>.</li>
+                                    </ul>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="p-2 border border-amber-300 text-center font-bold text-sm">1</td>
+                                <td class="p-2 border border-amber-300">
+                                    <ul class="list-disc pl-4 space-y-0.5">
+                                        <li>I may be <strong>slow to respond or rarely engage</strong> in the conversation.</li>
+                                        <li>My responses may be <strong>brief or incomplete</strong>.</li>
+                                    </ul>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div>
+                    <label class="block font-bold text-gray-800 mb-1.5">
+                        Select Curve Point for "Responsiveness to chat" (Presentation) <span class="text-red-600">*</span>
+                    </label>
+                    <div class="flex flex-wrap gap-3">
+                        <label class="flex items-center space-x-2 px-3 py-1.5 border rounded-md cursor-pointer hover:bg-indigo-50">
+                            <input type="radio" name="cp_chat" value="3" class="h-4 w-4 text-indigo-600">
+                            <span class="font-semibold">Curve Point 3</span>
+                        </label>
+                        <label class="flex items-center space-x-2 px-3 py-1.5 border rounded-md cursor-pointer hover:bg-indigo-50">
+                            <input type="radio" name="cp_chat" value="2" class="h-4 w-4 text-indigo-600">
+                            <span class="font-semibold">Curve Point 2</span>
+                        </label>
+                        <label class="flex items-center space-x-2 px-3 py-1.5 border rounded-md cursor-pointer hover:bg-indigo-50">
+                            <input type="radio" name="cp_chat" value="1" class="h-4 w-4 text-indigo-600">
+                            <span class="font-semibold">Curve Point 1</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="ofnr-chat" class="block font-bold text-gray-800 mb-1">
+                        Detail Feedback in OFNR on <strong>"Responsiveness to chat"</strong> (Presentation) <span class="text-red-600">*</span>
+                    </label>
+                    <textarea id="ofnr-chat" rows="3" placeholder="Share your detailed feedback in OFNR..." class="w-full p-2.5 border border-gray-300 rounded-md text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                </div>
+            </div>
+
+            <!-- 7. Concept Clarity (Presentation) -->
+            <div class="border border-gray-200 rounded-lg p-3.5 space-y-3">
+                <h2 class="font-bold text-sm text-indigo-900 border-b border-gray-100 pb-1.5">
+                    7. "Concept Clarity" (Presentation) <span class="text-red-600">*</span>
+                </h2>
+
+                <ul class="list-disc pl-5 text-[11px] text-gray-700 space-y-0.5 bg-blue-50/60 p-2.5 rounded border border-blue-100">
+                    <li>Clarity in sharing of concepts, with simple, interactive delivery supported with relevant examples, preferably from own experience, so that it doesn't remain academic only.</li>
+                    <li>Confidently answering questions of participants and making learning interesting through insightful answers.</li>
+                    <li>Concept clarity can also be ascertained through your slides (pptx doc) if you make any.</li>
+                </ul>
+
+                <!-- Native HTML Rubric Table -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-[11px] border-collapse border border-blue-200">
+                        <thead>
+                            <tr class="bg-blue-100 text-gray-900">
+                                <th class="p-2 border border-blue-200 text-center w-20">Curve Point</th>
+                                <th class="p-2 border border-blue-200 text-left">Description (Concept Clarity)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="p-2 border border-blue-200 text-center font-bold text-sm">5</td>
+                                <td class="p-2 border border-blue-200">
+                                    <ul class="list-disc pl-4 space-y-0.5">
+                                        <li>I demonstrate <strong>exceptional clarity</strong> in explaining concepts.</li>
+                                        <li>The delivery is <strong>clear, simple, and interactive</strong>, with a focus on making NVC principles easy to understand.</li>
+                                        <li>I <strong>consistently use relevant, relatable examples</strong> (including personal experiences) to connect theory to real-world situations.</li>
+                                        <li>I answer participants’ questions <strong>confidently and insightfully</strong>, providing thoughtful and detailed responses that deepen understanding.</li>
+                                        <li>I am <strong>confident and flexible reflecting back</strong> the essence of what I understand of a question or contribution, and can use the questions to support the questioner’s own learning, or open them out to others.</li>
+                                        <li>My <strong>slides</strong> (if used) are well-designed, visually engaging, and enhance the clarity of the concept.</li>
+                                        <li>The overall presentation fosters interest, and participants leave with a solid understanding of the topic.</li>
+                                    </ul>
+                                </td>
+                            </tr>
+                            <tr class="bg-gray-50/50">
+                                <td class="p-2 border border-blue-200 text-center font-bold text-sm">4</td>
+                                <td class="p-2 border border-blue-200">
+                                    <ul class="list-disc pl-4 space-y-0.5">
+                                        <li>I explain concepts with <strong>good clarity and simplicity</strong>.</li>
+                                        <li>I offer clear explanations and use examples.</li>
+                                        <li>My delivery is interactive, though there could be slightly more participant involvement at times.</li>
+                                        <li>I answer most questions confidently, with insightful responses that generally enhance understanding.</li>
+                                        <li>I am able to reflect back my understanding of a question or contribution, and may sometimes use questions to support the questioner’s own learning, or open them out to others.</li>
+                                    </ul>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="p-2 border border-blue-200 text-center font-bold text-sm">3</td>
+                                <td class="p-2 border border-blue-200">
+                                    <ul class="list-disc pl-4 space-y-0.5">
+                                        <li>I provide adequate accuracy in explaining concepts, but my <strong>explanations may sometimes lack clarity</strong> or may not be as engaging.</li>
+                                        <li>I try to use examples, but these may not always feel relevant to the topic or feel vague.</li>
+                                        <li>While I answer questions, some answers may <strong>lack depth</strong> or might not fully clarify the concept for participants.</li>
+                                        <li>I am not at ease reflecting back accurately my understanding of a question or contribution, or of using questions to support the questioner’s own learning, or opening them out to others.</li>
+                                    </ul>
+                                </td>
+                            </tr>
+                            <tr class="bg-gray-50/50">
+                                <td class="p-2 border border-blue-200 text-center font-bold text-sm">2</td>
+                                <td class="p-2 border border-blue-200">
+                                    <ul class="list-disc pl-4 space-y-0.5">
+                                        <li>My explanations of concepts are <strong>sometimes unclear or overly complex</strong>.</li>
+                                        <li>I may have struggled to break down ideas in simple terms, and the delivery can feel one-sided or lack interaction.</li>
+                                        <li>I offer examples, but these may be vague or not clearly connected to the topic at hand.</li>
+                                        <li>Answers to questions may be <strong>unclear or incomplete</strong>, leaving some confusion among participants.</li>
+                                        <li>I do not reflect back understanding of a question or engage the questioner.</li>
+                                        <li>Overall, the presentation may not fully engage participants or may require follow-up to clarify key concepts.</li>
+                                    </ul>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="p-2 border border-blue-200 text-center font-bold text-sm">1</td>
+                                <td class="p-2 border border-blue-200">
+                                    <ul class="list-disc pl-4 space-y-0.5">
+                                        <li>I struggle with clarity in explaining concepts.</li>
+                                        <li>I feel my explanations are either overly complex or too vague, making it difficult for participants to grasp the material.</li>
+                                        <li>I rarely use examples, or the examples provided are irrelevant, leaving the learning feeling academic or disconnected from real-world application.</li>
+                                        <li>Responses to questions are often inaccurate, unclear, or lack sufficient detail, leading to confusion.</li>
+                                        <li>I do not reflect back understanding of a question or engage the questioner.</li>
+                                        <li>The delivery lacks engagement, and participants may leave with a limited understanding of the topic.</li>
+                                    </ul>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div>
+                    <label class="block font-bold text-gray-800 mb-1.5">
+                        Select Curve Point for "Concept Clarity" (Presentation) <span class="text-red-600">*</span>
+                    </label>
+                    <div class="flex flex-wrap gap-2.5">
+                        <label class="flex items-center space-x-2 px-3 py-1.5 border rounded-md cursor-pointer hover:bg-indigo-50">
+                            <input type="radio" name="cp_concept" value="5" class="h-4 w-4 text-indigo-600">
+                            <span class="font-semibold">Curve Point 5</span>
+                        </label>
+                        <label class="flex items-center space-x-2 px-3 py-1.5 border rounded-md cursor-pointer hover:bg-indigo-50">
+                            <input type="radio" name="cp_concept" value="4" class="h-4 w-4 text-indigo-600">
+                            <span class="font-semibold">Curve Point 4</span>
+                        </label>
+                        <label class="flex items-center space-x-2 px-3 py-1.5 border rounded-md cursor-pointer hover:bg-indigo-50">
+                            <input type="radio" name="cp_concept" value="3" class="h-4 w-4 text-indigo-600">
+                            <span class="font-semibold">Curve Point 3</span>
+                        </label>
+                        <label class="flex items-center space-x-2 px-3 py-1.5 border rounded-md cursor-pointer hover:bg-indigo-50">
+                            <input type="radio" name="cp_concept" value="2" class="h-4 w-4 text-indigo-600">
+                            <span class="font-semibold">Curve Point 2</span>
+                        </label>
+                        <label class="flex items-center space-x-2 px-3 py-1.5 border rounded-md cursor-pointer hover:bg-indigo-50">
+                            <input type="radio" name="cp_concept" value="1" class="h-4 w-4 text-indigo-600">
+                            <span class="font-semibold">Curve Point 1</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="ofnr-concept" class="block font-bold text-gray-800 mb-1">
+                        Detail Feedback in OFNR on <strong>"Concept Clarity"</strong> (Presentation) <span class="text-red-600">*</span>
+                    </label>
+                    <textarea id="ofnr-concept" rows="3" placeholder="Share your detailed feedback in OFNR..." class="w-full p-2.5 border border-gray-300 rounded-md text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                </div>
+            </div>
+
+            <!-- 8. Walking the Talk (Presentation) -->
+            <div class="border border-gray-200 rounded-lg p-3.5 space-y-3">
+                <h2 class="font-bold text-sm text-indigo-900 border-b border-gray-100 pb-1.5">
+                    8. "Walking the Talk" (Presentation) <span class="text-red-600">*</span>
+                </h2>
+
+                <div class="text-[11px] text-gray-700 space-y-1.5 bg-amber-50/60 p-2.5 rounded border border-amber-100 leading-relaxed">
+                    <p><strong>Quality of presence of presenter:</strong> Greeting, smiling, establishing warm/approachable presence through facial expressions.</p>
+                    <p><strong>Connection of the presenter</strong> with Self and the participants. To what extent is the presenter listening and speaking in accord with LPoC, HC consciousness, principles and practices.</p>
+                    <p><strong>Note:</strong> A strong connection with self means being aligned with inner values and principles and bringing your true, authentic self to interactions—including acknowledging vulnerability with composure (e.g., <em>"I am not sure of the answer right now, will get back"</em>).</p>
+                    <p class="text-gray-600 italic">Example of gap: Interrupting, usage of "should" / "must", alienating language, not empathizing, providing quick-fix solutions.</p>
+                </div>
+
+                <!-- Native HTML Rubric Table -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-[11px] border-collapse border border-amber-300">
+                        <thead>
+                            <tr class="bg-amber-100 text-gray-900">
+                                <th class="p-2 border border-amber-300 text-center w-20">Curve Point</th>
+                                <th class="p-2 border border-amber-300 text-left">Description (Walking the talk)</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-amber-50/40">
+                            <tr>
+                                <td class="p-2 border border-amber-300 text-center font-bold text-sm">5</td>
+                                <td class="p-2 border border-amber-300">
+                                    <ul class="list-disc pl-4 space-y-0.5">
+                                        <li>I consistently demonstrate an <strong>outstanding quality of presence</strong> (e.g., connecting the dots on what has been shared in chat or plenary for conceptual clarity, smiling, not reading directly from notes).</li>
+                                        <li>I greet others <strong>warmly, smile often, and maintain a highly approachable and open demeanor</strong> throughout interactions.</li>
+                                        <li>I make a <strong>strong connection</strong> with both myself and the participants.</li>
+                                        <li>I <strong>listen deeply and engage fully</strong>, embodying the principles of LPoC, HC, and relevant practices.</li>
+                                        <li>My speaking and actions reflect a <strong>high level of consciousness</strong> and alignment with my stated values (e.g., responding in a composed manner using LPoC in triggering situations, connecting rather than correcting, inviting participants to contemplate).</li>
+                                    </ul>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="p-2 border border-amber-300 text-center font-bold text-sm">4</td>
+                                <td class="p-2 border border-amber-300">
+                                    <ul class="list-disc pl-4 space-y-0.5">
+                                        <li>I maintain a <strong>warm and approachable presence</strong>, offering consistent greetings and displaying openness through non-verbal communication (facial expressions) or encouraging words.</li>
+                                        <li>I <strong>engage in active listening</strong>, and while there may be <strong>occasional lapses</strong>, my presence generally aligns with the principles of LPoC and HC.</li>
+                                        <li>My words and actions are <strong>mostly in accord</strong> with the stated principles, and I make a good connection with both myself and the participants, even if some opportunities for deeper connection are occasionally missed.</li>
+                                    </ul>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="p-2 border border-amber-300 text-center font-bold text-sm">3</td>
+                                <td class="p-2 border border-amber-300">
+                                    <ul class="list-disc pl-4 space-y-0.5">
+                                        <li>I demonstrate an adequate presence but may have <strong>moments of disengagement or inconsistency in warmth</strong> (e.g., sometimes greeting or smiling less).</li>
+                                        <li>I listen and respond to others, but my <strong>connection to participants or myself</strong> may feel more surface-level.</li>
+                                        <li>My adherence to the principles of LPoC, HC, and other practices is <strong>apparent but not always consistent</strong>.</li>
+                                    </ul>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="p-2 border border-amber-300 text-center font-bold text-sm">2</td>
+                                <td class="p-2 border border-amber-300">
+                                    <ul class="list-disc pl-4 space-y-0.5">
+                                        <li>I occasionally speak in a way that <strong>contradicts the principles of LPoC, HC</strong>, or other related practices.</li>
+                                        <li>While there are moments of connection, these are not frequent, and my <strong>presence may feel disconnected or misaligned</strong> with my values at times.</li>
+                                    </ul>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="p-2 border border-amber-300 text-center font-bold text-sm">1</td>
+                                <td class="p-2 border border-amber-300">
+                                    <ul class="list-disc pl-4 space-y-0.5">
+                                        <li>It is <strong>challenging to connect</strong> with the participants.</li>
+                                        <li>I <strong>struggle with active listening</strong> and often speak in ways that <strong>contradict</strong> the principles of LPoC and HC.</li>
+                                        <li>My <strong>connection to self and participants is limited</strong>, and there is a noticeable <strong>lack of alignment</strong> between my words, actions, and values.</li>
+                                    </ul>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div>
+                    <label class="block font-bold text-gray-800 mb-1.5">
+                        Select Curve Point for "Walking the Talk" (Presentation) <span class="text-red-600">*</span>
+                    </label>
+                    <div class="flex flex-wrap gap-2.5">
+                        <label class="flex items-center space-x-2 px-3 py-1.5 border rounded-md cursor-pointer hover:bg-indigo-50">
+                            <input type="radio" name="cp_walking_talk" value="5" class="h-4 w-4 text-indigo-600">
+                            <span class="font-semibold">Curve Point 5</span>
+                        </label>
+                        <label class="flex items-center space-x-2 px-3 py-1.5 border rounded-md cursor-pointer hover:bg-indigo-50">
+                            <input type="radio" name="cp_walking_talk" value="4" class="h-4 w-4 text-indigo-600">
+                            <span class="font-semibold">Curve Point 4</span>
+                        </label>
+                        <label class="flex items-center space-x-2 px-3 py-1.5 border rounded-md cursor-pointer hover:bg-indigo-50">
+                            <input type="radio" name="cp_walking_talk" value="3" class="h-4 w-4 text-indigo-600">
+                            <span class="font-semibold">Curve Point 3</span>
+                        </label>
+                        <label class="flex items-center space-x-2 px-3 py-1.5 border rounded-md cursor-pointer hover:bg-indigo-50">
+                            <input type="radio" name="cp_walking_talk" value="2" class="h-4 w-4 text-indigo-600">
+                            <span class="font-semibold">Curve Point 2</span>
+                        </label>
+                        <label class="flex items-center space-x-2 px-3 py-1.5 border rounded-md cursor-pointer hover:bg-indigo-50">
+                            <input type="radio" name="cp_walking_talk" value="1" class="h-4 w-4 text-indigo-600">
+                            <span class="font-semibold">Curve Point 1</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 9. Time Management (Presentation) -->
+            <div class="border border-gray-200 rounded-lg p-3.5 space-y-3">
+                <h2 class="font-bold text-sm text-indigo-900 border-b border-gray-100 pb-1.5">
+                    9. "Time Management" (Presentation) <span class="text-red-600">*</span>
+                </h2>
+
+                <div class="space-y-2 bg-gray-50 p-3 rounded border border-gray-200">
+                    <label class="flex items-start space-x-2.5 cursor-pointer">
+                        <input type="checkbox" id="tm-check-focus" class="mt-0.5 h-4 w-4 text-indigo-600 rounded">
+                        <span>Did I keep a check on time and adjust if necessary, ensuring the core learning focus for the session is preserved?</span>
+                    </label>
+                    <label class="flex items-start space-x-2.5 cursor-pointer">
+                        <input type="checkbox" id="tm-check-agreement" class="mt-0.5 h-4 w-4 text-indigo-600 rounded">
+                        <span>Did I request agreement for any adjustments as needed?</span>
+                    </label>
+                </div>
+
+                <div>
+                    <label for="ofnr-time-management" class="block font-bold text-gray-800 mb-1">
+                        Detail Feedback in OFNR on <strong>"Time Management"</strong> (Presentation) <span class="text-red-600">*</span>
+                    </label>
+                    <textarea id="ofnr-time-management" rows="3" placeholder="Share your detailed feedback in OFNR on Time Management..." class="w-full p-2.5 border border-gray-300 rounded-md text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="pt-2">
+                <button type="button" id="btn-submit-form" onclick="handleFormSubmit()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-4 rounded-lg shadow transition text-sm">
+                    Submit Self-Evaluation Feedback
+                </button>
+            </div>
+        </div>
+
+        <!-- =========================================================
+             TAB 2: SUBMITTED EVALUATIONS LIST (ROLE-BASED PERMISSIONS)
+             ========================================================= -->
+        <div id="panel-records" class="bg-white rounded-b-lg shadow-md p-4 sm:p-5 space-y-4 hidden">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-gray-200 pb-3">
+                <div>
+                    <h2 class="text-sm sm:text-base font-bold text-gray-800" id="records-panel-title">Your Submitted Evaluations</h2>
+                    <p class="text-[11px] text-gray-500" id="records-panel-subtitle">
+                        Submissions remain editable for 1 day (24 hours) unless you click "Lock & Submit for Mentors to Review".
+                    </p>
+                </div>
+
+                <!-- Mentor Filter by Mentee -->
+                <div id="mentor-filter-wrap" class="hidden">
+                    <select id="mentor-mentee-filter" onchange="renderSubmissionsList()" class="p-1.5 border border-gray-300 rounded-md text-xs bg-white">
+                        <option value="ALL">All Mentees</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="submissions-list-container" class="space-y-3">
+                <div class="text-center text-gray-400 py-6">Loading submitted evaluations...</div>
+            </div>
+        </div>
+    </main>
+
+    <!-- =========================================================
+         VIEW / PRINT MODAL + DEDICATED PRINT CONTAINER
+         ========================================================= -->
+    <div id="view-record-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-3 no-print">
+        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden">
+            <div class="bg-indigo-900 text-white px-4 py-3 flex items-center justify-between">
+                <h3 class="font-bold text-sm">Mentee Self-Evaluation Details</h3>
+                <button onclick="closeViewModal()" class="text-indigo-200 hover:text-white font-bold text-base">&times;</button>
+            </div>
+            <div id="view-modal-body" class="p-4 overflow-y-auto space-y-3 text-xs flex-grow">
+                <!-- Populated dynamically -->
+            </div>
+            <div id="view-modal-footer" class="bg-gray-100 px-4 py-2.5 border-t flex flex-wrap justify-end gap-2">
+                <!-- Populated dynamically based on role & locked state -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden Print-Only Layout (Populated when Print is clicked) -->
+    <div id="print-area" class="hidden p-6"></div>
+
+    <!-- =========================================================
+         CUSTOM ALERT & CONFIRMATION MODALS
+         ========================================================= -->
+    <div id="custom-alert-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-3 no-print">
+        <div class="bg-white rounded-lg shadow-xl max-w-sm w-full p-5 text-center space-y-4">
+            <div id="custom-alert-title" class="font-bold text-sm text-indigo-900 hidden"></div>
+            <div id="custom-alert-message" class="text-gray-800 text-xs leading-relaxed whitespace-pre-line"></div>
+            <button onclick="closeCustomAlert()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2 px-5 rounded-md shadow">
+                OK
+            </button>
+        </div>
+    </div>
+
+    <div id="confirm-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-3 no-print">
+        <div class="bg-white rounded-lg shadow-xl max-w-sm w-full p-5 text-center space-y-4">
+            <div class="text-amber-600 font-bold text-sm" id="confirm-modal-title">Are you sure?</div>
+            <div class="text-gray-700 text-xs leading-relaxed whitespace-pre-line" id="confirm-modal-message"></div>
+            <div class="flex justify-center gap-3 pt-1">
+                <button id="confirm-btn-no" onclick="closeConfirmModal()" class="px-4 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold rounded-md text-xs">
+                    No
+                </button>
+                <button id="confirm-btn-yes" class="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-md text-xs">
+                    Yes, Proceed
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="text-center py-2 text-[11px] text-gray-500 no-print">
+        Heartful Communication &bull; Mentee Self-Evaluation Portal
+    </footer>
+
+    <script>
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwZwp6CgVUqLM9LUWob9FvgiioA3S5sACYHlkOD7RiopRucNaHzP8IsAcKMEARKbunH3A/exec";
+        const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAt_HbqtG_kMn41NC1wPy5KDFNsDp5HTb8",
+            authDomain: "hc-app-72298.firebaseapp.com",
+            databaseURL: "https://hc-app-72298-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "hc-app-72298",
+            storageBucket: "hc-app-72298.firebasestorage.app",
+            messagingSenderId: "1013251414152",
+            appId: "1:1013251414152:web:3e598848e31a81bb43273d"
+        };
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.database();
+
+        // URL Parsing: supports ?uname=...&uid=...#WORKSHOP_ID or ?workshop_id=...
+        const urlParams = new URLSearchParams(window.location.search);
+        const paramUname = (urlParams.get("uname") || "").trim();
+        const paramUid = (urlParams.get("uid") || "").trim();
+        const rawHash = window.location.hash.replace(/^#/, "").trim();
+        const activeWorkshopId = (rawHash.split("?")[0] || urlParams.get("workshop_id") || "FT3H").trim().toUpperCase();
+
+        let allParticipants = {};
+        let allWorkshops = {};
+        let currentUser = {
+            ps_id: paramUid,
+            ps_name: paramUname,
+            ps_email: "",
+            role: "Participant",
+            workshop_id: activeWorkshopId
+        };
+        let isMentorViewer = false;
+        let workshopSubmissions = {};
+        let editingRecordId = null;
+        let participantsBasePath = "control_tower/participants";
+        let workshopsBasePath = "control_tower/workshops";
+
+        function isMentorRole(roleStr) {
+            const r = (roleStr || "").toString().trim().toUpperCase();
+            return (
+                r === "FACILITATOR" ||
+                r === "FACILITATORS" ||
+                r === "MENTOR" ||
+                r === "MENTORS" ||
+                r === "T&S" ||
+                r === "TRUST & SAFETY" ||
+                r === "ADMIN"
+            );
+        }
+
+        function buildStaticRadioOptions() {
+            const secContainer = document.getElementById("module-section-options");
+            ["Section A", "Section B", "Section C", "Section D", "Section E", "Section F", "Section G", "Section H"].forEach(sec => {
+                const lbl = document.createElement("label");
+                lbl.className = "flex items-center space-x-2 px-2.5 py-1.5 border rounded-md cursor-pointer hover:bg-indigo-50 bg-white";
+                lbl.innerHTML = `<input type="radio" name="module_section" value="${sec}" class="h-4 w-4 text-indigo-600"><span>${sec}</span>`;
+                secContainer.appendChild(lbl);
+            });
+
+            const modContainer = document.getElementById("module-number-options");
+            for (let i = 1; i <= 8; i++) {
+                const val = `Module # ${i}`;
+                const lbl = document.createElement("label");
+                lbl.className = "flex items-center space-x-2 px-2.5 py-1.5 border rounded-md cursor-pointer hover:bg-indigo-50 bg-white";
+                lbl.innerHTML = `<input type="radio" name="module_number" value="${val}" class="h-4 w-4 text-indigo-600"><span>${val}</span>`;
+                modContainer.appendChild(lbl);
+            }
+        }
+
+        function fetchNodeWithFallback(primaryPath, fallbackPath) {
+            return db.ref(primaryPath).once("value").then(snap => {
+                const val = snap.val();
+                if (val && Object.keys(val).length > 0) return { data: val, path: primaryPath };
+                return db.ref(fallbackPath).once("value").then(fbSnap => ({
+                    data: fbSnap.val() || {},
+                    path: fallbackPath
+                }));
+            });
+        }
+
+        function initApp() {
+            buildStaticRadioOptions();
+            document.getElementById("workshop-badge").innerText = `Workshop: ${activeWorkshopId}`;
+
+            Promise.all([
+                fetchNodeWithFallback("control_tower/workshops", "workshops"),
+                fetchNodeWithFallback("control_tower/participants", "participants")
+            ]).then(([wRes, pRes]) => {
+                allWorkshops = wRes.data || {};
+                workshopsBasePath = wRes.path;
+                allParticipants = pRes.data || {};
+                participantsBasePath = pRes.path;
+
+                const workshop = allWorkshops[activeWorkshopId] ||
+                    Object.values(allWorkshops).find(w => (w.workshop_id || "").toString().trim().toUpperCase() === activeWorkshopId);
+
+                if (workshop) {
+                    document.getElementById("workshop-badge").innerText = `${workshop.workshop_name || activeWorkshopId} (${activeWorkshopId})`;
+                    if (workshop.logo_status === "ON" && workshop.logo_url) {
+                        document.getElementById("app-logo").src = workshop.logo_url;
+                        document.getElementById("global-header").classList.remove("hidden");
+                    }
+                }
+
+                resolveLoggedInUser();
+                listenToWorkshopSubmissions();
+            }).catch(err => {
+                console.error("Firebase initialization error:", err);
+                showCustomAlert("Unable to load workshop data. Please check your internet connection.");
+            });
+        }
+
+        function resolveLoggedInUser() {
+            let matched = null;
+            for (const key in allParticipants) {
+                const p = allParticipants[key];
+                const pId = (p.ps_id || "").toString().trim();
+                const pName = (p.ps_name || "").toString().trim();
+                const pWId = (p.workshop_id || "").toString().trim().toUpperCase();
+
+                if (paramUid && pId.toLowerCase() === paramUid.toLowerCase()) {
+                    matched = p;
+                    break;
+                }
+                if (!paramUid && paramUname && pName.toLowerCase() === paramUname.toLowerCase() && (pWId === activeWorkshopId || pWId === "ALL")) {
+                    matched = p;
+                    break;
+                }
+            }
+
+            if (matched) {
+                currentUser = {
+                    ps_id: (matched.ps_id || paramUid || "").toString().trim(),
+                    ps_name: (matched.ps_name || paramUname || "").toString().trim(),
+                    ps_email: (matched.ps_email || "").toString().trim(),
+                    role: (matched.role || "Participant").toString().trim(),
+                    workshop_id: activeWorkshopId
+                };
+                applyUserContextUI();
+            } else if (paramUid || paramUname) {
+                currentUser = {
+                    ps_id: paramUid || "UNKNOWN",
+                    ps_name: paramUname || "Participant",
+                    ps_email: "",
+                    role: "Participant",
+                    workshop_id: activeWorkshopId
+                };
+                applyUserContextUI();
+            } else {
+                // Opened directly without URL params -> show fallback dropdown for batch users
+                populateFallbackUserDropdown();
+            }
+        }
+
+        function populateFallbackUserDropdown() {
+            const card = document.getElementById("fallback-user-card");
+            const sel = document.getElementById("fallback-user-select");
+            card.classList.remove("hidden");
+            sel.innerHTML = '<option value="">-- Select Participant / Mentor --</option>';
+
+            Object.keys(allParticipants).forEach(key => {
+                const p = allParticipants[key];
+                const pWId = (p.workshop_id || "").toString().trim().toUpperCase();
+                if (pWId === activeWorkshopId || pWId === "ALL") {
+                    const opt = document.createElement("option");
+                    opt.value = key;
+                    opt.textContent = `${p.ps_name || key} (${p.role || "Participant"})`;
+                    sel.appendChild(opt);
+                }
+            });
+        }
+
+        function onFallbackUserSelected() {
+            const key = document.getElementById("fallback-user-select").value;
+            if (!key || !allParticipants[key]) return;
+            const p = allParticipants[key];
+            currentUser = {
+                ps_id: (p.ps_id || key).toString().trim(),
+                ps_name: (p.ps_name || "").toString().trim(),
+                ps_email: (p.ps_email || "").toString().trim(),
+                role: (p.role || "Participant").toString().trim(),
+                workshop_id: activeWorkshopId
+            };
+            applyUserContextUI();
+            renderSubmissionsList();
+        }
+
+        function applyUserContextUI() {
+            isMentorViewer = isMentorRole(currentUser.role);
+            document.getElementById("ctx-user-name").innerText = currentUser.ps_name || "--";
+            document.getElementById("ctx-user-id").innerText = currentUser.ps_id || "--";
+            document.getElementById("ctx-user-role").innerText = isMentorViewer ? "Mentor / Facilitator" : "Mentee (Participant)";
+
+            if (isMentorViewer) {
+                // Mentors only review submitted evaluations; switch directly to Submitted Evaluations tab
+                document.getElementById("tab-btn-form").classList.add("hidden");
+                document.getElementById("records-panel-title").innerText = "Mentee Self-Evaluations (Mentor Review)";
+                document.getElementById("records-panel-subtitle").innerText =
+                    "You can view all evaluations. Print & Download unlock automatically once a mentee locks their evaluation (or after 1 day).";
+                document.getElementById("mentor-filter-wrap").classList.remove("hidden");
+                switchTab("records");
+            } else {
+                document.getElementById("tab-btn-form").classList.remove("hidden");
+                document.getElementById("records-panel-title").innerText = "Your Submitted Evaluations";
+                document.getElementById("records-panel-subtitle").innerText =
+                    "You have 1 day (24 hours) after submission to Edit or Delete, unless you click 'Lock & Submit for Mentors to Review'.";
+                document.getElementById("mentor-filter-wrap").classList.add("hidden");
+            }
+        }
+
+        /* =========================================================
+           FIREBASE LISTENER & 1-DAY AUTO-LOCK CHECKER
+           ========================================================= */
+        function listenToWorkshopSubmissions() {
+            const refPath = `control_tower/mentee_feedback/${activeWorkshopId}`;
+            db.ref(refPath).on("value", snap => {
+                workshopSubmissions = snap.val() || {};
+                checkAndAutoLockExpiredSubmissions();
+                populateMentorMenteeFilter();
+                renderSubmissionsList();
+            });
+        }
+
+        function isRecordLocked(rec) {
+            if (!rec) return false;
+            if (rec.status === "locked" || rec.is_locked === true) return true;
+            const deadline = Number(rec.lock_deadline || 0);
+            return deadline > 0 && Date.now() >= deadline;
+        }
+
+        function checkAndAutoLockExpiredSubmissions() {
+            const now = Date.now();
+            Object.keys(workshopSubmissions).forEach(recId => {
+                const rec = workshopSubmissions[recId];
+                if (!rec) return;
+                const deadline = Number(rec.lock_deadline || 0);
+                const expired = deadline > 0 && now >= deadline;
+
+                if (expired && rec.status !== "locked") {
+                    const updates = {
+                        status: "locked",
+                        is_locked: true,
+                        locked_at: now,
+                        locked_reason: "auto_24h_expired"
+                    };
+                    db.ref(`control_tower/mentee_feedback/${activeWorkshopId}/${recId}`).update(updates).then(() => {
+                        if (!rec.mentor_notified) {
+                            triggerLockEmailNotifications(recId, { ...rec, ...updates });
+                        }
+                    });
+                } else if (rec.status === "locked" && !rec.mentor_notified) {
+                    triggerLockEmailNotifications(recId, rec);
+                }
+            });
+        }
+
+        function getBatchMentorEmails() {
+            const emails = new Set();
+            Object.values(allParticipants).forEach(p => {
+                const pWId = (p.workshop_id || "").toString().trim().toUpperCase();
+                const pRole = (p.role || "").toString().trim().toUpperCase();
+                const isBatchMentor = (pWId === activeWorkshopId) &&
+                    (pRole === "FACILITATOR" || pRole === "FACILITATORS" || pRole === "MENTOR" || pRole === "MENTORS");
+                const email = (p.ps_email || "").toString().trim();
+                if (isBatchMentor && email && email.includes("@")) {
+                    emails.add(email);
+                }
+            });
+            return Array.from(emails);
+        }
+
+        function getMenteeEmailById(menteeId, menteeName) {
+            if (currentUser && currentUser.ps_id === menteeId && currentUser.ps_email) {
+                return currentUser.ps_email;
+            }
+            for (const key in allParticipants) {
+                const p = allParticipants[key];
+                if (menteeId && (p.ps_id || "").toString().trim().toLowerCase() === menteeId.toLowerCase()) {
+                    return (p.ps_email || "").toString().trim();
+                }
+                if (menteeName && (p.ps_name || "").toString().trim().toLowerCase() === menteeName.toLowerCase()) {
+                    return (p.ps_email || "").toString().trim();
+                }
+            }
+            return "";
+        }
+
+        function triggerLockEmailNotifications(recId, rec) {
+            // Mark mentor_notified immediately to prevent duplicate emails across clients
+            db.ref(`control_tower/mentee_feedback/${activeWorkshopId}/${recId}`).update({
+                mentor_notified: true,
+                notified_at: Date.now()
+            });
+
+            const mentorEmails = getBatchMentorEmails();
+            const menteeEmail = (rec.mentee_email || getMenteeEmailById(rec.mentee_id, rec.mentee_name) || "").trim();
+            const workshopObj = allWorkshops[activeWorkshopId] || {};
+            const workshopName = workshopObj.workshop_name || activeWorkshopId;
+
+            const payload = {
+                action: "sendMenteeSelfEvalNotification",
+                workshopId: activeWorkshopId,
+                workshopName: workshopName,
+                menteeName: rec.mentee_name || "Mentee",
+                menteeId: rec.mentee_id || "",
+                menteeEmail: menteeEmail,
+                mentorEmails: mentorEmails,
+                sessionDate: rec.session_date || "",
+                moduleSection: rec.module_section || "",
+                moduleNumber: rec.module_number || "",
+                lockedReason: rec.locked_reason || "manual_lock"
+            };
+
+            fetch(WEB_APP_URL, {
+                method: "POST",
+                body: JSON.stringify(payload)
+            })
+            .then(r => r.json())
+            .then(res => console.log("Self-eval lock notification response:", res))
+            .catch(err => console.error("Error sending self-eval notification emails:", err));
+        }
+
+        /* =========================================================
+           FORM VALIDATION & SUBMISSION
+           ========================================================= */
+        function getRadioValue(name) {
+            const checked = document.querySelector(`input[name="${name}"]:checked`);
+            return checked ? checked.value : "";
+        }
+
+        function setRadioValue(name, val) {
+            document.querySelectorAll(`input[name="${name}"]`).forEach(el => {
+                el.checked = (el.value.toString() === (val ?? "").toString());
+            });
+        }
+
+        function handleFormSubmit() {
+            if (!currentUser.ps_id && !currentUser.ps_name) {
+                showCustomAlert("Unable to identify your user profile. Please open this form from your Participant Resources link.");
+                return;
+            }
+
+            const sessionDate = document.getElementById("session-date").value.trim();
+            const moduleSection = getRadioValue("module_section");
+            const moduleNumber = getRadioValue("module_number");
+
+            const vaWithinFrame = getRadioValue("va_within_frame");
+            const vaVisibleAudible = getRadioValue("va_visible_audible");
+            const ofnrVideoAudio = document.getElementById("ofnr-video-audio").value.trim();
+
+            const techMultitask = getRadioValue("tech_multitask");
+            const techPptx = getRadioValue("tech_pptx");
+            const ofnrTechCapability = document.getElementById("ofnr-tech-capability").value.trim();
+
+            const cpChat = getRadioValue("cp_chat");
+            const ofnrChat = document.getElementById("ofnr-chat").value.trim();
+
+            const cpConcept = getRadioValue("cp_concept");
+            const ofnrConcept = document.getElementById("ofnr-concept").value.trim();
+
+            const cpWalkingTalk = getRadioValue("cp_walking_talk");
+
+            const tmCheckFocus = document.getElementById("tm-check-focus").checked ? "Yes" : "No";
+            const tmCheckAgreement = document.getElementById("tm-check-agreement").checked ? "Yes" : "No";
+            const ofnrTimeManagement = document.getElementById("ofnr-time-management").value.trim();
+
+            if (!sessionDate) return showCustomAlert("Please select the Date of the session.");
+            if (!moduleSection) return showCustomAlert("Please select the Section of the Module (Section A to Section H).");
+            if (!moduleNumber) return showCustomAlert("Please select the Module Number (Module # 1 to Module # 8).");
+            if (!vaWithinFrame || !vaVisibleAudible) return showCustomAlert("Please answer both Yes/No questions under Video/Audio Clarity.");
+            if (!ofnrVideoAudio) return showCustomAlert("Please enter Detail Feedback in OFNR on Video/Audio Clarity.");
+            if (!techMultitask || !techPptx) return showCustomAlert("Please answer both Yes/No questions under Technical Capability.");
+            if (!ofnrTechCapability) return showCustomAlert("Please enter Detail Feedback in OFNR on Technical Capability.");
+            if (!cpChat) return showCustomAlert("Please select a Curve Point for Responsiveness to chat.");
+            if (!ofnrChat) return showCustomAlert("Please enter Detail Feedback in OFNR on Responsiveness to chat.");
+            if (!cpConcept) return showCustomAlert("Please select a Curve Point for Concept Clarity.");
+            if (!ofnrConcept) return showCustomAlert("Please enter Detail Feedback in OFNR on Concept Clarity.");
+            if (!cpWalkingTalk) return showCustomAlert("Please select a Curve Point for Walking the Talk.");
+            if (!ofnrTimeManagement) return showCustomAlert("Please enter Detail Feedback in OFNR on Time Management.");
+
+            const btn = document.getElementById("btn-submit-form");
+            btn.disabled = true;
+            btn.innerText = "Saving...";
+
+            const now = Date.now();
+            const baseRef = db.ref(`control_tower/mentee_feedback/${activeWorkshopId}`);
+
+            const recordPayload = {
+                workshop_id: activeWorkshopId,
+                mentee_id: currentUser.ps_id,
+                mentee_name: currentUser.ps_name,
+                mentee_email: currentUser.ps_email || getMenteeEmailById(currentUser.ps_id, currentUser.ps_name) || "",
+                session_date: sessionDate,
+                module_section: moduleSection,
+                module_number: moduleNumber,
+
+                // Video / Audio Clarity
+                va_within_frame: vaWithinFrame,
+                va_visible_audible: vaVisibleAudible,
+                ofnr_video_audio: ofnrVideoAudio,
+
+                // Technical Capability
+                tech_multitask: techMultitask,
+                tech_pptx: techPptx,
+                ofnr_tech_capability: ofnrTechCapability,
+
+                // Numeric Curve Points stored as integers for graphing
+                cp_chat: Number(cpChat),
+                ofnr_chat: ofnrChat,
+
+                cp_concept: Number(cpConcept),
+                ofnr_concept: ofnrConcept,
+
+                cp_walking_talk: Number(cpWalkingTalk),
+
+                // Time Management
+                tm_check_focus: tmCheckFocus,
+                tm_check_agreement: tmCheckAgreement,
+                ofnr_time_management: ofnrTimeManagement,
+
+                updated_at: now
+            };
+
+            if (editingRecordId) {
+                const existing = workshopSubmissions[editingRecordId];
+                if (isRecordLocked(existing)) {
+                    btn.disabled = false;
+                    btn.innerText = "Submit Self-Evaluation Feedback";
+                    cancelEditMode();
+                    return showCustomAlert("This evaluation has already been locked and can no longer be edited.");
+                }
+
+                baseRef.child(editingRecordId).update(recordPayload).then(() => {
+                    btn.disabled = false;
+                    cancelEditMode();
+                    resetFormFields();
+                    showCustomAlert(
+                        "Your draft self-evaluation has been updated!
+
+Reminder: You can still Edit or Delete it until the 1-day window ends, or click 'Lock & Submit for Mentors to Review' whenever you are ready.",
+                        "Draft Updated"
+                    );
+                    switchTab("records");
+                }).catch(err => {
+                    btn.disabled = false;
+                    btn.innerText = "Update Draft Self-Evaluation";
+                    showCustomAlert("Error updating submission: " + err.message);
+                });
+            } else {
+                const newRef = baseRef.push();
+                recordPayload.record_id = newRef.key;
+                recordPayload.created_at = now;
+                recordPayload.lock_deadline = now + ONE_DAY_MS;
+                recordPayload.status = "draft";
+                recordPayload.is_locked = false;
+                recordPayload.mentor_notified = false;
+
+                newRef.set(recordPayload).then(() => {
+                    btn.disabled = false;
+                    btn.innerText = "Submit Self-Evaluation Feedback";
+                    resetFormFields();
+                    showCustomAlert(
+                        "Your Self-Evaluation Feedback has been saved!
+
+" +
+                        "IMPORTANT NOTICE:
+" +
+                        "• You have 1 day (24 hours) to Edit or Delete this response.
+" +
+                        "• Once you are ready, click 'Lock & Submit for Mentors to Review' on your submission.
+" +
+                        "• If you do not click that button within 1 day, it will automatically be locked after 24 hours and an email notification will be sent to all mentors (with a confirmation email to you).",
+                        "Submission Saved (1-Day Edit Window)"
+                    );
+                    switchTab("records");
+                }).catch(err => {
+                    btn.disabled = false;
+                    btn.innerText = "Submit Self-Evaluation Feedback";
+                    showCustomAlert("Error saving submission: " + err.message);
+                });
+            }
+        }
+
+        function resetFormFields() {
+            document.getElementById("session-date").value = "";
+            ["module_section", "module_number", "va_within_frame", "va_visible_audible", "tech_multitask", "tech_pptx", "cp_chat", "cp_concept", "cp_walking_talk"].forEach(name => {
+                document.querySelectorAll(`input[name="${name}"]`).forEach(el => el.checked = false);
+            });
+            document.getElementById("ofnr-video-audio").value = "";
+            document.getElementById("ofnr-tech-capability").value = "";
+            document.getElementById("ofnr-chat").value = "";
+            document.getElementById("ofnr-concept").value = "";
+            document.getElementById("tm-check-focus").checked = false;
+            document.getElementById("tm-check-agreement").checked = false;
+            document.getElementById("ofnr-time-management").value = "";
+        }
+
+        function startEditRecord(recId) {
+            const rec = workshopSubmissions[recId];
+            if (!rec) return;
+            if (isRecordLocked(rec)) {
+                return showCustomAlert("This evaluation is already locked and cannot be edited.");
+            }
+
+            editingRecordId = recId;
+            document.getElementById("edit-mode-banner").classList.remove("hidden");
+            document.getElementById("btn-submit-form").innerText = "Update Draft Self-Evaluation";
+
+            document.getElementById("session-date").value = rec.session_date || "";
+            setRadioValue("module_section", rec.module_section);
+            setRadioValue("module_number", rec.module_number);
+
+            setRadioValue("va_within_frame", rec.va_within_frame);
+            setRadioValue("va_visible_audible", rec.va_visible_audible);
+            document.getElementById("ofnr-video-audio").value = rec.ofnr_video_audio || "";
+
+            setRadioValue("tech_multitask", rec.tech_multitask);
+            setRadioValue("tech_pptx", rec.tech_pptx);
+            document.getElementById("ofnr-tech-capability").value = rec.ofnr_tech_capability || "";
+
+            setRadioValue("cp_chat", rec.cp_chat);
+            document.getElementById("ofnr-chat").value = rec.ofnr_chat || "";
+
+            setRadioValue("cp_concept", rec.cp_concept);
+            document.getElementById("ofnr-concept").value = rec.ofnr_concept || "";
+
+            setRadioValue("cp_walking_talk", rec.cp_walking_talk);
+
+            document.getElementById("tm-check-focus").checked = (rec.tm_check_focus === "Yes");
+            document.getElementById("tm-check-agreement").checked = (rec.tm_check_agreement === "Yes");
+            document.getElementById("ofnr-time-management").value = rec.ofnr_time_management || "";
+
+            switchTab("form");
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+
+        function cancelEditMode() {
+            editingRecordId = null;
+            document.getElementById("edit-mode-banner").classList.add("hidden");
+            document.getElementById("btn-submit-form").innerText = "Submit Self-Evaluation Feedback";
+            resetFormFields();
+        }
+
+        /* =========================================================
+           LOCK & DELETE ACTIONS WITH CONFIRMATION CHECKPOINTS
+           ========================================================= */
+        function confirmLockRecord(recId) {
+            const rec = workshopSubmissions[recId];
+            if (!rec) return;
+            if (isRecordLocked(rec)) {
+                return showCustomAlert("This evaluation is already locked.");
+            }
+
+            openConfirmModal(
+                "Lock & Submit for Mentors to Review?",
+                "Are you sure you want to lock and submit this evaluation?
+
+" +
+                "⚠️ WARNING: Once you click 'Yes', you will NOT be able to edit or delete this evaluation anymore. " +
+                "An email notification will immediately be sent to all mentors (and a confirmation email to you), and Print/Download will be enabled.",
+                () => {
+                    const now = Date.now();
+                    const updates = {
+                        status: "locked",
+                        is_locked: true,
+                        locked_at: now,
+                        locked_reason: "manual_lock"
+                    };
+                    db.ref(`control_tower/mentee_feedback/${activeWorkshopId}/${recId}`).update(updates).then(() => {
+                        triggerLockEmailNotifications(recId, { ...rec, ...updates });
+                        showCustomAlert(
+                            "Your Self-Evaluation has been locked and submitted for mentors to review!
+
+Email notifications have been sent to all mentors and a confirmation copy has been sent to you.",
+                            "Locked & Submitted"
+                        );
+                    }).catch(err => showCustomAlert("Failed to lock evaluation: " + err.message));
+                }
+            );
+        }
+
+        function confirmDeleteRecord(recId) {
+            const rec = workshopSubmissions[recId];
+            if (!rec) return;
+            if (isRecordLocked(rec)) {
+                return showCustomAlert("This evaluation is already locked and cannot be deleted.");
+            }
+
+            openConfirmModal(
+                "Delete Draft Evaluation?",
+                "Are you sure you want to permanently delete this draft evaluation? This action cannot be undone.",
+                () => {
+                    db.ref(`control_tower/mentee_feedback/${activeWorkshopId}/${recId}`).remove().then(() => {
+                        showCustomAlert("Draft evaluation deleted.");
+                    }).catch(err => showCustomAlert("Failed to delete evaluation: " + err.message));
+                }
+            );
+        }
+
+        /* =========================================================
+           SUBMISSIONS LIST RENDERING & ROLE-BASED PERMISSIONS
+           ========================================================= */
+        function populateMentorMenteeFilter() {
+            const filterEl = document.getElementById("mentor-mentee-filter");
+            if (!filterEl) return;
+            const prevVal = filterEl.value;
+            const mentees = new Map();
+
+            Object.values(workshopSubmissions).forEach(rec => {
+                if (rec && rec.mentee_id) {
+                    mentees.set(rec.mentee_id, rec.mentee_name || rec.mentee_id);
+                }
+            });
+
+            filterEl.innerHTML = '<option value="ALL">All Mentees</option>';
+            mentees.forEach((name, id) => {
+                const opt = document.createElement("option");
+                opt.value = id;
+                opt.textContent = `${name} (${id})`;
+                filterEl.appendChild(opt);
+            });
+            if (prevVal && (prevVal === "ALL" || mentees.has(prevVal))) {
+                filterEl.value = prevVal;
+            }
+        }
+
+        function renderSubmissionsList() {
+            const container = document.getElementById("submissions-list-container");
+            const badge = document.getElementById("records-count-badge");
+            const filterMenteeId = document.getElementById("mentor-mentee-filter")?.value || "ALL";
+
+            let list = Object.keys(workshopSubmissions).map(id => ({ id, ...workshopSubmissions[id] }));
+
+            if (!isMentorViewer) {
+                list = list.filter(rec => {
+                    const idMatch = currentUser.ps_id && (rec.mentee_id || "").toLowerCase() === currentUser.ps_id.toLowerCase();
+                    const nameMatch = !currentUser.ps_id && currentUser.ps_name && (rec.mentee_name || "").toLowerCase() === currentUser.ps_name.toLowerCase();
+                    return idMatch || nameMatch;
+                });
+            } else if (filterMenteeId !== "ALL") {
+                list = list.filter(rec => rec.mentee_id === filterMenteeId);
+            }
+
+            list.sort((a, b) => (b.created_at || 0) - (a.created_at || 0));
+            badge.innerText = list.length;
+
+            if (list.length === 0) {
+                container.innerHTML = `<div class="text-center text-gray-500 py-8 text-xs">No submitted evaluations found yet.</div>`;
+                return;
+            }
+
+            container.innerHTML = "";
+            list.forEach(rec => {
+                const locked = isRecordLocked(rec);
+                const deadlineStr = rec.lock_deadline ? new Date(rec.lock_deadline).toLocaleString() : "";
+                const submittedStr = rec.created_at ? new Date(rec.created_at).toLocaleString() : "";
+
+                const statusBadge = locked
+                    ? `<span class="bg-green-100 text-green-800 border border-green-300 text-[10px] font-bold px-2 py-0.5 rounded-full">✓ Locked & Finalized</span>`
+                    : `<span class="bg-amber-100 text-amber-800 border border-amber-300 text-[10px] font-bold px-2 py-0.5 rounded-full">Draft (Auto-locks: ${deadlineStr})</span>`;
+
+                let actionButtonsHtml = `
+                    <button onclick="openViewModal('${rec.id}')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-1.5 rounded text-[11px] transition">
+                        View
+                    </button>
+                `;
+
+                if (locked) {
+                    // Both Mentee and Mentor get Print & Download once locked
+                    actionButtonsHtml += `
+                        <button onclick="printRecord('${rec.id}')" class="bg-gray-700 hover:bg-gray-800 text-white font-bold px-3 py-1.5 rounded text-[11px] transition">
+                            Print
+                        </button>
+                        <button onclick="downloadRecordHtml('${rec.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded text-[11px] transition">
+                            Download
+                        </button>
+                    `;
+                } else if (!isMentorViewer) {
+                    // Mentee before lock: Edit, Delete, and Lock & Submit for Mentors to Review
+                    actionButtonsHtml += `
+                        <button onclick="startEditRecord('${rec.id}')" class="bg-amber-500 hover:bg-amber-600 text-white font-bold px-3 py-1.5 rounded text-[11px] transition">
+                            Edit
+                        </button>
+                        <button onclick="confirmDeleteRecord('${rec.id}')" class="bg-red-500 hover:bg-red-600 text-white font-bold px-3 py-1.5 rounded text-[11px] transition">
+                            Delete
+                        </button>
+                        <button onclick="confirmLockRecord('${rec.id}')" class="bg-green-600 hover:bg-green-700 text-white font-bold px-3 py-1.5 rounded text-[11px] transition shadow-sm">
+                            Lock & Submit for Mentors to Review
+                        </button>
+                    `;
+                } else {
+                    // Mentor before lock: View only
+                    actionButtonsHtml += `
+                        <span class="text-[10px] italic text-gray-500 self-center">Print/Download unlocks once mentee locks</span>
+                    `;
+                }
+
+                const card = document.createElement("div");
+                card.className = "border border-gray-200 rounded-lg p-3.5 bg-gray-50/60 hover:bg-white transition shadow-sm space-y-2.5";
+                card.innerHTML = `
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5">
+                        <div>
+                            <div class="font-bold text-gray-900 text-xs sm:text-sm">
+                                ${rec.module_number || ""} &bull; ${rec.module_section || ""}
+                                ${isMentorViewer ? `<span class="text-indigo-700 font-semibold"> &mdash; ${rec.mentee_name || ""}</span>` : ""}
+                            </div>
+                            <div class="text-[11px] text-gray-500">
+                                Session Date: <strong>${rec.session_date || "N/A"}</strong> &bull; Submitted: ${submittedStr}
+                            </div>
+                        </div>
+                        <div>${statusBadge}</div>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-2 text-center bg-white border border-gray-200 rounded p-2 text-[11px]">
+                        <div>
+                            <div class="text-gray-500">Chat Responsiveness</div>
+                            <div class="font-bold text-indigo-800">Curve Point ${rec.cp_chat ?? "-"} / 3</div>
+                        </div>
+                        <div>
+                            <div class="text-gray-500">Concept Clarity</div>
+                            <div class="font-bold text-indigo-800">Curve Point ${rec.cp_concept ?? "-"} / 5</div>
+                        </div>
+                        <div>
+                            <div class="text-gray-500">Walking the Talk</div>
+                            <div class="font-bold text-indigo-800">Curve Point ${rec.cp_walking_talk ?? "-"} / 5</div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap gap-2 pt-1">
+                        ${actionButtonsHtml}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        /* =========================================================
+           VIEW, PRINT & DOWNLOAD HELPERS
+           ========================================================= */
+        function buildRecordReportHtml(rec) {
+            const locked = isRecordLocked(rec);
+            return `
+                <div class="space-y-3 text-xs text-gray-800">
+                    <div class="border-b-2 border-indigo-800 pb-2 flex justify-between items-start">
+                        <div>
+                            <h2 class="text-base font-bold text-indigo-900">Heartful Communication &mdash; Mentee Self-Evaluation</h2>
+                            <p class="text-[11px] text-gray-600">Workshop: <strong>${rec.workshop_id || activeWorkshopId}</strong></p>
+                        </div>
+                        <div class="text-right text-[11px]">
+                            <div>Status: <strong>${locked ? "Locked & Finalized" : "Draft (Editable)"}</strong></div>
+                            <div>Submitted: ${rec.created_at ? new Date(rec.created_at).toLocaleString() : ""}</div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-gray-100 p-2.5 rounded border border-gray-200">
+                        <div><span class="text-gray-500 block">Mentee Name:</span><strong>${rec.mentee_name || ""}</strong></div>
+                        <div><span class="text-gray-500 block">Session Date:</span><strong>${rec.session_date || ""}</strong></div>
+                        <div><span class="text-gray-500 block">Module Number:</span><strong>${rec.module_number || ""}</strong></div>
+                        <div><span class="text-gray-500 block">Module Section:</span><strong>${rec.module_section || ""}</strong></div>
+                    </div>
+
+                    <div class="border rounded p-2.5 space-y-1">
+                        <div class="font-bold text-indigo-900">1. Video / Audio Clarity (Presentation)</div>
+                        <div>Presenting within the frame: <strong>${rec.va_within_frame || "-"}</strong> &bull; Visible & audible clearly: <strong>${rec.va_visible_audible || "-"}</strong></div>
+                        <div class="bg-gray-50 p-2 rounded border mt-1 whitespace-pre-line"><strong>OFNR Feedback:</strong>
+${rec.ofnr_video_audio || "-"}</div>
+                    </div>
+
+                    <div class="border rounded p-2.5 space-y-1">
+                        <div class="font-bold text-indigo-900">2. "Technical Capability" (Presentation)</div>
+                        <div>Multitasking (screen share/chat/emoticons): <strong>${rec.tech_multitask || "-"}</strong> &bull; Working knowledge of pptx: <strong>${rec.tech_pptx || "-"}</strong></div>
+                        <div class="bg-gray-50 p-2 rounded border mt-1 whitespace-pre-line"><strong>OFNR Feedback:</strong>
+${rec.ofnr_tech_capability || "-"}</div>
+                    </div>
+
+                    <div class="border rounded p-2.5 space-y-1">
+                        <div class="font-bold text-indigo-900">3. "Responsiveness to chat" (Presentation)</div>
+                        <div>Self-Evaluation Rating: <strong>Curve Point ${rec.cp_chat ?? "-"}</strong> (out of 3)</div>
+                        <div class="bg-gray-50 p-2 rounded border mt-1 whitespace-pre-line"><strong>OFNR Feedback:</strong>
+${rec.ofnr_chat || "-"}</div>
+                    </div>
+
+                    <div class="border rounded p-2.5 space-y-1">
+                        <div class="font-bold text-indigo-900">4. "Concept Clarity" (Presentation)</div>
+                        <div>Self-Evaluation Rating: <strong>Curve Point ${rec.cp_concept ?? "-"}</strong> (out of 5)</div>
+                        <div class="bg-gray-50 p-2 rounded border mt-1 whitespace-pre-line"><strong>OFNR Feedback:</strong>
+${rec.ofnr_concept || "-"}</div>
+                    </div>
+
+                    <div class="border rounded p-2.5 space-y-1">
+                        <div class="font-bold text-indigo-900">5. "Walking the Talk" (Presentation)</div>
+                        <div>Self-Evaluation Rating: <strong>Curve Point ${rec.cp_walking_talk ?? "-"}</strong> (out of 5)</div>
+                    </div>
+
+                    <div class="border rounded p-2.5 space-y-1">
+                        <div class="font-bold text-indigo-900">6. "Time Management" (Presentation)</div>
+                        <div>Kept check on time & preserved core focus: <strong>${rec.tm_check_focus || "No"}</strong> &bull; Requested agreement for adjustments: <strong>${rec.tm_check_agreement || "No"}</strong></div>
+                        <div class="bg-gray-50 p-2 rounded border mt-1 whitespace-pre-line"><strong>OFNR Feedback:</strong>
+${rec.ofnr_time_management || "-"}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function openViewModal(recId) {
+            const rec = workshopSubmissions[recId];
+            if (!rec) return;
+            const locked = isRecordLocked(rec);
+
+            document.getElementById("view-modal-body").innerHTML = buildRecordReportHtml(rec);
+
+            const footer = document.getElementById("view-modal-footer");
+            let btns = "";
+            if (locked) {
+                btns += `
+                    <button onclick="printRecord('${recId}')" class="bg-gray-700 hover:bg-gray-800 text-white font-bold px-3.5 py-1.5 rounded text-xs">Print</button>
+                    <button onclick="downloadRecordHtml('${recId}')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3.5 py-1.5 rounded text-xs">Download</button>
+                `;
+            } else if (!isMentorViewer) {
+                btns += `
+                    <button onclick="closeViewModal(); startEditRecord('${recId}')" class="bg-amber-500 hover:bg-amber-600 text-white font-bold px-3.5 py-1.5 rounded text-xs">Edit</button>
+                    <button onclick="closeViewModal(); confirmLockRecord('${recId}')" class="bg-green-600 hover:bg-green-700 text-white font-bold px-3.5 py-1.5 rounded text-xs">Lock & Submit for Mentors to Review</button>
+                `;
+            }
+            btns += `<button onclick="closeViewModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold px-3.5 py-1.5 rounded text-xs">Close</button>`;
+            footer.innerHTML = btns;
+
+            document.getElementById("view-record-modal").classList.remove("hidden");
+        }
+
+        function closeViewModal() {
+            document.getElementById("view-record-modal").classList.add("hidden");
+        }
+
+        function printRecord(recId) {
+            const rec = workshopSubmissions[recId];
+            if (!rec || !isRecordLocked(rec)) {
+                return showCustomAlert("Print is only enabled after the evaluation is locked.");
+            }
+            const printArea = document.getElementById("print-area");
+            printArea.innerHTML = buildRecordReportHtml(rec);
+            printArea.classList.remove("hidden");
+            window.print();
+            setTimeout(() => {
+                printArea.classList.add("hidden");
+            }, 500);
+        }
+
+        function downloadRecordHtml(recId) {
+            const rec = workshopSubmissions[recId];
+            if (!rec || !isRecordLocked(rec)) {
+                return showCustomAlert("Download is only enabled after the evaluation is locked.");
+            }
+            const reportHtml = buildRecordReportHtml(rec);
+            const fullDoc = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Self-Evaluation - ${rec.mentee_name || "Mentee"} - ${rec.module_number || ""}</title>
+<script src="https://cdn.tailwindcss.com"><\/script>
+</head>
+<body class="p-6 max-w-3xl mx-auto bg-white">
+${reportHtml}
+</body>
+</html>`;
+            const blob = new Blob([fullDoc], { type: "text/html;charset=utf-8" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            const safeName = (rec.mentee_name || "Mentee").replace(/[^a-zA-Z0-9_-]/g, "_");
+            const safeMod = (rec.module_number || "Module").replace(/[^a-zA-Z0-9_-]/g, "_");
+            a.href = url;
+            a.download = `Self_Evaluation_${safeName}_${safeMod}.html`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        /* =========================================================
+           UI TABS & MODALS
+           ========================================================= */
+        function switchTab(tabName) {
+            const formTabBtn = document.getElementById("tab-btn-form");
+            const recTabBtn = document.getElementById("tab-btn-records");
+            const formPanel = document.getElementById("panel-form");
+            const recPanel = document.getElementById("panel-records");
+
+            if (tabName === "form" && !isMentorViewer) {
+                formTabBtn.classList.add("text-indigo-700", "border-indigo-600", "bg-indigo-50/60");
+                formTabBtn.classList.remove("text-gray-600", "border-transparent");
+                recTabBtn.classList.remove("text-indigo-700", "border-indigo-600", "bg-indigo-50/60");
+                recTabBtn.classList.add("text-gray-600", "border-transparent");
+                formPanel.classList.remove("hidden");
+                recPanel.classList.add("hidden");
+            } else {
+                recTabBtn.classList.add("text-indigo-700", "border-indigo-600", "bg-indigo-50/60");
+                recTabBtn.classList.remove("text-gray-600", "border-transparent");
+                formTabBtn.classList.remove("text-indigo-700", "border-indigo-600", "bg-indigo-50/60");
+                formTabBtn.classList.add("text-gray-600", "border-transparent");
+                formPanel.classList.add("hidden");
+                recPanel.classList.remove("hidden");
+            }
+        }
+
+        function showCustomAlert(message, title = "") {
+            const titleEl = document.getElementById("custom-alert-title");
+            if (title) {
+                titleEl.innerText = title;
+                titleEl.classList.remove("hidden");
+            } else {
+                titleEl.classList.add("hidden");
+            }
+            document.getElementById("custom-alert-message").innerText = message;
+            document.getElementById("custom-alert-modal").classList.remove("hidden");
+        }
+
+        function closeCustomAlert() {
+            document.getElementById("custom-alert-modal").classList.add("hidden");
+        }
+
+        let confirmCallback = null;
+        function openConfirmModal(title, message, onYes) {
+            document.getElementById("confirm-modal-title").innerText = title;
+            document.getElementById("confirm-modal-message").innerText = message;
+            confirmCallback = onYes;
+            document.getElementById("confirm-modal").classList.remove("hidden");
+        }
+
+        function closeConfirmModal() {
+            document.getElementById("confirm-modal").classList.add("hidden");
+            confirmCallback = null;
+        }
+
+        document.getElementById("confirm-btn-yes").addEventListener("click", () => {
+            const cb = confirmCallback;
+            closeConfirmModal();
+            if (typeof cb === "function") cb();
+        });
+
+        window.addEventListener("DOMContentLoaded", initApp);
+    </script>
+</body>
+</html>
