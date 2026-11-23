@@ -112,7 +112,7 @@
 <body class="bg-gray-50 min-h-screen flex flex-col justify-between text-xs">
 
     <main class="max-w-md mx-auto px-3 py-2 flex-grow w-full app-shell">
-        <!-- Banner -->
+        <!-- Banner (Participant details strip removed) -->
         <div class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg shadow p-3 mb-2.5 banner-box">
             <div class="flex justify-between items-start gap-2">
                 <div>
@@ -121,7 +121,6 @@
                 </div>
                 <span id="batch-badge" class="text-[10px] bg-black/20 px-2 py-0.5 rounded font-mono flex-shrink-0"></span>
             </div>
-            <div id="user-info-strip" class="mt-2 pt-1.5 border-t border-white/20 text-[11px] text-purple-100"></div>
         </div>
 
         <!-- Mode Switcher -->
@@ -347,24 +346,22 @@
             });
         }
 
-        function updateUserStrip() {
+        function syncActiveUserKey() {
             const nameSelect = document.getElementById("f1-participant-name");
-            const chosenName = (nameSelect && nameSelect.value) || forwardedUserName || "Select Your Name";
-            if (!params.get("uid") && chosenName && chosenName !== "Select Your Name") {
+            const chosenName = (nameSelect && nameSelect.value) || forwardedUserName || "";
+            if (!params.get("uid") && chosenName) {
                 activeUserKey = sanitizeKey(chosenName);
             }
-            document.getElementById("user-info-strip").innerHTML =
-                `<span><strong>Participant:</strong> ${chosenName}</span>`;
         }
 
         function onParticipantNameChange() {
-            updateUserStrip();
+            syncActiveUserKey();
             loadMySubmissions();
         }
 
         function loadDataFromFirebase() {
             document.getElementById("batch-badge").innerText = workshopId;
-            updateUserStrip();
+            syncActiveUserKey();
 
             if (!db) {
                 document.getElementById("workshop-name-sub").innerText = `Batch: ${workshopId} (Firebase SDK unavailable)`;
@@ -443,7 +440,7 @@
                     sortedNames.length ? "-- Select Your Name --" : "-- No names found --",
                     forwardedUserName
                 );
-                updateUserStrip();
+                syncActiveUserKey();
                 loadMySubmissions();
             }).catch(err => {
                 console.error("Participants load error:", err);
