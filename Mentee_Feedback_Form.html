@@ -14,6 +14,22 @@
 
     <style>
         .hidden { display: none !important; }
+        #fixed-top-shell {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 40;
+            background-color: #f9fafb;
+            border-bottom: 1px solid #e5e7eb;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+        .fixed-inner {
+            max-width: 448px;
+            margin: 0 auto;
+            padding: 8px 12px;
+            box-sizing: border-box;
+        }
         @media print {
             body {
                 background: #ffffff !important;
@@ -38,18 +54,27 @@
 
 <body class="bg-gray-50 min-h-screen flex flex-col justify-between text-xs sm:text-sm text-gray-800">
 
-    <!-- Top Banner (Top participant details block removed) -->
-    <header id="context-header" class="max-w-3xl mx-auto w-full px-3 pt-2.5 no-print">
-        <div class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg shadow p-3">
-            <div>
-                <h1 id="form-title-heading" class="text-sm sm:text-base font-bold leading-snug">Mentee Self-Evaluation &amp; Feedback Form</h1>
-                <p id="workshop-name-sub" class="text-[11px] text-purple-100 mt-0.5">Loading workshop details...</p>
+    <!-- Fixed Top Banner Image + Participant Profile Card + Back to Main Screen -->
+    <div id="fixed-top-shell" class="no-print">
+        <div class="fixed-inner space-y-1.5">
+            <div id="fixed-banner-wrap" class="bg-white rounded-lg shadow-sm overflow-hidden flex justify-center w-full hidden">
+                <img id="fixed-app-logo" src="" alt="App Logo" class="w-full h-auto object-cover block" style="max-height: 84px;" />
+            </div>
+            <div class="bg-blue-50 border border-blue-200 text-blue-900 shadow-sm rounded-lg p-2 flex items-start justify-between gap-2">
+                <div id="fixed-profile-info" class="text-[11px] leading-snug overflow-hidden">
+                    <!-- Populated dynamically via JS -->
+                </div>
+                <div class="flex flex-shrink-0 flex-col gap-1">
+                    <button type="button" onclick="goBackToMainScreen()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-bold py-1.5 px-2 rounded transition shadow leading-tight text-center">
+                        Back to<br>Main Screen
+                    </button>
+                </div>
             </div>
         </div>
-    </header>
+    </div>
 
     <!-- Main Container -->
-    <main class="max-w-3xl mx-auto w-full px-3 py-2.5 flex-grow space-y-3 no-print">
+    <main id="main-content" class="max-w-md mx-auto w-full px-3 py-2.5 flex-grow space-y-3 no-print" style="padding-top: 195px;">
 
         <!-- Tab Navigation -->
         <div class="flex gap-2">
@@ -100,7 +125,7 @@
                 <label class="block font-bold text-gray-800 mb-2">
                     2. Select Section of the Module for which you presented
                 </label>
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2" id="module-section-options">
+                <div class="grid grid-cols-2 gap-2" id="module-section-options">
                     <div class="text-[11px] text-gray-400 italic">Loading sections...</div>
                 </div>
             </div>
@@ -110,7 +135,7 @@
                 <label class="block font-bold text-gray-800 mb-2">
                     3. Select Module Number
                 </label>
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2" id="module-number-options">
+                <div class="grid grid-cols-2 gap-2" id="module-number-options">
                     <div class="text-[11px] text-gray-400 italic">Loading modules...</div>
                 </div>
             </div>
@@ -126,8 +151,8 @@
                         <thead>
                             <tr class="bg-gray-100 text-gray-700">
                                 <th class="text-left p-2 border border-gray-200">Checkpoints</th>
-                                <th class="text-center p-2 border border-gray-200 w-20">Yes</th>
-                                <th class="text-center p-2 border border-gray-200 w-20">No</th>
+                                <th class="text-center p-2 border border-gray-200 w-16">Yes</th>
+                                <th class="text-center p-2 border border-gray-200 w-16">No</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -164,8 +189,8 @@
                         <thead>
                             <tr class="bg-gray-100 text-gray-700">
                                 <th class="text-left p-2 border border-gray-200">Checkpoints</th>
-                                <th class="text-center p-2 border border-gray-200 w-20">Yes</th>
-                                <th class="text-center p-2 border border-gray-200 w-20">No</th>
+                                <th class="text-center p-2 border border-gray-200 w-16">Yes</th>
+                                <th class="text-center p-2 border border-gray-200 w-16">No</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -207,7 +232,7 @@
                     <table class="w-full text-[11px] border-collapse border border-amber-300">
                         <thead>
                             <tr class="bg-amber-100 text-gray-900">
-                                <th class="p-2 border border-amber-300 text-center w-20">Curve Point</th>
+                                <th class="p-2 border border-amber-300 text-center w-16">Curve Point</th>
                                 <th class="p-2 border border-amber-300 text-left">Description (Responsiveness to chat)</th>
                             </tr>
                         </thead>
@@ -249,16 +274,16 @@
                     <label class="block font-bold text-gray-800 mb-1.5">
                         Select Curve Point for "Responsiveness to chat" (Presentation)
                     </label>
-                    <div class="flex flex-wrap gap-3">
-                        <label class="flex items-center space-x-2 px-3 py-1.5 border rounded-md cursor-pointer hover:bg-indigo-50">
+                    <div class="flex flex-wrap gap-2">
+                        <label class="flex items-center space-x-1.5 px-2.5 py-1.5 border rounded-md cursor-pointer hover:bg-indigo-50">
                             <input type="radio" name="cp_chat" value="3" class="h-4 w-4 text-indigo-600">
                             <span class="font-semibold">Curve Point 3</span>
                         </label>
-                        <label class="flex items-center space-x-2 px-3 py-1.5 border rounded-md cursor-pointer hover:bg-indigo-50">
+                        <label class="flex items-center space-x-1.5 px-2.5 py-1.5 border rounded-md cursor-pointer hover:bg-indigo-50">
                             <input type="radio" name="cp_chat" value="2" class="h-4 w-4 text-indigo-600">
                             <span class="font-semibold">Curve Point 2</span>
                         </label>
-                        <label class="flex items-center space-x-2 px-3 py-1.5 border rounded-md cursor-pointer hover:bg-indigo-50">
+                        <label class="flex items-center space-x-1.5 px-2.5 py-1.5 border rounded-md cursor-pointer hover:bg-indigo-50">
                             <input type="radio" name="cp_chat" value="1" class="h-4 w-4 text-indigo-600">
                             <span class="font-semibold">Curve Point 1</span>
                         </label>
@@ -289,7 +314,7 @@
                     <table class="w-full text-[11px] border-collapse border border-blue-200">
                         <thead>
                             <tr class="bg-blue-100 text-gray-900">
-                                <th class="p-2 border border-blue-200 text-center w-20">Curve Point</th>
+                                <th class="p-2 border border-blue-200 text-center w-16">Curve Point</th>
                                 <th class="p-2 border border-blue-200 text-left">Description (Concept Clarity)</th>
                             </tr>
                         </thead>
@@ -365,24 +390,24 @@
                     <label class="block font-bold text-gray-800 mb-1.5">
                         Select Curve Point for "Concept Clarity" (Presentation)
                     </label>
-                    <div class="flex flex-wrap gap-2.5">
-                        <label class="flex items-center space-x-2 px-3 py-1.5 border rounded-md cursor-pointer hover:bg-indigo-50">
+                    <div class="flex flex-wrap gap-2">
+                        <label class="flex items-center space-x-1.5 px-2.5 py-1.5 border rounded-md cursor-pointer hover:bg-indigo-50">
                             <input type="radio" name="cp_concept" value="5" class="h-4 w-4 text-indigo-600">
                             <span class="font-semibold">Curve Point 5</span>
                         </label>
-                        <label class="flex items-center space-x-2 px-3 py-1.5 border rounded-md cursor-pointer hover:bg-indigo-50">
+                        <label class="flex items-center space-x-1.5 px-2.5 py-1.5 border rounded-md cursor-pointer hover:bg-indigo-50">
                             <input type="radio" name="cp_concept" value="4" class="h-4 w-4 text-indigo-600">
                             <span class="font-semibold">Curve Point 4</span>
                         </label>
-                        <label class="flex items-center space-x-2 px-3 py-1.5 border rounded-md cursor-pointer hover:bg-indigo-50">
+                        <label class="flex items-center space-x-1.5 px-2.5 py-1.5 border rounded-md cursor-pointer hover:bg-indigo-50">
                             <input type="radio" name="cp_concept" value="3" class="h-4 w-4 text-indigo-600">
                             <span class="font-semibold">Curve Point 3</span>
                         </label>
-                        <label class="flex items-center space-x-2 px-3 py-1.5 border rounded-md cursor-pointer hover:bg-indigo-50">
+                        <label class="flex items-center space-x-1.5 px-2.5 py-1.5 border rounded-md cursor-pointer hover:bg-indigo-50">
                             <input type="radio" name="cp_concept" value="2" class="h-4 w-4 text-indigo-600">
                             <span class="font-semibold">Curve Point 2</span>
                         </label>
-                        <label class="flex items-center space-x-2 px-3 py-1.5 border rounded-md cursor-pointer hover:bg-indigo-50">
+                        <label class="flex items-center space-x-1.5 px-2.5 py-1.5 border rounded-md cursor-pointer hover:bg-indigo-50">
                             <input type="radio" name="cp_concept" value="1" class="h-4 w-4 text-indigo-600">
                             <span class="font-semibold">Curve Point 1</span>
                         </label>
@@ -414,7 +439,7 @@
                     <table class="w-full text-[11px] border-collapse border border-amber-300">
                         <thead>
                             <tr class="bg-amber-100 text-gray-900">
-                                <th class="p-2 border border-amber-300 text-center w-20">Curve Point</th>
+                                <th class="p-2 border border-amber-300 text-center w-16">Curve Point</th>
                                 <th class="p-2 border border-amber-300 text-left">Description (Walking the talk)</th>
                             </tr>
                         </thead>
@@ -478,24 +503,24 @@
                     <label class="block font-bold text-gray-800 mb-1.5">
                         Select Curve Point for "Walking the Talk" (Presentation)
                     </label>
-                    <div class="flex flex-wrap gap-2.5">
-                        <label class="flex items-center space-x-2 px-3 py-1.5 border rounded-md cursor-pointer hover:bg-indigo-50">
+                    <div class="flex flex-wrap gap-2">
+                        <label class="flex items-center space-x-1.5 px-2.5 py-1.5 border rounded-md cursor-pointer hover:bg-indigo-50">
                             <input type="radio" name="cp_walking_talk" value="5" class="h-4 w-4 text-indigo-600">
                             <span class="font-semibold">Curve Point 5</span>
                         </label>
-                        <label class="flex items-center space-x-2 px-3 py-1.5 border rounded-md cursor-pointer hover:bg-indigo-50">
+                        <label class="flex items-center space-x-1.5 px-2.5 py-1.5 border rounded-md cursor-pointer hover:bg-indigo-50">
                             <input type="radio" name="cp_walking_talk" value="4" class="h-4 w-4 text-indigo-600">
                             <span class="font-semibold">Curve Point 4</span>
                         </label>
-                        <label class="flex items-center space-x-2 px-3 py-1.5 border rounded-md cursor-pointer hover:bg-indigo-50">
+                        <label class="flex items-center space-x-1.5 px-2.5 py-1.5 border rounded-md cursor-pointer hover:bg-indigo-50">
                             <input type="radio" name="cp_walking_talk" value="3" class="h-4 w-4 text-indigo-600">
                             <span class="font-semibold">Curve Point 3</span>
                         </label>
-                        <label class="flex items-center space-x-2 px-3 py-1.5 border rounded-md cursor-pointer hover:bg-indigo-50">
+                        <label class="flex items-center space-x-1.5 px-2.5 py-1.5 border rounded-md cursor-pointer hover:bg-indigo-50">
                             <input type="radio" name="cp_walking_talk" value="2" class="h-4 w-4 text-indigo-600">
                             <span class="font-semibold">Curve Point 2</span>
                         </label>
-                        <label class="flex items-center space-x-2 px-3 py-1.5 border rounded-md cursor-pointer hover:bg-indigo-50">
+                        <label class="flex items-center space-x-1.5 px-2.5 py-1.5 border rounded-md cursor-pointer hover:bg-indigo-50">
                             <input type="radio" name="cp_walking_talk" value="1" class="h-4 w-4 text-indigo-600">
                             <span class="font-semibold">Curve Point 1</span>
                         </label>
@@ -541,7 +566,7 @@
              TAB 2: SUBMITTED EVALUATIONS LIST (ROLE-BASED PERMISSIONS)
              ========================================================= -->
         <div id="panel-records" class="bg-white rounded-lg shadow-md border border-gray-200 p-4 sm:p-5 space-y-4 hidden">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-gray-200 pb-3">
+            <div class="flex flex-col gap-2 border-b border-gray-200 pb-3">
                 <div>
                     <h2 class="text-sm sm:text-base font-bold text-gray-800" id="records-panel-title">Your Submitted Evaluations</h2>
                     <p class="text-[11px] text-gray-500" id="records-panel-subtitle">
@@ -551,7 +576,7 @@
 
                 <!-- Mentor Filter by Mentee -->
                 <div id="mentor-filter-wrap" class="hidden">
-                    <select id="mentor-mentee-filter" onchange="renderSubmissionsList()" class="p-1.5 border border-gray-300 rounded-md text-xs bg-white">
+                    <select id="mentor-mentee-filter" onchange="renderSubmissionsList()" class="p-1.5 border border-gray-300 rounded-md text-xs bg-white w-full">
                         <option value="ALL">All Mentees</option>
                     </select>
                 </div>
@@ -567,7 +592,7 @@
          VIEW / PRINT MODAL + DEDICATED PRINT CONTAINER
          ========================================================= -->
     <div id="view-record-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-3 no-print">
-        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] flex flex-col overflow-hidden">
             <div class="bg-indigo-900 text-white px-4 py-3 flex items-center justify-between">
                 <h3 class="font-bold text-sm">Mentee Self-Evaluation Details</h3>
                 <button onclick="closeViewModal()" class="text-indigo-200 hover:text-white font-bold text-base">&times;</button>
@@ -620,6 +645,7 @@
     <script>
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwZwp6CgVUqLM9LUWob9FvgiioA3S5sACYHlkOD7RiopRucNaHzP8IsAcKMEARKbunH3A/exec";
         const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+        const SESSION_STORAGE_KEY = "hc_portal_active_session";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAt_HbqtG_kMn41NC1wPy5KDFNsDp5HTb8",
@@ -676,12 +702,103 @@
             ps_id: paramUid,
             ps_name: paramUname,
             ps_email: paramEmail,
+            ps_mob: "",
+            ps_centre: "",
+            ps_state: "",
+            ps_country: "",
             role: paramRole || "Participant",
             workshop_id: activeWorkshopId
         };
         let isMentorViewer = false;
         let workshopSubmissions = {};
         let editingRecordId = null;
+
+        function syncFixedHeaderOffset() {
+            const fixedEl = document.getElementById("fixed-top-shell");
+            const mainEl = document.getElementById("main-content");
+            if (fixedEl && mainEl) {
+                mainEl.style.paddingTop = (fixedEl.offsetHeight + 10) + "px";
+            }
+        }
+
+        function maskMobile(mob) {
+            if (!mob) return "***";
+            let s = mob.toString().trim();
+            if (s.length <= 4) return "****";
+            return s.substring(0, 2) + "****" + s.substring(s.length - 2);
+        }
+
+        function maskEmail(email) {
+            if (!email || !email.includes("@")) return "***@***.com";
+            let parts = email.toString().trim().split("@");
+            let maskedName = parts[0].length > 2 ? parts[0].substring(0, 2) + "***" : "***";
+            return maskedName + "@" + parts[1];
+        }
+
+        function renderFixedProfileCard() {
+            const infoEl = document.getElementById("fixed-profile-info");
+            if (!infoEl) return;
+            const pName = currentUser.ps_name || "Participant";
+            const pId = currentUser.ps_id || "N/A";
+            const pMob = maskMobile(currentUser.ps_mob);
+            const pEmail = maskEmail(currentUser.ps_email);
+            const pCentre = currentUser.ps_centre || "N/A";
+            const pState = currentUser.ps_state || "N/A";
+            const pCountry = currentUser.ps_country || "N/A";
+
+            infoEl.innerHTML = `
+                <div><strong>Name:</strong> ${pName}</div>
+                <div><strong>Unique ID Number:</strong> ${pId}</div>
+                <div><strong>Mobile Number:</strong> ${pMob}</div>
+                <div><strong>Email Address:</strong> ${pEmail}</div>
+                <div><strong>Centre:</strong> ${pCentre}</div>
+                <div><strong>State / Province:</strong> ${pState}</div>
+                <div><strong>Country:</strong> ${pCountry}</div>
+            `;
+            syncFixedHeaderOffset();
+        }
+
+        function applyFixedBannerLogo(wsObj) {
+            const wrap = document.getElementById("fixed-banner-wrap");
+            const img = document.getElementById("fixed-app-logo");
+            if (!wrap || !img) return;
+            if (wsObj && wsObj.logo_status === "ON" && wsObj.logo_url) {
+                img.onload = syncFixedHeaderOffset;
+                img.src = wsObj.logo_url;
+                wrap.classList.remove("hidden");
+            } else {
+                wrap.classList.add("hidden");
+            }
+            syncFixedHeaderOffset();
+        }
+
+        function goBackToMainScreen() {
+            let portalRole = (paramRole || currentUser.role || "participant").toString().trim().toLowerCase();
+            if (portalRole.includes("facilitator") || portalRole.includes("mentor")) {
+                portalRole = "facilitator";
+            } else {
+                portalRole = "participant";
+            }
+            try {
+                const raw = sessionStorage.getItem(SESSION_STORAGE_KEY);
+                const parsed = raw ? JSON.parse(raw) : {};
+                const mergedUser = { ...(parsed.user || {}), ...currentUser };
+                sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify({
+                    ...parsed,
+                    workshopId: activeWorkshopId,
+                    portalRole: portalRole,
+                    user: mergedUser
+                }));
+            } catch (_) {}
+
+            const q = new URLSearchParams();
+            q.set("role", portalRole);
+            q.set("return", "dashboard");
+            if (currentUser.ps_id) q.set("uid", currentUser.ps_id);
+            if (currentUser.ps_name) q.set("uname", currentUser.ps_name);
+            const hashPart = activeWorkshopId && activeWorkshopId !== "DEFAULT" ? `#${encodeURIComponent(activeWorkshopId)}` : "";
+            window.location.href = `index.html?${q.toString()}${hashPart}`;
+        }
 
         function isMentorRole(roleStr) {
             const r = (roleStr || "").toString().trim().toUpperCase();
@@ -759,6 +876,10 @@
                     return {
                         ps_name: String(name || "").trim(),
                         ps_id: String(id || "").trim(),
+                        ps_mob: String(val.ps_mob || "").trim(),
+                        ps_centre: String(val.ps_centre || "").trim(),
+                        ps_state: String(val.ps_state || "").trim(),
+                        ps_country: String(val.ps_country || val.country || "").trim(),
                         role: String(role || "").trim(),
                         ps_email: String(email || "").trim()
                     };
@@ -847,11 +968,11 @@
         }
 
         function initApp() {
-            document.getElementById("workshop-name-sub").innerText = `Batch: ${activeWorkshopId}`;
+            renderFixedProfileCard();
 
             Promise.all([
-                fetchNodeWithFallback("workshops", "control_tower/workshops"),
-                fetchNodeWithFallback("participants", "control_tower/participants")
+                fetchNodeWithFallback("control_tower/workshops", "workshops"),
+                fetchNodeWithFallback("control_tower/participants", "participants")
             ]).then(([wData, pData]) => {
                 allWorkshops = wData || {};
                 allParticipants = pData || {};
@@ -860,9 +981,7 @@
                 if (workshop) {
                     const wsTitle = workshop.workshop_name || `Workshop (${activeWorkshopId})`;
                     document.getElementById("page-title").innerText = `${wsTitle} | Mentee Self-Evaluation`;
-                    document.getElementById("form-title-heading").innerText = wsTitle;
-                    document.getElementById("workshop-name-sub").innerText =
-                        `Mentee Self-Evaluation & Feedback Form${workshop.workshop_language ? " • " + workshop.workshop_language : ""}`;
+                    applyFixedBannerLogo(workshop);
                     renderDynamicSectionAndModuleOptions(workshop);
                 } else {
                     renderDynamicSectionAndModuleOptions({});
@@ -922,22 +1041,30 @@
 
             if (matched) {
                 currentUser = {
+                    ...(stored || {}),
+                    ...matched,
                     ps_id: (matched.ps_id || matched.uid || matched.id || effectiveUid || "").toString().trim(),
                     ps_name: (matched.ps_name || matched.uname || matched.name || effectiveUname || "").toString().trim(),
                     ps_email: (matched.ps_email || matched.email || effectiveEmail || "").toString().trim(),
+                    ps_mob: (matched.ps_mob || (stored && stored.ps_mob) || "").toString().trim(),
+                    ps_centre: (matched.ps_centre || (stored && stored.ps_centre) || "").toString().trim(),
+                    ps_state: (matched.ps_state || (stored && stored.ps_state) || "").toString().trim(),
+                    ps_country: (matched.ps_country || matched.country || (stored && stored.ps_country) || "").toString().trim(),
                     role: (matched.role || matched.user_role || effectiveRole || "Participant").toString().trim(),
                     workshop_id: activeWorkshopId
                 };
-            } else if (effectiveUid || effectiveUname || effectiveEmail) {
+            } else if (stored || effectiveUid || effectiveUname || effectiveEmail) {
                 currentUser = {
-                    ps_id: effectiveUid || "",
-                    ps_name: effectiveUname || "",
-                    ps_email: effectiveEmail || "",
-                    role: effectiveRole || "Participant",
+                    ...(stored || {}),
+                    ps_id: effectiveUid || (stored && stored.ps_id) || "",
+                    ps_name: effectiveUname || (stored && stored.ps_name) || "",
+                    ps_email: effectiveEmail || (stored && stored.ps_email) || "",
+                    role: effectiveRole || (stored && stored.role) || "Participant",
                     workshop_id: activeWorkshopId
                 };
             }
 
+            renderFixedProfileCard();
             applyUserContextUI();
         }
 
@@ -1191,7 +1318,9 @@
                         cancelEditMode();
                         resetFormFields();
                         showCustomAlert(
-                            "Your draft self-evaluation has been updated!\n\nReminder: You can still Edit or Delete it until the 1-day window ends, or click 'Lock & Submit for Mentors to Review' whenever you are ready.",
+                            "Your draft self-evaluation has been updated!
+
+Reminder: You can still Edit or Delete it until the 1-day window ends, or click 'Lock & Submit for Mentors to Review' whenever you are ready.",
                             "Draft Updated"
                         );
                         switchTab("records");
@@ -1214,10 +1343,15 @@
                         btn.innerText = "Submit Self-Evaluation Feedback";
                         resetFormFields();
                         showCustomAlert(
-                            "Your Self-Evaluation Feedback has been saved!\n\n" +
-                            "IMPORTANT NOTICE:\n" +
-                            "• You have 1 day (24 hours) to Edit or Delete this response.\n" +
-                            "• Once you are ready, click 'Lock & Submit for Mentors to Review' on your submission.\n" +
+                            "Your Self-Evaluation Feedback has been saved!
+
+" +
+                            "IMPORTANT NOTICE:
+" +
+                            "• You have 1 day (24 hours) to Edit or Delete this response.
+" +
+                            "• Once you are ready, click 'Lock & Submit for Mentors to Review' on your submission.
+" +
                             "• If you do not click that button within 1 day, it will automatically be locked after 24 hours and an email notification will be sent to all mentors (with a confirmation email to you).",
                             "Submission Saved (1-Day Edit Window)"
                         );
@@ -1310,7 +1444,9 @@
 
             openConfirmModal(
                 "Lock & Submit for Mentors to Review?",
-                "Are you sure you want to lock and submit this evaluation?\n\n" +
+                "Are you sure you want to lock and submit this evaluation?
+
+" +
                 "⚠️ WARNING: Once you click 'Yes', you will NOT be able to edit or delete this evaluation anymore. " +
                 "An email notification will immediately be sent to all mentors (and a confirmation email to you), and Print/Download will be enabled.",
                 () => {
@@ -1325,7 +1461,9 @@
                     db.ref(`control_tower/mentee_feedback/${wsKey}/${recId}`).update(updates).then(() => {
                         triggerLockEmailNotifications(recId, { ...rec, ...updates });
                         showCustomAlert(
-                            "Your Self-Evaluation has been locked and submitted for mentors to review!\n\nEmail notifications have been sent to all mentors and a confirmation copy has been sent to you.",
+                            "Your Self-Evaluation has been locked and submitted for mentors to review!
+
+Email notifications have been sent to all mentors and a confirmation copy has been sent to you.",
                             "Locked & Submitted"
                         );
                     }).catch(err => showCustomAlert("Failed to lock evaluation: " + err.message));
@@ -1450,7 +1588,7 @@
                 const card = document.createElement("div");
                 card.className = "border border-gray-200 rounded-lg p-3.5 bg-gray-50/60 hover:bg-white transition shadow-sm space-y-2.5";
                 card.innerHTML = `
-                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5">
+                    <div class="flex flex-col gap-1.5">
                         <div>
                             <div class="font-bold text-gray-900 text-xs sm:text-sm">
                                 ${rec.module_number || ""} &bull; ${rec.module_section || ""}
@@ -1504,7 +1642,7 @@
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-gray-100 p-2.5 rounded border border-gray-200">
+                    <div class="grid grid-cols-2 gap-2 bg-gray-100 p-2.5 rounded border border-gray-200">
                         <div><span class="text-gray-500 block">Mentee Name:</span><strong>${rec.mentee_name || ""}</strong></div>
                         <div><span class="text-gray-500 block">Session Date:</span><strong>${rec.session_date || ""}</strong></div>
                         <div><span class="text-gray-500 block">Module Number:</span><strong>${rec.module_number || ""}</strong></div>
@@ -1514,25 +1652,29 @@
                     <div class="border rounded p-2.5 space-y-1">
                         <div class="font-bold text-indigo-900">4. Video / Audio Clarity (Presentation)</div>
                         <div>Presenting within the frame: <strong>${rec.va_within_frame || "-"}</strong> &bull; Visible &amp; audible clearly: <strong>${rec.va_visible_audible || "-"}</strong></div>
-                        <div class="bg-gray-50 p-2 rounded border mt-1 whitespace-pre-line"><strong>OFNR Feedback:</strong>\n${rec.ofnr_video_audio || "-"}</div>
+                        <div class="bg-gray-50 p-2 rounded border mt-1 whitespace-pre-line"><strong>OFNR Feedback:</strong>
+${rec.ofnr_video_audio || "-"}</div>
                     </div>
 
                     <div class="border rounded p-2.5 space-y-1">
                         <div class="font-bold text-indigo-900">5. "Technical Capability" (Presentation)</div>
                         <div>Multitasking (screen share/chat/emoticons): <strong>${rec.tech_multitask || "-"}</strong> &bull; Working knowledge of pptx: <strong>${rec.tech_pptx || "-"}</strong></div>
-                        <div class="bg-gray-50 p-2 rounded border mt-1 whitespace-pre-line"><strong>OFNR Feedback:</strong>\n${rec.ofnr_tech_capability || "-"}</div>
+                        <div class="bg-gray-50 p-2 rounded border mt-1 whitespace-pre-line"><strong>OFNR Feedback:</strong>
+${rec.ofnr_tech_capability || "-"}</div>
                     </div>
 
                     <div class="border rounded p-2.5 space-y-1">
                         <div class="font-bold text-indigo-900">6. "Responsiveness to chat" (Presentation)</div>
                         <div>Self-Evaluation Rating: <strong>Curve Point ${rec.cp_chat ?? "-"}</strong> (out of 3)</div>
-                        <div class="bg-gray-50 p-2 rounded border mt-1 whitespace-pre-line"><strong>OFNR Feedback:</strong>\n${rec.ofnr_chat || "-"}</div>
+                        <div class="bg-gray-50 p-2 rounded border mt-1 whitespace-pre-line"><strong>OFNR Feedback:</strong>
+${rec.ofnr_chat || "-"}</div>
                     </div>
 
                     <div class="border rounded p-2.5 space-y-1">
                         <div class="font-bold text-indigo-900">7. "Concept Clarity" (Presentation)</div>
                         <div>Self-Evaluation Rating: <strong>Curve Point ${rec.cp_concept ?? "-"}</strong> (out of 5)</div>
-                        <div class="bg-gray-50 p-2 rounded border mt-1 whitespace-pre-line"><strong>OFNR Feedback:</strong>\n${rec.ofnr_concept || "-"}</div>
+                        <div class="bg-gray-50 p-2 rounded border mt-1 whitespace-pre-line"><strong>OFNR Feedback:</strong>
+${rec.ofnr_concept || "-"}</div>
                     </div>
 
                     <div class="border rounded p-2.5 space-y-1">
@@ -1543,7 +1685,8 @@
                     <div class="border rounded p-2.5 space-y-1">
                         <div class="font-bold text-indigo-900">9. "Time Management" (Presentation)</div>
                         <div>Kept check on time &amp; preserved core focus: <strong>${rec.tm_check_focus || "No"}</strong> &bull; Requested agreement for adjustments: <strong>${rec.tm_check_agreement || "No"}</strong></div>
-                        <div class="bg-gray-50 p-2 rounded border mt-1 whitespace-pre-line"><strong>OFNR Feedback:</strong>\n${rec.ofnr_time_management || "-"}</div>
+                        <div class="bg-gray-50 p-2 rounded border mt-1 whitespace-pre-line"><strong>OFNR Feedback:</strong>
+${rec.ofnr_time_management || "-"}</div>
                     </div>
                 </div>
             `;
@@ -1556,22 +1699,14 @@
 
             document.getElementById("view-modal-body").innerHTML = buildRecordReportHtml(rec);
 
-            const footer = document.getElementById("view-modal-footer");
-            let btns = "";
+            let footerHtml = `<button onclick="closeViewModal()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold px-3 py-1.5 rounded text-xs">Close</button>`;
             if (locked) {
-                btns += `
-                    <button onclick="printRecord('${recId}')" class="bg-gray-700 hover:bg-gray-800 text-white font-bold px-3.5 py-1.5 rounded text-xs">Print</button>
-                    <button onclick="downloadRecordHtml('${recId}')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3.5 py-1.5 rounded text-xs">Download</button>
-                `;
-            } else if (!isMentorViewer) {
-                btns += `
-                    <button onclick="closeViewModal(); startEditRecord('${recId}')" class="bg-amber-500 hover:bg-amber-600 text-white font-bold px-3.5 py-1.5 rounded text-xs">Edit</button>
-                    <button onclick="closeViewModal(); confirmLockRecord('${recId}')" class="bg-green-600 hover:bg-green-700 text-white font-bold px-3.5 py-1.5 rounded text-xs">Lock &amp; Submit for Mentors to Review</button>
+                footerHtml += `
+                    <button onclick="printRecord('${recId}')" class="bg-gray-700 hover:bg-gray-800 text-white font-bold px-3 py-1.5 rounded text-xs">Print</button>
+                    <button onclick="downloadRecordHtml('${recId}')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded text-xs">Download</button>
                 `;
             }
-            btns += `<button onclick="closeViewModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold px-3.5 py-1.5 rounded text-xs">Close</button>`;
-            footer.innerHTML = btns;
-
+            document.getElementById("view-modal-footer").innerHTML = footerHtml;
             document.getElementById("view-record-modal").classList.remove("hidden");
         }
 
@@ -1581,8 +1716,9 @@
 
         function printRecord(recId) {
             const rec = workshopSubmissions[recId];
-            if (!rec || !isRecordLocked(rec)) {
-                return showCustomAlert("Print is only enabled after the evaluation is locked.");
+            if (!rec) return;
+            if (!isRecordLocked(rec)) {
+                return showCustomAlert("Print is available once the self-evaluation is locked.");
             }
             const printArea = document.getElementById("print-area");
             printArea.innerHTML = buildRecordReportHtml(rec);
@@ -1590,33 +1726,44 @@
             window.print();
             setTimeout(() => {
                 printArea.classList.add("hidden");
+                printArea.innerHTML = "";
             }, 500);
         }
 
         function downloadRecordHtml(recId) {
             const rec = workshopSubmissions[recId];
-            if (!rec || !isRecordLocked(rec)) {
-                return showCustomAlert("Download is only enabled after the evaluation is locked.");
+            if (!rec) return;
+            if (!isRecordLocked(rec)) {
+                return showCustomAlert("Download is available once the self-evaluation is locked.");
             }
-            const reportHtml = buildRecordReportHtml(rec);
-            const fullDoc = `<!DOCTYPE html>
+
+            const safeName = (rec.mentee_name || "Mentee").replace(/[^a-zA-Z0-9_-]/g, "_");
+            const safeMod = (rec.module_number || "Module").replace(/[^a-zA-Z0-9_-]/g, "_");
+            const fileName = `Mentee_Self_Eval_${safeName}_${safeMod}_${rec.session_date || ""}.html`;
+
+            const htmlDoc = `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Self-Evaluation - ${rec.mentee_name || "Mentee"} - ${rec.module_number || ""}</title>
-<script src="https://cdn.tailwindcss.com"><\/script>
+<title>${fileName}</title>
+<style>
+  body { font-family: Arial, sans-serif; margin: 24px; color: #1f2937; font-size: 13px; }
+  h2 { color: #312e81; margin-bottom: 4px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #f3f4f6; padding: 12px; border-radius: 6px; margin: 12px 0; }
+  .box { border: 1px solid #d1d5db; border-radius: 6px; padding: 12px; margin-bottom: 12px; }
+  .ofnr { background: #f9fafb; border: 1px solid #e5e7eb; padding: 8px; border-radius: 4px; white-space: pre-line; margin-top: 6px; }
+</style>
 </head>
-<body class="p-6 max-w-3xl mx-auto bg-white">
-${reportHtml}
+<body>
+${buildRecordReportHtml(rec)}
 </body>
 </html>`;
-            const blob = new Blob([fullDoc], { type: "text/html;charset=utf-8" });
+
+            const blob = new Blob([htmlDoc], { type: "text/html;charset=utf-8" });
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
-            const safeName = (rec.mentee_name || "Mentee").replace(/[^a-zA-Z0-9_-]/g, "_");
-            const safeMod = (rec.module_number || "Module").replace(/[^a-zA-Z0-9_-]/g, "_");
             a.href = url;
-            a.download = `Self_Evaluation_${safeName}_${safeMod}.html`;
+            a.download = fileName;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -1624,24 +1771,26 @@ ${reportHtml}
         }
 
         /* =========================================================
-           UI TABS & MODALS
+           TAB SWITCHING & MODALS
            ========================================================= */
-        function switchTab(tabName) {
-            const formTabBtn = document.getElementById("tab-btn-form");
-            const recTabBtn = document.getElementById("tab-btn-records");
-            const formPanel = document.getElementById("panel-form");
-            const recPanel = document.getElementById("panel-records");
+        function switchTab(tab) {
+            const btnForm = document.getElementById("tab-btn-form");
+            const btnRecords = document.getElementById("tab-btn-records");
+            const panelForm = document.getElementById("panel-form");
+            const panelRecords = document.getElementById("panel-records");
 
-            if (tabName === "form" && !isMentorViewer) {
-                formTabBtn.className = "flex-1 py-2 px-3 rounded-md text-xs font-bold bg-indigo-600 text-white shadow-sm transition";
-                recTabBtn.className = "flex-1 py-2 px-3 rounded-md text-xs font-semibold bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 transition";
-                formPanel.classList.remove("hidden");
-                recPanel.classList.add("hidden");
+            if (tab === "records") {
+                panelForm.classList.add("hidden");
+                panelRecords.classList.remove("hidden");
+
+                btnRecords.className = "flex-1 py-2 px-3 rounded-md text-xs font-bold bg-indigo-600 text-white shadow-sm transition";
+                btnForm.className = "flex-1 py-2 px-3 rounded-md text-xs font-semibold bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 transition";
             } else {
-                recTabBtn.className = "flex-1 py-2 px-3 rounded-md text-xs font-bold bg-indigo-600 text-white shadow-sm transition";
-                formTabBtn.className = "flex-1 py-2 px-3 rounded-md text-xs font-semibold bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 transition";
-                formPanel.classList.add("hidden");
-                recPanel.classList.remove("hidden");
+                panelRecords.classList.add("hidden");
+                panelForm.classList.remove("hidden");
+
+                btnForm.className = "flex-1 py-2 px-3 rounded-md text-xs font-bold bg-indigo-600 text-white shadow-sm transition";
+                btnRecords.className = "flex-1 py-2 px-3 rounded-md text-xs font-semibold bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 transition";
             }
         }
 
@@ -1661,30 +1810,30 @@ ${reportHtml}
             document.getElementById("custom-alert-modal").classList.add("hidden");
         }
 
-        let confirmCallback = null;
+        let confirmYesCallback = null;
         function openConfirmModal(title, message, onYes) {
-            document.getElementById("confirm-modal-title").innerText = title;
-            document.getElementById("confirm-modal-message").innerText = message;
-            confirmCallback = onYes;
+            document.getElementById("confirm-modal-title").innerText = title || "Are you sure?";
+            document.getElementById("confirm-modal-message").innerText = message || "";
+            confirmYesCallback = onYes;
+            document.getElementById("confirm-btn-yes").onclick = () => {
+                closeConfirmModal();
+                if (typeof confirmYesCallback === "function") {
+                    confirmYesCallback();
+                }
+            };
             document.getElementById("confirm-modal").classList.remove("hidden");
         }
 
         function closeConfirmModal() {
             document.getElementById("confirm-modal").classList.add("hidden");
-            confirmCallback = null;
+            confirmYesCallback = null;
         }
 
-        document.getElementById("confirm-btn-yes").addEventListener("click", () => {
-            const cb = confirmCallback;
-            closeConfirmModal();
-            if (typeof cb === "function") cb();
-        });
-
-        if (document.readyState === "loading") {
-            window.addEventListener("DOMContentLoaded", initApp);
-        } else {
+        window.addEventListener("resize", syncFixedHeaderOffset);
+        window.addEventListener("DOMContentLoaded", () => {
             initApp();
-        }
+            syncFixedHeaderOffset();
+        });
     </script>
 </body>
 </html>
