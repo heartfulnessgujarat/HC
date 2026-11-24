@@ -353,6 +353,7 @@
     <!-- Footer -->
     <footer id="app-footer" class="text-center py-1.5 text-[10px] text-gray-500">
         Heartful Communication - Participant Login System
+        <span id="app-version" class="ml-1 text-[9px] text-gray-400">| v2026.11.24-FB-LOGO-01</span>
     </footer>
 
     <!-- Custom Message Box Modal -->
@@ -462,7 +463,7 @@
                 document.getElementById('page-title').innerText = `Heartful Communication - Workshop (${activeWorkshopId}) | Participant Portal`;
                 if (headingEl) headingEl.textContent = "Participant Login";
                 if (selectedLabelEl) selectedLabelEl.textContent = "Name of the Participant:";
-                if (footerEl) footerEl.textContent = "Heartful Communication - Participant Login System";
+                if (footerEl) footerEl.innerHTML = 'Heartful Communication - Participant Login System <span id="app-version" class="ml-1 text-[9px] text-gray-400">| v2026.11.24-FB-LOGO-01</span>';
             }
         }
         applyPortalRoleLabels();
