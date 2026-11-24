@@ -221,11 +221,11 @@
                 <table class="min-w-full border border-gray-200 text-[11px] text-left">
                     <thead class="bg-gray-100 text-gray-700">
                         <tr>
-                            <th class="py-1.5 px-2 border-b">Name</th>
                             <th class="py-1.5 px-2 border-b">Sec</th>
                             <th class="py-1.5 px-2 border-b">Mod</th>
                             <th class="py-1.5 px-2 border-b">Link</th>
-                            <th class="py-1.5 px-2 border-b text-right">Actions</th>
+                            <th class="py-1.5 px-2 border-b">Review Status</th>
+                            <th class="py-1.5 px-2 border-b">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="my-submissions-tbody" class="divide-y divide-gray-100">
@@ -246,7 +246,7 @@
     </main>
 
     <footer class="text-center py-2 text-[10px] text-gray-500">
-        Heartful Communication - Recording Submission Module | HC Portal V4 • 24-Nov-2026
+        Heartful Communication - Recording Submission Module | HC Portal V5.1 • 24-Nov-2026
     </footer>
 
     <!-- View Modal -->
@@ -258,6 +258,18 @@
                 <button onclick="closeViewModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1.5 px-4 rounded text-xs btn-primary">
                     Close
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Review submission confirmation: explicit Yes / No -->
+    <div id="review-confirm-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-3 modal-backdrop">
+        <div class="bg-white rounded-lg shadow-xl max-w-xs w-full p-4 text-center text-xs modal-card">
+            <h3 class="text-sm font-bold text-gray-800 mb-2">Submit to Mentors for Review?</h3>
+            <p class="text-gray-700 mb-4">Once you submit this recording for mentor review, you will no longer be able to edit or delete this entry. Do you want to continue?</p>
+            <div class="flex gap-2 justify-center">
+                <button type="button" onclick="confirmSubmitForReview()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1.5 px-5 rounded text-xs btn-primary">Yes</button>
+                <button type="button" onclick="cancelSubmitForReview()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-1.5 px-5 rounded text-xs btn-secondary">No</button>
             </div>
         </div>
     </div>
@@ -298,6 +310,7 @@
         const forwardedRole = (params.get("role") || "").trim();
         const viewParam = (params.get("view") || "").trim().toLowerCase();
         const FORM_ID = "recording_link";
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwZwp6CgVUqLM9LUWob9FvgiioA3S5sACYHlkOD7RiopRucNaHzP8IsAcKMEARKbunH3A/exec";
         const SESSION_STORAGE_KEY = "hc_portal_active_session";
 
         function sanitizeKey(val) {
@@ -318,6 +331,7 @@
         let activeUserKey = sanitizeKey(forwardedUserId || forwardedUserName || "guest");
 
         let editingId = null;
+        let pendingReviewSubmissionId = null;
         let submissionsStore = {};
         let currentViewMode = viewParam === "my" ? "my" : "form";
 
@@ -548,6 +562,86 @@
             });
         }
 
+        function escapeHtml(value) {
+            return (value ?? "").toString().replace(/[&<>\"']/g, ch => ({
+                "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;"
+            }[ch]));
+        }
+
+        function normalizeDuplicateValue(value) {
+            return (value || "").toString().trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+        }
+
+        function isSubmittedForReview(record) {
+            return !!(record && (record.submitted_for_review === true ||
+                (record.review_status || "").toString().toUpperCase() === "SUBMITTED"));
+        }
+
+        function hasDuplicateSectionModule(section, moduleName, excludeId = null) {
+            const secKey = normalizeDuplicateValue(section);
+            const modKey = normalizeDuplicateValue(moduleName);
+            return Object.keys(submissionsStore).some(id => {
+                if (id === excludeId) return false;
+                const rec = submissionsStore[id] || {};
+                return normalizeDuplicateValue(rec.section) === secKey &&
+                    normalizeDuplicateValue(rec.module_name) === modKey;
+            });
+        }
+
+        function submitForMentorReview(submissionId) {
+            const rec = submissionsStore[submissionId];
+            if (!rec) return;
+            if (isSubmittedForReview(rec)) return showAlert("This recording has already been submitted for mentor review.");
+            pendingReviewSubmissionId = submissionId;
+            document.getElementById("review-confirm-modal").classList.remove("hidden");
+        }
+
+        function cancelSubmitForReview() {
+            pendingReviewSubmissionId = null;
+            document.getElementById("review-confirm-modal").classList.add("hidden");
+        }
+
+        function confirmSubmitForReview() {
+            const submissionId = pendingReviewSubmissionId;
+            cancelSubmitForReview();
+            if (!submissionId || !db) return;
+            const rec = submissionsStore[submissionId];
+            if (!rec || isSubmittedForReview(rec)) return showAlert("This recording has already been submitted for mentor review.");
+
+            const entryRef = db.ref(`form_submissions/${safeWorkshopKey}/${FORM_ID}/${activeUserKey}/${submissionId}`);
+            entryRef.transaction(current => {
+                if (!current || current.submitted_for_review === true ||
+                    (current.review_status || "").toString().toUpperCase() === "SUBMITTED") return;
+                current.submitted_for_review = true;
+                current.review_status = "SUBMITTED";
+                current.submitted_for_review_at_ms = Date.now();
+                current.submission_source = "MANUAL";
+                current.notification_status = "PENDING";
+                return current;
+            }).then(result => {
+                if (!result.committed) return showAlert("This entry is already submitted or could not be updated. Please refresh your submissions.");
+                loadMySubmissions();
+                showAlert("Your recording has been submitted to mentors for review. Edit and Delete are now disabled. A confirmation email will be sent to you, and mentors will be notified.");
+                // Apps Script sends emails and records delivery status. The scheduled backend retries if this request fails.
+                fetch(WEB_APP_URL, {
+                    method: "POST",
+                    mode: "no-cors",
+                    body: JSON.stringify({
+                        action: "sendRecordingReviewNotification",
+                        workshopKey: safeWorkshopKey,
+                        ownerKey: activeUserKey,
+                        submissionId: submissionId
+                    })
+                }).catch(err => console.warn("Recording review email request failed; scheduled backend will retry:", err));
+            }).catch(err => showAlert("Could not submit for review: " + err.message));
+        }
+
+        function openRecordingDownload(submissionId) {
+            const rec = submissionsStore[submissionId];
+            if (!rec || !isSubmittedForReview(rec)) return;
+            if (rec.recording_link) window.open(rec.recording_link, "_blank", "noopener");
+        }
+
         function cancelEdit() {
             editingId = null;
             document.getElementById("edit-badge").classList.add("hidden");
@@ -562,6 +656,7 @@
         function startEdit(submissionId) {
             const rec = submissionsStore[submissionId];
             if (!rec) return;
+            if (isSubmittedForReview(rec)) return showAlert("This entry has been submitted for mentor review and can no longer be edited.");
             setViewMode("form");
             editingId = submissionId;
             document.getElementById("edit-badge").classList.remove("hidden");
@@ -590,6 +685,12 @@
             if (!/^https?:\/\//i.test(recordingLink)) {
                 return showAlert("Please enter a valid link starting with http:// or https://.");
             }
+            if (editingId && isSubmittedForReview(submissionsStore[editingId])) {
+                return showAlert("This entry has already been submitted for mentor review and cannot be edited.");
+            }
+            if (hasDuplicateSectionModule(sectionVal, moduleVal, editingId)) {
+                return showAlert("Duplicate entry detected. You have already submitted a recording for this Section and Module. Please choose a different Section or Module.");
+            }
 
             const ownerKey = sanitizeKey(currentProfile.ps_id || forwardedUserId || participantName);
             activeUserKey = ownerKey;
@@ -612,7 +713,8 @@
                     section: sectionVal,
                     module_name: moduleVal,
                     recording_link: recordingLink,
-                    updated_at: nowStr
+                    updated_at: nowStr,
+                    updated_at_ms: Date.now()
                 };
                 db.ref(`${basePath}/${editingId}`).set(updated).then(() => {
                     saveBtn.disabled = false;
@@ -638,14 +740,19 @@
                     module_name: moduleVal,
                     recording_link: recordingLink,
                     created_at: nowStr,
-                    updated_at: nowStr
+                    created_at_ms: Date.now(),
+                    updated_at: nowStr,
+                    updated_at_ms: Date.now(),
+                    review_status: "PENDING",
+                    submitted_for_review: false,
+                    notification_status: "WAITING_48_HOURS"
                 };
                 newRef.set(record).then(() => {
                     saveBtn.disabled = false;
                     statusEl.classList.add("hidden");
                     cancelEdit();
                     loadMySubmissions();
-                    showAlert("Recording link submitted.");
+                    showAlert("Recording link submitted.\n\nIf you do not click ‘Submit to Mentors for Review’ within 48 hours, this entry will automatically be submitted to mentors for review.");
                 }).catch(err => {
                     saveBtn.disabled = false;
                     statusEl.classList.add("hidden");
@@ -669,6 +776,8 @@
 
         function deleteSubmission(submissionId) {
             if (!db) return;
+            const rec = submissionsStore[submissionId];
+            if (isSubmittedForReview(rec)) return showAlert("This entry has been submitted for mentor review and can no longer be deleted.");
             if (!confirm("Delete this submission?")) return;
             const path = `form_submissions/${safeWorkshopKey}/${FORM_ID}/${activeUserKey}/${submissionId}`;
             db.ref(path).remove().then(() => {
@@ -701,18 +810,25 @@
 
                 tbody.innerHTML = "";
                 entries.forEach(item => {
+                    const submitted = isSubmittedForReview(item);
+                    const statusLabel = submitted ? "Submitted for Review" : "Pending";
+                    const statusClass = submitted ? "text-green-700 bg-green-50" : "text-amber-700 bg-amber-50";
                     const tr = document.createElement("tr");
                     tr.innerHTML = `
-                        <td class="py-1.5 px-2 font-medium">${item.participant_name || "-"}</td>
-                        <td class="py-1.5 px-2">${item.section || "-"}</td>
-                        <td class="py-1.5 px-2">${item.module_name || "-"}</td>
+                        <td class="py-1.5 px-2">${escapeHtml(item.section || "-")}</td>
+                        <td class="py-1.5 px-2">${escapeHtml(item.module_name || "-")}</td>
                         <td class="py-1.5 px-2" style="max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
-                            <a href="${item.recording_link}" target="_blank" style="color:#4f46e5;text-decoration:underline;">Open</a>
+                            <a href="${escapeHtml(item.recording_link || "#")}" target="_blank" rel="noopener" style="color:#4f46e5;text-decoration:underline;">Open</a>
                         </td>
-                        <td class="py-1.5 px-2 text-right" style="white-space:nowrap;">
-                            <button type="button" onclick="viewSubmission('${item.id}')" title="View" style="padding:2px 5px;cursor:pointer;">👁️</button>
-                            <button type="button" onclick="startEdit('${item.id}')" title="Edit" style="padding:2px 5px;cursor:pointer;">✏️</button>
-                            <button type="button" onclick="deleteSubmission('${item.id}')" title="Delete" style="padding:2px 5px;cursor:pointer;">🗑️</button>
+                        <td class="py-1.5 px-2"><span class="text-[10px] font-semibold px-1.5 py-1 rounded ${statusClass}">${statusLabel}</span></td>
+                        <td class="py-1.5 px-2" style="white-space:nowrap;">
+                            <div class="flex flex-wrap gap-1">
+                                <button type="button" onclick="viewSubmission('${item.id}')" class="border rounded px-1.5 py-1" title="View">View</button>
+                                <button type="button" onclick="startEdit('${item.id}')" class="border rounded px-1.5 py-1 ${submitted ? "opacity-40 cursor-not-allowed" : ""}" ${submitted ? "disabled" : ""} title="Edit">Edit</button>
+                                <button type="button" onclick="deleteSubmission('${item.id}')" class="border rounded px-1.5 py-1 ${submitted ? "opacity-40 cursor-not-allowed" : ""}" ${submitted ? "disabled" : ""} title="Delete">Delete</button>
+                                <button type="button" onclick="submitForMentorReview('${item.id}')" class="border rounded px-1.5 py-1 bg-indigo-50 text-indigo-700 ${submitted ? "opacity-40 cursor-not-allowed" : ""}" ${submitted ? "disabled" : ""} title="Submit to Mentors for Review">Submit to Mentors for Review</button>
+                                <button type="button" onclick="openRecordingDownload('${item.id}')" class="border rounded px-1.5 py-1 ${submitted ? "bg-green-50 text-green-700" : "opacity-40 cursor-not-allowed"}" ${submitted ? "" : "disabled"} title="Download / open recording">Download</button>
+                            </div>
                         </td>
                     `;
                     tbody.appendChild(tr);
