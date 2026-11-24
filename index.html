@@ -25,10 +25,29 @@
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
         }
         .fixed-inner {
-            max-width: 448px;
+            max-width: 520px;
             margin: 0 auto;
             padding: 8px 12px;
             box-sizing: border-box;
+        }
+        #global-header {
+            min-height: 0;
+        }
+        #app-logo {
+            width: 100%;
+            height: auto;
+            max-height: 180px;
+            object-fit: contain;
+            object-position: center;
+        }
+        #app-version-badge {
+            display: inline-block;
+            font-size: 9px;
+            line-height: 1.2;
+            color: #6b7280;
+            margin-top: 5px;
+            text-align: center;
+            width: 100%;
         }
     </style>
 </head>
@@ -39,7 +58,7 @@
     <div id="fixed-top-shell" class="hidden">
         <div class="fixed-inner space-y-1.5">
             <div id="global-header" class="bg-white rounded-lg shadow-sm overflow-hidden flex justify-center w-full hidden">
-                <img id="app-logo" src="" alt="App Logo" class="w-full h-auto object-cover block" style="max-height: 84px;" />
+                <img id="app-logo" src="" alt="Workshop banner" class="block" />
             </div>
             <div id="app-header" class="bg-blue-50 border border-blue-200 text-blue-900 shadow-sm rounded-lg p-2 flex items-start justify-between w-full gap-2 hidden">
                 <div id="header-user-info" class="text-[11px] leading-snug overflow-hidden">
@@ -64,7 +83,8 @@
             <div id="login-workshop-badge" class="text-center mb-1 hidden">
                 <span id="login-workshop-name" class="text-[10px] uppercase tracking-widest bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full font-semibold">--</span>
             </div>
-            <h2 id="login-screen-heading" class="text-base sm:text-lg font-bold text-gray-800 mb-2 text-center">Participant Login</h2>
+            <h2 id="login-screen-heading" class="text-base sm:text-lg font-bold text-gray-800 mb-1 text-center">Participant Login</h2>
+            <div id="app-version-badge">HC Portal · V2 · 24-Nov-2026</div>
 
             <div class="mb-2 relative">
                 <label class="block text-gray-700 text-[11px] font-bold mb-0.5">Type your name in English (at least 3 letters):</label>
@@ -352,8 +372,7 @@
 
     <!-- Footer -->
     <footer id="app-footer" class="text-center py-1.5 text-[10px] text-gray-500">
-        Heartful Communication - Participant Login System
-        <span id="app-version" class="ml-1 text-[9px] text-gray-400">| v2026.11.24-FB-LOGO-01</span>
+        Heartful Communication - Participant Login System | V2 · 24-Nov-2026
     </footer>
 
     <!-- Custom Message Box Modal -->
@@ -423,14 +442,23 @@
             }
         }
 
-        function setFixedHeaderVisibility(isVisible) {
+        function setFixedHeaderVisibility(isLoggedIn) {
             const shellEl = document.getElementById("fixed-top-shell");
-            if (!shellEl) return;
-            if (isVisible) {
-                shellEl.classList.remove("hidden");
-            } else {
-                shellEl.classList.add("hidden");
-            }
+            const logoContainer = document.getElementById("global-header");
+            const profileHeader = document.getElementById("app-header");
+            if (!shellEl || !logoContainer || !profileHeader) return;
+
+            // The workshop banner remains visible on the login and dashboard screens.
+            const logoIsAvailable = !logoContainer.classList.contains("hidden") &&
+                !!document.getElementById("app-logo")?.src;
+            const showProfile = !!(isLoggedIn && currentActiveUser);
+
+            if (logoIsAvailable || showProfile) shellEl.classList.remove("hidden");
+            else shellEl.classList.add("hidden");
+
+            if (showProfile) profileHeader.classList.remove("hidden");
+            else profileHeader.classList.add("hidden");
+
             syncFixedHeaderOffset();
         }
 
@@ -463,7 +491,7 @@
                 document.getElementById('page-title').innerText = `Heartful Communication - Workshop (${activeWorkshopId}) | Participant Portal`;
                 if (headingEl) headingEl.textContent = "Participant Login";
                 if (selectedLabelEl) selectedLabelEl.textContent = "Name of the Participant:";
-                if (footerEl) footerEl.innerHTML = 'Heartful Communication - Participant Login System <span id="app-version" class="ml-1 text-[9px] text-gray-400">| v2026.11.24-FB-LOGO-01</span>';
+                if (footerEl) footerEl.textContent = "Heartful Communication - Participant Login System";
             }
         }
         applyPortalRoleLabels();
@@ -552,70 +580,26 @@
             return false;
         }
 
-        // Workshop logo assets are now read from Firebase Realtime Database.
-        // Cached per workshop for this page session; no CDN/Drive image URL is used.
-        const workshopLogoCache = {};
-
         function applyWorkshopLogo(workshop) {
             const logoContainer = document.getElementById('global-header');
             const logoElement = document.getElementById('app-logo');
-
-            if (!workshop || workshop.logo_status !== "ON") {
-                logoContainer.classList.add('hidden');
-                syncFixedHeaderOffset();
-                return;
-            }
-
-            const workshopId = String(workshop.workshop_id || activeWorkshopId || "").trim();
-            if (!workshopId) {
-                logoContainer.classList.add('hidden');
-                syncFixedHeaderOffset();
-                console.warn("Workshop logo: workshop ID is missing.");
-                return;
-            }
-
-            // Show only after a valid Base64 asset has been retrieved and decoded.
-            logoContainer.classList.add('hidden');
-            logoElement.onload = () => {
-                logoContainer.classList.remove('hidden');
-                syncFixedHeaderOffset();
-            };
-            logoElement.onerror = () => {
-                logoContainer.classList.add('hidden');
-                syncFixedHeaderOffset();
-                console.error("Workshop logo could not be rendered from Firebase:", workshopId);
-            };
-
-            if (!workshopLogoCache[workshopId]) {
-                workshopLogoCache[workshopId] = db
-                    .ref('control_tower/workshop_logo_assets/' + workshopId)
-                    .once('value')
-                    .then(snapshot => {
-                        const asset = snapshot.val();
-                        if (!asset || !asset.image_base64) {
-                            throw new Error("No Base64 logo asset found for workshop " + workshopId);
-                        }
-                        const mimeType = asset.mime_type || "image/png";
-                        return "data:" + mimeType + ";base64," + asset.image_base64;
-                    })
-                    .catch(error => {
-                        delete workshopLogoCache[workshopId];
-                        throw error;
-                    });
-            }
-
-            workshopLogoCache[workshopId]
-                .then(dataUrl => {
-                    // Avoid applying a late response if the workshop context changed.
-                    const currentId = String(activeWorkshopId || "").trim();
-                    if (currentId && currentId.toLowerCase() !== workshopId.toLowerCase()) return;
-                    logoElement.src = dataUrl;
-                })
-                .catch(error => {
+            if (workshop && workshop.logo_status === "ON" && workshop.logo_url) {
+                logoElement.onload = () => {
+                    setFixedHeaderVisibility(!!currentActiveUser);
+                };
+                logoElement.onerror = () => {
                     logoContainer.classList.add('hidden');
-                    syncFixedHeaderOffset();
-                    console.warn("Workshop logo asset unavailable in Firebase:", error.message);
-                });
+                    setFixedHeaderVisibility(!!currentActiveUser);
+                };
+                logoElement.src = workshop.logo_url;
+                logoContainer.classList.remove('hidden');
+                // Display the banner on the initial login screen as soon as its URL is available.
+                setFixedHeaderVisibility(!!currentActiveUser);
+            } else {
+                logoContainer.classList.add('hidden');
+                setFixedHeaderVisibility(!!currentActiveUser);
+            }
+            syncFixedHeaderOffset();
         }
 
         function fetchNodeWithFallback(primaryPath, fallbackPath) {
@@ -1176,7 +1160,11 @@
                 workshop = allWorkshops[wId] || allWorkshops[activeWorkshopId] || {};
             }
 
-            applyWorkshopLogo(workshop);
+            if (workshop && (workshop.logo_status === "ON" && workshop.logo_url)) {
+                applyWorkshopLogo(workshop);
+            } else {
+                syncFixedHeaderOffset();
+            }
 
             let workshopName = workshop.workshop_name || "Workshop Name Not Available";
             let subtitleDisplay = document.getElementById('workshop-subtitle-display');
