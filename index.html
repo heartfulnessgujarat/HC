@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="page-title">Heartful Communication | Portal · V3</title>
+    <title id="page-title">Heartful Communication | Portal · V4</title>
 
     <!-- Tailwind CSS for modern responsive design -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -24,7 +24,8 @@
             border-bottom: 1px solid #e5e7eb;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
         }
-        /* Shared width for banner, participant profile, and dashboard resources */
+        /* V4: one shared outer width for banner, profile, and resources.
+           The image itself fills the banner card; no side gutters remain. */
         .fixed-inner,
         #main-container {
             width: 100%;
@@ -41,14 +42,21 @@
             padding-right: 12px;
         }
         #global-header {
+            display: block;
+            width: 100%;
             min-height: 0;
+            padding: 0;
+            margin: 0;
         }
         #app-logo {
+            display: block;
             width: 100%;
-            height: auto;
-            max-height: 180px;
-            object-fit: contain;
+            max-width: 100%;
+            height: clamp(112px, 28vw, 180px);
+            max-height: none;
+            object-fit: cover;
             object-position: center;
+            margin: 0;
         }
         #app-version-badge {
             display: inline-block;
@@ -94,7 +102,7 @@
                 <span id="login-workshop-name" class="text-[10px] uppercase tracking-widest bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full font-semibold">--</span>
             </div>
             <h2 id="login-screen-heading" class="text-base sm:text-lg font-bold text-gray-800 mb-1 text-center">Participant Login</h2>
-            <div id="app-version-badge">HC Portal · V3 · 24-Nov-2026</div>
+            <div id="app-version-badge">HC Portal · V4 · 24-Nov-2026 | Banner width + footer version</div>
 
             <div class="mb-2 relative">
                 <label class="block text-gray-700 text-[11px] font-bold mb-0.5">Type your name in English (at least 3 letters):</label>
@@ -382,7 +390,7 @@
 
     <!-- Footer -->
     <footer id="app-footer" class="text-center py-1.5 text-[10px] text-gray-500">
-        Heartful Communication - Participant Login System | V2 · 24-Nov-2026
+        Heartful Communication - Participant Login System | HC Portal V4 · 24-Nov-2026
     </footer>
 
     <!-- Custom Message Box Modal -->
@@ -496,12 +504,12 @@
                 document.getElementById('page-title').innerText = `Heartful Communication - Workshop (${activeWorkshopId}) | Facilitator / Mentor Portal`;
                 if (headingEl) headingEl.textContent = "Facilitator / Mentor Login";
                 if (selectedLabelEl) selectedLabelEl.textContent = "Name of the Facilitator / Mentor:";
-                if (footerEl) footerEl.textContent = "Heartful Communication - Facilitator / Mentor Login System";
+                if (footerEl) footerEl.textContent = "Heartful Communication - Facilitator / Mentor Login System | HC Portal V4 · 24-Nov-2026";
             } else {
                 document.getElementById('page-title').innerText = `Heartful Communication - Workshop (${activeWorkshopId}) | Participant Portal`;
                 if (headingEl) headingEl.textContent = "Participant Login";
                 if (selectedLabelEl) selectedLabelEl.textContent = "Name of the Participant:";
-                if (footerEl) footerEl.textContent = "Heartful Communication - Participant Login System";
+                if (footerEl) footerEl.textContent = "Heartful Communication - Participant Login System | HC Portal V4 · 24-Nov-2026";
             }
         }
         applyPortalRoleLabels();
