@@ -39,7 +39,7 @@
     <div id="fixed-top-shell" class="hidden">
         <div class="fixed-inner space-y-1.5">
             <div id="global-header" class="bg-white rounded-lg shadow-sm overflow-hidden flex justify-center w-full hidden">
-                <img id="app-logo" src="" alt="App Logo" class="w-full h-auto object-contain block" style="max-height: 140px; object-fit: contain; object-position: center;" />
+                <img id="app-logo" src="" alt="App Logo" class="w-full h-auto object-cover block" style="max-height: 84px;" />
             </div>
             <div id="app-header" class="bg-blue-50 border border-blue-200 text-blue-900 shadow-sm rounded-lg p-2 flex items-start justify-between w-full gap-2 hidden">
                 <div id="header-user-info" class="text-[11px] leading-snug overflow-hidden">
@@ -551,17 +551,70 @@
             return false;
         }
 
+        // Workshop logo assets are now read from Firebase Realtime Database.
+        // Cached per workshop for this page session; no CDN/Drive image URL is used.
+        const workshopLogoCache = {};
+
         function applyWorkshopLogo(workshop) {
             const logoContainer = document.getElementById('global-header');
             const logoElement = document.getElementById('app-logo');
-            if (workshop && workshop.logo_status === "ON" && workshop.logo_url) {
-                logoElement.onload = syncFixedHeaderOffset;
-                logoElement.src = workshop.logo_url;
-                logoContainer.classList.remove('hidden');
-            } else {
+
+            if (!workshop || workshop.logo_status !== "ON") {
                 logoContainer.classList.add('hidden');
+                syncFixedHeaderOffset();
+                return;
             }
-            syncFixedHeaderOffset();
+
+            const workshopId = String(workshop.workshop_id || activeWorkshopId || "").trim();
+            if (!workshopId) {
+                logoContainer.classList.add('hidden');
+                syncFixedHeaderOffset();
+                console.warn("Workshop logo: workshop ID is missing.");
+                return;
+            }
+
+            // Show only after a valid Base64 asset has been retrieved and decoded.
+            logoContainer.classList.add('hidden');
+            logoElement.onload = () => {
+                logoContainer.classList.remove('hidden');
+                syncFixedHeaderOffset();
+            };
+            logoElement.onerror = () => {
+                logoContainer.classList.add('hidden');
+                syncFixedHeaderOffset();
+                console.error("Workshop logo could not be rendered from Firebase:", workshopId);
+            };
+
+            if (!workshopLogoCache[workshopId]) {
+                workshopLogoCache[workshopId] = db
+                    .ref('control_tower/workshop_logo_assets/' + workshopId)
+                    .once('value')
+                    .then(snapshot => {
+                        const asset = snapshot.val();
+                        if (!asset || !asset.image_base64) {
+                            throw new Error("No Base64 logo asset found for workshop " + workshopId);
+                        }
+                        const mimeType = asset.mime_type || "image/png";
+                        return "data:" + mimeType + ";base64," + asset.image_base64;
+                    })
+                    .catch(error => {
+                        delete workshopLogoCache[workshopId];
+                        throw error;
+                    });
+            }
+
+            workshopLogoCache[workshopId]
+                .then(dataUrl => {
+                    // Avoid applying a late response if the workshop context changed.
+                    const currentId = String(activeWorkshopId || "").trim();
+                    if (currentId && currentId.toLowerCase() !== workshopId.toLowerCase()) return;
+                    logoElement.src = dataUrl;
+                })
+                .catch(error => {
+                    logoContainer.classList.add('hidden');
+                    syncFixedHeaderOffset();
+                    console.warn("Workshop logo asset unavailable in Firebase:", error.message);
+                });
         }
 
         function fetchNodeWithFallback(primaryPath, fallbackPath) {
@@ -1122,11 +1175,7 @@
                 workshop = allWorkshops[wId] || allWorkshops[activeWorkshopId] || {};
             }
 
-            if (workshop && (workshop.logo_status === "ON" && workshop.logo_url)) {
-                applyWorkshopLogo(workshop);
-            } else {
-                syncFixedHeaderOffset();
-            }
+            applyWorkshopLogo(workshop);
 
             let workshopName = workshop.workshop_name || "Workshop Name Not Available";
             let subtitleDisplay = document.getElementById('workshop-subtitle-display');
