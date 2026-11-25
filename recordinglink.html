@@ -601,41 +601,147 @@
             document.getElementById("review-confirm-modal").classList.add("hidden");
         }
 
-        function confirmSubmitForReview() {
-            const submissionId = pendingReviewSubmissionId;
-            cancelSubmitForReview();
-            if (!submissionId || !db) return;
-            const rec = submissionsStore[submissionId];
-            if (!rec || isSubmittedForReview(rec)) return showAlert("This recording has already been submitted for mentor review.");
 
-            const entryRef = db.ref(`form_submissions/${safeWorkshopKey}/${FORM_ID}/${activeUserKey}/${submissionId}`);
-            entryRef.transaction(current => {
-                if (!current || current.submitted_for_review === true ||
-                    (current.review_status || "").toString().toUpperCase() === "SUBMITTED") return;
-                current.submitted_for_review = true;
-                current.review_status = "SUBMITTED";
-                current.submitted_for_review_at_ms = Date.now();
-                current.submission_source = "MANUAL";
-                current.notification_status = "PENDING";
-                return current;
-            }).then(result => {
-                if (!result.committed) return showAlert("This entry is already submitted or could not be updated. Please refresh your submissions.");
-                loadMySubmissions();
-                showAlert("Your recording has been submitted to mentors for review. Edit and Delete are now disabled. A confirmation email will be sent to you, and mentors will be notified.");
-                // Apps Script sends emails and records delivery status. The scheduled backend retries if this request fails.
-                fetch(WEB_APP_URL, {
-                    method: "POST",
-                    mode: "no-cors",
-                    body: JSON.stringify({
-                        action: "sendRecordingReviewNotification",
-                        workshopKey: safeWorkshopKey,
-                        ownerKey: activeUserKey,
-                        submissionId: submissionId
-                    })
-                }).catch(err => console.warn("Recording review email request failed; scheduled backend will retry:", err));
-            }).catch(err => showAlert("Could not submit for review: " + err.message));
+
+function confirmSubmitForReview() {
+    const submissionId = pendingReviewSubmissionId;
+    cancelSubmitForReview();
+
+    if (!submissionId || !db) {
+        return showAlert("Unable to process this request. Please refresh the page and try again.");
+    }
+
+    const rec = submissionsStore[submissionId];
+
+    if (!rec) {
+        return showAlert(
+            "This recording entry is not available in your current submissions list. Please refresh your submissions and try again."
+        );
+    }
+
+    if (isSubmittedForReview(rec)) {
+        return showAlert(
+            "This recording has already been submitted for mentor review."
+        );
+    }
+
+    const entryRef = db.ref(
+        `form_submissions/${safeWorkshopKey}/${FORM_ID}/${activeUserKey}/${submissionId}`
+    );
+
+    let recordNotFound = false;
+    let alreadySubmitted = false;
+
+    entryRef.transaction(current => {
+
+        // Reset flags because Firebase may retry the transaction.
+        recordNotFound = false;
+        alreadySubmitted = false;
+
+        // The record does not exist at this Firebase path.
+        if (!current) {
+            recordNotFound = true;
+            return;
         }
 
+        // If already submitted, preserve the record and commit
+        // without changing its data.
+        if (
+            current.submitted_for_review === true ||
+            (current.review_status || "")
+                .toString()
+                .toUpperCase() === "SUBMITTED"
+        ) {
+            alreadySubmitted = true;
+            return current;
+        }
+
+        // Submit this recording for mentor review.
+        current.submitted_for_review = true;
+        current.review_status = "SUBMITTED";
+        current.submitted_for_review_at_ms = Date.now();
+        current.submission_source = "MANUAL";
+        current.notification_status = "PENDING";
+
+        return current;
+
+    }).then(result => {
+
+        // Distinguish an already-submitted record from a missing record.
+        if (alreadySubmitted) {
+            return showAlert(
+                "This recording has already been submitted for mentor review."
+            );
+        }
+
+        if (!result.committed) {
+            if (recordNotFound) {
+                return showAlert(
+                    "The recording entry could not be found in Firebase. " +
+                    "Please refresh your submissions. If the problem continues, " +
+                    "the Firebase record path needs to be checked."
+                );
+            }
+
+            return showAlert(
+                "The recording could not be submitted for review. " +
+                "Please refresh your submissions and try again."
+            );
+        }
+
+        const savedRecord = result.snapshot.val();
+
+        if (
+            !savedRecord ||
+            savedRecord.submitted_for_review !== true ||
+            (savedRecord.review_status || "")
+                .toString()
+                .toUpperCase() !== "SUBMITTED"
+        ) {
+            return showAlert(
+                "The review status could not be confirmed. " +
+                "Please refresh your submissions before trying again."
+            );
+        }
+
+        // Refresh the mentee's submissions list.
+        loadMySubmissions();
+
+        showAlert(
+            "Your recording has been submitted to mentors for review.\n\n" +
+            "Edit and Delete are now disabled. " +
+            "A confirmation email will be sent to you, " +
+            "and mentors will be notified."
+        );
+
+        // Request the Apps Script email notification.
+        fetch(WEB_APP_URL, {
+            method: "POST",
+            mode: "no-cors",
+            body: JSON.stringify({
+                action: "sendRecordingReviewNotification",
+                workshopKey: safeWorkshopKey,
+                ownerKey: activeUserKey,
+                submissionId: submissionId
+            })
+        }).catch(err => {
+            console.warn(
+                "Recording review email request failed. " +
+                "The scheduled backend should retry:",
+                err
+            );
+        });
+
+    }).catch(err => {
+        showAlert(
+            "Could not submit for review: " + err.message
+        );
+    });
+}
+
+
+
+        
         function openRecordingDownload(submissionId) {
             const rec = submissionsStore[submissionId];
             if (!rec || !isSubmittedForReview(rec)) return;
