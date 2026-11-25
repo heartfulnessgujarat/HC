@@ -94,7 +94,7 @@
             <!-- Edit Mode Banner -->
             <div id="edit-mode-banner" class="hidden bg-amber-50 border border-amber-300 text-amber-900 rounded-md p-2.5 flex items-center justify-between text-xs">
                 <div>
-                    <strong>Editing Draft Submission</strong> &mdash; Make your updates below and click <em>Update Draft Self-Evaluation</em>.
+                    <strong>Editing Draft Mentor Feedback</strong> &mdash; Make your updates below and click <em>Update Draft Mentor Feedback</em>.
                 </div>
                 <button type="button" onclick="cancelEditMode()" class="bg-amber-200 hover:bg-amber-300 text-amber-900 font-bold px-2.5 py-1 rounded text-[11px]">
                     Cancel Edit
@@ -586,8 +586,9 @@
             <!-- Submit Button + Back to Main Screen -->
             <div class="pt-2 space-y-2">
                 <button type="button" id="btn-submit-form" onclick="handleFormSubmit()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-4 rounded-lg shadow transition text-sm">
-                    I have reviewed my response, let the feedback go to Mentee
+                    Submit Mentor Feedback
                 </button>
+                <p class="text-[10px] text-gray-500 text-center">Submit saves your feedback as a draft. You can View, Edit, or Delete it from Submissions. It is sent to the mentee only after you choose “Lock &amp; Submit for Mentee Review” and confirm.</p>
                 <button type="button" onclick="goBackToMainScreen()" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg transition text-xs">
                     Back to Main Screen
                 </button>
@@ -602,7 +603,7 @@
                 <div>
                     <h2 class="text-sm sm:text-base font-bold text-gray-800" id="records-panel-title">Your Submissions</h2>
                     <p class="text-[11px] text-gray-500" id="records-panel-subtitle">
-                        Submissions remain editable for 1 day (24 hours) unless you click "Lock &amp; Submit for Mentors to Review".
+                        Drafts remain editable until you explicitly confirm “Lock &amp; Submit for Mentee Review”. Once locked, they cannot be edited or deleted.
                     </p>
                 </div>
 
@@ -677,12 +678,12 @@
 
     <!-- Footer -->
     <footer class="text-center py-2 text-[11px] text-gray-500 no-print">
-        Heartful Communication • Mentor Feedback Portal | HC Portal · Mentor Feedback V1.0 · 26-Nov-2026
+        Heartful Communication • Mentor Feedback Portal | HC Portal · Mentor Feedback V1.1 · Draft → Review → Finalise workflow · 26-Nov-2026
     </footer>
 
     <script>
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwZwp6CgVUqLM9LUWob9FvgiioA3S5sACYHlkOD7RiopRucNaHzP8IsAcKMEARKbunH3A/exec";
-        const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+        const MENTOR_FEEDBACK_NODE = "control_tower/mentor_feedback";
         const SESSION_STORAGE_KEY = "hc_portal_active_session";
 
         const firebaseConfig = {
@@ -750,6 +751,7 @@
         let isMentorViewer = false;
         let workshopSubmissions = {};
         let editingRecordId = null;
+        let submissionsListenerStarted = false;
 
         function syncFixedHeaderOffset() {
             const fixedEl = document.getElementById("fixed-top-shell");
@@ -1018,7 +1020,7 @@
                 const workshop = findWorkshopEntry(allWorkshops, activeWorkshopId);
                 if (workshop) {
                     const wsTitle = workshop.workshop_name || `Workshop (${activeWorkshopId})`;
-                    document.getElementById("page-title").innerText = `${wsTitle} | Mentee Self-Evaluation`;
+                    document.getElementById("page-title").innerText = `${wsTitle} | Mentor Feedback`;
                     applyFixedBannerLogo(workshop);
                     renderDynamicSectionAndModuleOptions(workshop);
                 } else {
@@ -1027,11 +1029,13 @@
 
                 resolveLoggedInUser();
                 populateMenteeSelector();
+                if (isMentorViewer) listenToWorkshopSubmissions();
             }).catch(err => {
                 console.error("Firebase initialization error:", err);
                 renderDynamicSectionAndModuleOptions({});
                 resolveLoggedInUser();
                 populateMenteeSelector();
+                if (isMentorViewer) listenToWorkshopSubmissions();
                 showCustomAlert("Unable to load workshop data. Please check your internet connection.");
             });
         }
@@ -1137,7 +1141,7 @@
 
         function applyUserContextUI() {
             isMentorViewer = isMentorRole(currentUser.role);
-            document.getElementById("tab-btn-records").classList.add("hidden");
+            document.getElementById("tab-btn-records").classList.remove("hidden");
             document.getElementById("panel-records").classList.add("hidden");
             document.getElementById("tab-btn-form").classList.remove("hidden");
             document.getElementById("tab-btn-form").innerText = "Mentor Feedback Form";
@@ -1149,116 +1153,28 @@
             switchTab("form");
         }
 
+        function mentorFeedbackPath() {
+            return `${MENTOR_FEEDBACK_NODE}/${activeWorkshopId.toString().trim().toUpperCase()}`;
+        }
+
         function listenToWorkshopSubmissions() {
-            const refPath = `control_tower/mentee_feedback/${activeWorkshopId.toUpperCase()}`;
-            db.ref(refPath).on("value", snap => {
+            if (submissionsListenerStarted || !db || !isMentorViewer) return;
+            submissionsListenerStarted = true;
+            db.ref(mentorFeedbackPath()).on("value", snap => {
                 workshopSubmissions = snap.val() || {};
-                checkAndAutoLockExpiredSubmissions();
                 populateMentorMenteeFilter();
                 renderSubmissionsList();
+            }, err => {
+                console.error("Mentor feedback submissions listener error:", err);
+                document.getElementById("submissions-list-container").innerHTML =
+                    `<div class="text-center text-red-600 py-6 text-xs">Could not load mentor feedback submissions. Please refresh the page.</div>`;
             });
         }
 
         function isRecordLocked(rec) {
             if (!rec) return false;
-            if (rec.status === "locked" || rec.is_locked === true) return true;
-            const deadline = Number(rec.lock_deadline || 0);
-            return deadline > 0 && Date.now() >= deadline;
-        }
-
-        function checkAndAutoLockExpiredSubmissions() {
-            const now = Date.now();
-            const wsKey = activeWorkshopId.toUpperCase();
-            Object.keys(workshopSubmissions).forEach(recId => {
-                const rec = workshopSubmissions[recId];
-                if (!rec) return;
-                const deadline = Number(rec.lock_deadline || 0);
-                const expired = deadline > 0 && now >= deadline;
-
-                if (expired && rec.status !== "locked") {
-                    const updates = {
-                        status: "locked",
-                        is_locked: true,
-                        locked_at: now,
-                        locked_reason: "auto_24h_expired"
-                    };
-                    db.ref(`control_tower/mentee_feedback/${wsKey}/${recId}`).update(updates).then(() => {
-                        if (!rec.mentor_notified) {
-                            triggerLockEmailNotifications(recId, { ...rec, ...updates });
-                        }
-                    });
-                } else if (rec.status === "locked" && !rec.mentor_notified) {
-                    triggerLockEmailNotifications(recId, rec);
-                }
-            });
-        }
-
-        function getBatchMentorEmails() {
-            const emails = new Set();
-            Object.values(allParticipants).forEach(p => {
-                if (!p || typeof p !== "object") return;
-                const pWId = (p.workshop_id || p.wid || "").toString().trim().toUpperCase();
-                const pRole = (p.role || "").toString().trim().toUpperCase();
-                const isBatchMentor = (pWId === activeWorkshopId.toUpperCase()) &&
-                    (pRole === "FACILITATOR" || pRole === "FACILITATORS" || pRole === "MENTOR" || pRole === "MENTORS");
-                const email = (p.ps_email || "").toString().trim();
-                if (isBatchMentor && email && email.includes("@")) {
-                    emails.add(email);
-                }
-            });
-            return Array.from(emails);
-        }
-
-        function getMenteeEmailById(menteeId, menteeName) {
-            if (currentUser && currentUser.ps_id === menteeId && currentUser.ps_email) {
-                return currentUser.ps_email;
-            }
-            for (const key in allParticipants) {
-                const p = allParticipants[key];
-                if (!p || typeof p !== "object") continue;
-                if (menteeId && (p.ps_id || "").toString().trim().toLowerCase() === menteeId.toLowerCase()) {
-                    return (p.ps_email || "").toString().trim();
-                }
-                if (menteeName && (p.ps_name || "").toString().trim().toLowerCase() === menteeName.toLowerCase()) {
-                    return (p.ps_email || "").toString().trim();
-                }
-            }
-            return "";
-        }
-
-        function triggerLockEmailNotifications(recId, rec) {
-            const wsKey = activeWorkshopId.toUpperCase();
-            db.ref(`control_tower/mentee_feedback/${wsKey}/${recId}`).update({
-                mentor_notified: true,
-                notified_at: Date.now()
-            });
-
-            const mentorEmails = getBatchMentorEmails();
-            const menteeEmail = (rec.mentee_email || getMenteeEmailById(rec.mentee_id, rec.mentee_name) || "").trim();
-            const workshopObj = findWorkshopEntry(allWorkshops, activeWorkshopId) || {};
-            const workshopName = workshopObj.workshop_name || activeWorkshopId;
-
-            const payload = {
-                action: "sendMenteeSelfEvalNotification",
-                workshopId: wsKey,
-                workshopName: workshopName,
-                menteeName: rec.mentee_name || "Mentee",
-                menteeId: rec.mentee_id || "",
-                menteeEmail: menteeEmail,
-                mentorEmails: mentorEmails,
-                sessionDate: rec.session_date || "",
-                moduleSection: rec.module_section || "",
-                moduleNumber: rec.module_number || "",
-                lockedReason: rec.locked_reason || "manual_lock"
-            };
-
-            fetch(WEB_APP_URL, {
-                method: "POST",
-                body: JSON.stringify(payload)
-            })
-            .then(r => r.json())
-            .then(res => console.log("Self-eval lock notification response:", res))
-            .catch(err => console.error("Error sending self-eval notification emails:", err));
+            const status = (rec.status || "").toString().trim().toUpperCase();
+            return rec.is_locked === true || status === "LOCKED" || status === "FINALIZED" || status === "SENT";
         }
 
         function getRadioValue(name) {
@@ -1272,371 +1188,320 @@
             });
         }
 
-        function handleFormSubmit() {
-            const btn = document.getElementById("btn-submit-form");
-            if (!isMentorRole(currentUser.role)) return showCustomAlert("Please sign in as a Facilitator / Mentor.");
+        function collectMentorFeedbackForm() {
             const menteeSelect = document.getElementById("mentor-mentee-select");
             const selected = menteeSelect && menteeSelect.options[menteeSelect.selectedIndex];
-            if (!selected || !selected.value) return showCustomAlert("Please select the mentee.");
+            if (!selected || !selected.value) {
+                showCustomAlert("Please select the mentee.");
+                return null;
+            }
             const mentee = allParticipants[selected.value] || {};
-            const sessionDate = document.getElementById("session-date").value.trim();
-            const moduleSection = getRadioValue("module_section");
-            const moduleNumber = getRadioValue("module_number");
-            const vaWithinFrame = getRadioValue("va_within_frame");
-            const vaVisibleAudible = getRadioValue("va_visible_audible");
-            const ofnrVideoAudio = document.getElementById("ofnr-video-audio").value.trim();
-            const techMultitask = getRadioValue("tech_multitask");
-            const techPptx = getRadioValue("tech_pptx");
-            const ofnrTechCapability = document.getElementById("ofnr-tech-capability").value.trim();
-            const cpChat = getRadioValue("cp_chat");
-            const ofnrChat = document.getElementById("ofnr-chat").value.trim();
-            const cpConcept = getRadioValue("cp_concept");
-            const ofnrConcept = document.getElementById("ofnr-concept").value.trim();
-            const cpWalkingTalk = getRadioValue("cp_walking_talk");
-            const ofnrWalkingTalk = document.getElementById("ofnr-walking-talk").value.trim();
-            const tmCheckFocus = getRadioValue("tm_check_focus");
-            const tmCheckAgreement = getRadioValue("tm_check_agreement");
-            const ofnrTimeManagement = document.getElementById("ofnr-time-management").value.trim();
-            const recommendation = getRadioValue("presentation_recommendation");
+            const formData = {
+                mentee_key: selected.value,
+                mentee_id: (selected.dataset.participantId || mentee.ps_id || mentee.uid || mentee.id || selected.value).toString(),
+                mentee_name: (mentee.ps_name || mentee.uname || mentee.name || selected.textContent).toString(),
+                mentee_email: (selected.dataset.email || mentee.ps_email || mentee.email || "").toString(),
+                session_date: document.getElementById("session-date").value.trim(),
+                module_section: getRadioValue("module_section"),
+                module_number: getRadioValue("module_number"),
+                va_within_frame: getRadioValue("va_within_frame"),
+                va_visible_audible: getRadioValue("va_visible_audible"),
+                ofnr_video_audio: document.getElementById("ofnr-video-audio").value.trim(),
+                tech_multitask: getRadioValue("tech_multitask"),
+                tech_pptx: getRadioValue("tech_pptx"),
+                ofnr_tech_capability: document.getElementById("ofnr-tech-capability").value.trim(),
+                cp_chat: getRadioValue("cp_chat"),
+                ofnr_chat: document.getElementById("ofnr-chat").value.trim(),
+                cp_concept: getRadioValue("cp_concept"),
+                ofnr_concept: document.getElementById("ofnr-concept").value.trim(),
+                cp_walking_talk: getRadioValue("cp_walking_talk"),
+                ofnr_walking_talk: document.getElementById("ofnr-walking-talk").value.trim(),
+                tm_check_focus: getRadioValue("tm_check_focus"),
+                tm_check_agreement: getRadioValue("tm_check_agreement"),
+                ofnr_time_management: document.getElementById("ofnr-time-management").value.trim(),
+                presentation_recommendation: getRadioValue("presentation_recommendation")
+            };
 
-            if (!sessionDate) return showCustomAlert("Please select the Date of the session.");
-            if (!moduleSection) return showCustomAlert("Please select the Section of the Module.");
-            if (!moduleNumber) return showCustomAlert("Please select the Module Number.");
-            if (!vaWithinFrame || !vaVisibleAudible) return showCustomAlert("Please answer both Video / Audio Clarity questions.");
-            if (!ofnrVideoAudio) return showCustomAlert("Please enter detailed OFNR feedback on Video / Audio Clarity.");
-            if (!techMultitask || !techPptx) return showCustomAlert("Please answer both Technical Capability questions.");
-            if (!ofnrTechCapability) return showCustomAlert("Please enter detailed OFNR feedback on Technical Capability.");
-            if (!cpChat || !ofnrChat) return showCustomAlert("Please select the Responsiveness to Chat curve point and enter detailed OFNR feedback.");
-            if (!cpConcept || !ofnrConcept) return showCustomAlert("Please select the Concept Clarity curve point and enter detailed OFNR feedback.");
-            if (!cpWalkingTalk) return showCustomAlert("Please select the Walking the Talk curve point.");
-            if (!ofnrWalkingTalk) return showCustomAlert("Please enter detailed OFNR feedback on Walking the Talk.");
-            if (!tmCheckFocus || !tmCheckAgreement) return showCustomAlert("Please answer both Time Management questions.");
-            if (!ofnrTimeManagement) return showCustomAlert("Please enter detailed OFNR feedback on Time Management.");
-            if (!recommendation) return showCustomAlert("Please select the Presentation Related Topics recommendation.");
-
-            openConfirmModal(
-                "Finalise and Send Mentor Feedback?",
-                "Are you sure you want to finalise this feedback and send it to the mentee?\n\n" +
-                "Once you select Yes, the response will be finalised and an email containing the feedback will be sent to the selected mentee. " +
-                "The confidential Presentation Related Topics recommendation will not be included in the mentee's email.",
-                () => saveAndSendMentorFeedback({
-                    menteeKey:selected.value,
-                    menteeId:(selected.dataset.participantId || mentee.ps_id || mentee.uid || mentee.id || selected.value).toString(),
-                    menteeName:(mentee.ps_name || mentee.uname || mentee.name || selected.textContent).toString(),
-                    menteeEmail:(selected.dataset.email || mentee.ps_email || mentee.email || "").toString(),
-                    sessionDate,moduleSection,moduleNumber,
-                    vaWithinFrame,vaVisibleAudible,ofnrVideoAudio,
-                    techMultitask,techPptx,ofnrTechCapability,
-                    cpChat:Number(cpChat),ofnrChat,
-                    cpConcept:Number(cpConcept),ofnrConcept,
-                    cpWalkingTalk:Number(cpWalkingTalk),ofnrWalkingTalk,
-                    tmCheckFocus,tmCheckAgreement,ofnrTimeManagement,
-                    presentation_recommendation:recommendation
-                })
-            );
+            const required = [
+                [formData.session_date, "Please select the Date of the session."],
+                [formData.module_section, "Please select the Section of the Module."],
+                [formData.module_number, "Please select the Module Number."],
+                [formData.va_within_frame && formData.va_visible_audible, "Please answer both Video / Audio Clarity questions."],
+                [formData.ofnr_video_audio, "Please enter detailed OFNR feedback on Video / Audio Clarity."],
+                [formData.tech_multitask && formData.tech_pptx, "Please answer both Technical Capability questions."],
+                [formData.ofnr_tech_capability, "Please enter detailed OFNR feedback on Technical Capability."],
+                [formData.cp_chat && formData.ofnr_chat, "Please select the Responsiveness to Chat curve point and enter detailed OFNR feedback."],
+                [formData.cp_concept && formData.ofnr_concept, "Please select the Concept Clarity curve point and enter detailed OFNR feedback."],
+                [formData.cp_walking_talk, "Please select the Walking the Talk curve point."],
+                [formData.ofnr_walking_talk, "Please enter detailed OFNR feedback on Walking the Talk."],
+                [formData.tm_check_focus && formData.tm_check_agreement, "Please answer both Time Management questions."],
+                [formData.ofnr_time_management, "Please enter detailed OFNR feedback on Time Management."],
+                [formData.presentation_recommendation, "Please select the Presentation Related Topics recommendation."]
+            ];
+            const missing = required.find(item => !item[0]);
+            if (missing) {
+                showCustomAlert(missing[1]);
+                return null;
+            }
+            return formData;
         }
 
-        function saveAndSendMentorFeedback(formData) {
+        function handleFormSubmit() {
+            if (!isMentorRole(currentUser.role)) {
+                return showCustomAlert("Please sign in as a Facilitator / Mentor.");
+            }
+            if (!db) return showCustomAlert("Database connection is not ready. Please try again.");
+            const formData = collectMentorFeedbackForm();
+            if (!formData) return;
+            saveMentorFeedbackDraft(formData);
+        }
+
+        function saveMentorFeedbackDraft(formData) {
             const btn = document.getElementById("btn-submit-form");
+            if (editingRecordId && isRecordLocked(workshopSubmissions[editingRecordId])) {
+                return showCustomAlert("This feedback has already been locked and cannot be edited.");
+            }
             btn.disabled = true;
-            btn.innerText = "Saving and sending...";
+            btn.innerText = editingRecordId ? "Updating Draft..." : "Saving Draft...";
+
+            const wasEditing = !!editingRecordId;
+            const wsKey = activeWorkshopId.toString().trim().toUpperCase();
             const now = Date.now();
-            const wsKey = (activeWorkshopId || "DEFAULT").toString().trim().toUpperCase();
-            const recordRef = db.ref(`control_tower/mentor_feedback/${wsKey}`).push();
-            const recordId = recordRef.key;
+            const workshopObj = findWorkshopEntry(allWorkshops, activeWorkshopId) || {};
+            const recordId = editingRecordId || db.ref(mentorFeedbackPath()).push().key;
+            const existing = editingRecordId ? (workshopSubmissions[editingRecordId] || {}) : {};
             const record = {
-                workshop_id:wsKey,
-                workshop_name:(findWorkshopEntry(allWorkshops, activeWorkshopId) || {}).workshop_name || activeWorkshopId,
-                mentor_id:currentUser.ps_id || "",
-                mentor_name:currentUser.ps_name || "Facilitator",
-                mentor_email:currentUser.ps_email || "",
-                mentee_key:formData.menteeKey,
-                mentee_id:formData.menteeId,
-                mentee_name:formData.menteeName,
-                mentee_email:formData.menteeEmail,
-                session_date:formData.sessionDate,
-                module_section:formData.moduleSection,
-                module_number:formData.moduleNumber,
-                va_within_frame:formData.vaWithinFrame,
-                va_visible_audible:formData.vaVisibleAudible,
-                ofnr_video_audio:formData.ofnrVideoAudio,
-                tech_multitask:formData.techMultitask,
-                tech_pptx:formData.techPptx,
-                ofnr_tech_capability:formData.ofnrTechCapability,
-                cp_chat:formData.cpChat,
-                ofnr_chat:formData.ofnrChat,
-                cp_concept:formData.cpConcept,
-                ofnr_concept:formData.ofnrConcept,
-                cp_walking_talk:formData.cpWalkingTalk,
-                ofnr_walking_talk:formData.ofnrWalkingTalk,
-                tm_check_focus:formData.tmCheckFocus,
-                tm_check_agreement:formData.tmCheckAgreement,
-                ofnr_time_management:formData.ofnrTimeManagement,
-                presentation_recommendation:formData.presentation_recommendation,
-                record_id:recordId,
-                status:"FINALIZED",
-                email_status:"PENDING",
-                created_at:now,
-                finalised_at:now
+                ...existing,
+                ...formData,
+                workshop_id: wsKey,
+                workshop_name: workshopObj.workshop_name || activeWorkshopId,
+                form_id: "mentor_feedback",
+                mentor_id: currentUser.ps_id || "",
+                mentor_name: currentUser.ps_name || "Facilitator",
+                mentor_email: currentUser.ps_email || "",
+                record_id: recordId,
+                status: "DRAFT",
+                is_locked: false,
+                email_status: existing.email_status || "NOT_SENT",
+                created_at: existing.created_at || now,
+                updated_at: now,
+                draft_saved_at: now
             };
-            recordRef.set(record).then(() => {
-                return fetch(WEB_APP_URL, {
-                    method:"POST",
-                    body:JSON.stringify({action:"sendMentorFeedbackToMentee", workshopKey:wsKey, recordId:recordId})
-                }).then(r => r.json()).then(response => {
-                    if (!response || response.status !== "Success") throw new Error((response && response.message) || "The feedback was saved, but the email service did not confirm sending.");
-                    return recordRef.update({email_status:"SENT", email_client_response:response, email_sent_at:Date.now()});
-                });
-            }).then(() => {
+            const recordRef = db.ref(`${mentorFeedbackPath()}/${recordId}`);
+            const writePromise = editingRecordId ? recordRef.update(record) : recordRef.set(record);
+
+            writePromise.then(() => {
                 btn.disabled = false;
-                btn.innerText = "I have reviewed my response, let the feedback go to Mentee";
+                cancelEditMode(false);
                 resetFormFields();
-                showCustomAlert("Mentor feedback has been finalised and sent to the selected mentee. The confidential recommendation was not included in the email.", "Feedback Sent");
+                switchTab("records");
+                showCustomAlert(
+                    wasEditing ? "Your draft mentor feedback has been updated." :
+                    "Your mentor feedback has been saved as a draft. You can View, Edit, or Delete it from Submissions. It will be sent to the mentee only after you select “Lock & Submit for Mentee Review” and confirm.",
+                    "Draft Saved"
+                );
             }).catch(err => {
                 btn.disabled = false;
-                btn.innerText = "I have reviewed my response, let the feedback go to Mentee";
-                recordRef.update({email_status:"FAILED", email_error:err.message, email_last_attempt_at:Date.now()}).catch(()=>{});
-                showCustomAlert("The feedback record has been saved. However, email delivery was not confirmed. Please check the Apps Script execution log and the record's email_status before submitting again.\n\nDetails: " + err.message, "Saved – Email Needs Review");
+                btn.innerText = editingRecordId ? "Update Draft Mentor Feedback" : "Submit Mentor Feedback";
+                console.error("Mentor feedback draft save failed:", err);
+                showCustomAlert("Could not save the mentor feedback draft: " + (err.message || err));
             });
         }
 
         function resetFormFields() {
+            document.getElementById("mentor-mentee-select").value = "";
             document.getElementById("session-date").value = "";
             ["module_section", "module_number", "va_within_frame", "va_visible_audible", "tech_multitask", "tech_pptx", "cp_chat", "cp_concept", "cp_walking_talk", "tm_check_focus", "tm_check_agreement", "presentation_recommendation"].forEach(name => {
                 document.querySelectorAll(`input[name="${name}"]`).forEach(el => el.checked = false);
             });
-            document.getElementById("ofnr-video-audio").value = "";
-            document.getElementById("ofnr-tech-capability").value = "";
-            document.getElementById("ofnr-chat").value = "";
-            document.getElementById("ofnr-concept").value = "";
-            document.getElementById("ofnr-walking-talk").value = "";
-            document.getElementById("ofnr-time-management").value = "";
+            ["ofnr-video-audio", "ofnr-tech-capability", "ofnr-chat", "ofnr-concept", "ofnr-walking-talk", "ofnr-time-management"].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = "";
+            });
         }
 
         function startEditRecord(recId) {
             const rec = workshopSubmissions[recId];
             if (!rec) return;
-            if (isRecordLocked(rec)) {
-                return showCustomAlert("This evaluation is already locked and cannot be edited.");
+            if (isRecordLocked(rec)) return showCustomAlert("This feedback is locked and cannot be edited.");
+            const ownerId = (rec.mentor_id || "").toString();
+            if (ownerId && currentUser.ps_id && ownerId !== currentUser.ps_id) {
+                return showCustomAlert("Only the mentor who created this draft can edit it.");
             }
 
             editingRecordId = recId;
             document.getElementById("edit-mode-banner").classList.remove("hidden");
-            document.getElementById("btn-submit-form").innerText = "Update Draft Self-Evaluation";
-
+            document.getElementById("btn-submit-form").innerText = "Update Draft Mentor Feedback";
+            document.getElementById("mentor-mentee-select").value = rec.mentee_key || "";
             document.getElementById("session-date").value = rec.session_date || "";
-            setRadioValue("module_section", rec.module_section);
-            setRadioValue("module_number", rec.module_number);
-
-            setRadioValue("va_within_frame", rec.va_within_frame);
-            setRadioValue("va_visible_audible", rec.va_visible_audible);
+            ["module_section", "module_number", "va_within_frame", "va_visible_audible", "tech_multitask", "tech_pptx", "cp_chat", "cp_concept", "cp_walking_talk", "tm_check_focus", "tm_check_agreement", "presentation_recommendation"].forEach(name => setRadioValue(name, rec[name]));
             document.getElementById("ofnr-video-audio").value = rec.ofnr_video_audio || "";
-
-            setRadioValue("tech_multitask", rec.tech_multitask);
-            setRadioValue("tech_pptx", rec.tech_pptx);
             document.getElementById("ofnr-tech-capability").value = rec.ofnr_tech_capability || "";
-
-            setRadioValue("cp_chat", rec.cp_chat);
             document.getElementById("ofnr-chat").value = rec.ofnr_chat || "";
-
-            setRadioValue("cp_concept", rec.cp_concept);
             document.getElementById("ofnr-concept").value = rec.ofnr_concept || "";
-
-            setRadioValue("cp_walking_talk", rec.cp_walking_talk);
-
-            document.getElementById("tm-check-focus").checked = (rec.tm_check_focus === "Yes");
-            document.getElementById("tm-check-agreement").checked = (rec.tm_check_agreement === "Yes");
+            document.getElementById("ofnr-walking-talk").value = rec.ofnr_walking_talk || "";
             document.getElementById("ofnr-time-management").value = rec.ofnr_time_management || "";
-
             switchTab("form");
             window.scrollTo({ top: 0, behavior: "smooth" });
         }
 
-        function cancelEditMode() {
+        function cancelEditMode(clearFields = true) {
             editingRecordId = null;
             document.getElementById("edit-mode-banner").classList.add("hidden");
-            document.getElementById("btn-submit-form").innerText = "Finalise Mentor Feedback";
-            resetFormFields();
+            const btn = document.getElementById("btn-submit-form");
+            btn.innerText = "Submit Mentor Feedback";
+            btn.disabled = false;
+            if (clearFields) resetFormFields();
         }
 
         function confirmLockRecord(recId) {
             const rec = workshopSubmissions[recId];
             if (!rec) return;
-            if (isRecordLocked(rec)) {
-                return showCustomAlert("This evaluation is already locked.");
+            if (isRecordLocked(rec)) return showCustomAlert("This mentor feedback has already been locked and finalised.");
+            const ownerId = (rec.mentor_id || "").toString();
+            if (ownerId && currentUser.ps_id && ownerId !== currentUser.ps_id) {
+                return showCustomAlert("Only the mentor who created this draft can finalise it.");
             }
-
             openConfirmModal(
-                "Lock & Submit for Mentors to Review?",
-                "Are you sure you want to lock and submit this evaluation?\n\n" +
-                "⚠️ WARNING: Once you click 'Yes', you will NOT be able to edit or delete this evaluation anymore. " +
-                "An email notification will immediately be sent to all mentors (and a confirmation email to you), and Print/Download will be enabled.",
-                () => {
-                    const now = Date.now();
-                    const wsKey = activeWorkshopId.toUpperCase();
-                    const updates = {
-                        status: "locked",
-                        is_locked: true,
-                        locked_at: now,
-                        locked_reason: "manual_lock"
-                    };
-                    db.ref(`control_tower/mentee_feedback/${wsKey}/${recId}`).update(updates).then(() => {
-                        triggerLockEmailNotifications(recId, { ...rec, ...updates });
-                        showCustomAlert(
-                            "Your Self-Evaluation has been locked and submitted for mentors to review!\n\nEmail notifications have been sent to all mentors and a confirmation copy has been sent to you.",
-                            "Locked & Submitted"
-                        );
-                    }).catch(err => showCustomAlert("Failed to lock evaluation: " + err.message));
-                }
+                "Lock & Submit for Mentee Review?",
+                "Are you sure you want to lock and submit this mentor feedback?\n\n" +
+                "Once you select Yes, you will NOT be able to edit or delete this feedback. The feedback email will be sent to the selected mentee. The confidential Presentation Related Topics recommendation will NOT be included in the mentee's email.\n\n" +
+                "Please confirm only when you have reviewed the saved response.",
+                () => finaliseAndSendMentorFeedback(recId)
             );
+        }
+
+        function finaliseAndSendMentorFeedback(recId) {
+            const rec = workshopSubmissions[recId];
+            if (!rec || !db) return showCustomAlert("Could not locate this saved draft. Refresh Submissions and try again.");
+            if (isRecordLocked(rec)) return showCustomAlert("This feedback is already locked.");
+            const recordRef = db.ref(`${mentorFeedbackPath()}/${recId}`);
+            const now = Date.now();
+            const lockUpdates = {
+                status: "FINALIZED",
+                is_locked: true,
+                locked_at: now,
+                finalised_at: now,
+                locked_reason: "mentor_confirmed",
+                email_status: "PENDING"
+            };
+            showCustomAlert("Locking the feedback and sending it to the mentee. Please wait for the result.", "Processing");
+            recordRef.update(lockUpdates).then(() => {
+                const payload = {
+                    action: "sendMentorFeedbackToMentee",
+                    workshopKey: activeWorkshopId.toString().trim().toUpperCase(),
+                    recordId: recId
+                };
+                return fetch(WEB_APP_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    body: JSON.stringify(payload)
+                }).then(response => response.json()).then(response => {
+                    if (!response || response.status !== "Success") {
+                        throw new Error((response && response.message) || "The server did not confirm email delivery.");
+                    }
+                    return recordRef.update({ email_status: "SENT", email_client_response: response, email_sent_at: Date.now() });
+                });
+            }).then(() => {
+                closeCustomAlert();
+                showCustomAlert("Mentor feedback has been locked and finalised. The feedback email was sent to the selected mentee. The confidential Presentation Related Topics recommendation was not included in the mentee's email.", "Locked & Sent");
+            }).catch(err => {
+                console.error("Finalise/send mentor feedback failed:", err);
+                recordRef.update({ email_status: "FAILED", email_error: err.message || String(err), email_last_attempt_at: Date.now() }).catch(() => {});
+                closeCustomAlert();
+                showCustomAlert("The feedback has been locked, but email delivery was not confirmed. Please check the Apps Script execution log and the email_status field before attempting any resend.\n\nDetails: " + (err.message || err), "Locked – Email Needs Review");
+            });
         }
 
         function confirmDeleteRecord(recId) {
             const rec = workshopSubmissions[recId];
             if (!rec) return;
-            if (isRecordLocked(rec)) {
-                return showCustomAlert("This evaluation is already locked and cannot be deleted.");
+            if (isRecordLocked(rec)) return showCustomAlert("Locked mentor feedback cannot be deleted.");
+            const ownerId = (rec.mentor_id || "").toString();
+            if (ownerId && currentUser.ps_id && ownerId !== currentUser.ps_id) {
+                return showCustomAlert("Only the mentor who created this draft can delete it.");
             }
-
             openConfirmModal(
-                "Delete Draft Evaluation?",
-                "Are you sure you want to permanently delete this draft evaluation? This action cannot be undone.",
-                () => {
-                    const wsKey = activeWorkshopId.toUpperCase();
-                    db.ref(`control_tower/mentee_feedback/${wsKey}/${recId}`).remove().then(() => {
-                        showCustomAlert("Draft evaluation deleted.");
-                    }).catch(err => showCustomAlert("Failed to delete evaluation: " + err.message));
-                }
+                "Delete Draft Mentor Feedback?",
+                "Are you sure you want to permanently delete this draft? This action cannot be undone.",
+                () => db.ref(`${mentorFeedbackPath()}/${recId}`).remove().then(() => {
+                    if (editingRecordId === recId) cancelEditMode();
+                    showCustomAlert("Draft mentor feedback deleted.");
+                }).catch(err => showCustomAlert("Failed to delete draft: " + err.message))
             );
+        }
+
+        function escapeHtml(value) {
+            return (value ?? "").toString().replace(/[&<>\"']/g, ch => ({
+                "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;"
+            }[ch]));
         }
 
         function populateMentorMenteeFilter() {
             const filterEl = document.getElementById("mentor-mentee-filter");
             if (!filterEl) return;
-            const prevVal = filterEl.value;
+            const previous = filterEl.value;
             const mentees = new Map();
-
             Object.values(workshopSubmissions).forEach(rec => {
-                if (rec && rec.mentee_id) {
-                    mentees.set(rec.mentee_id, rec.mentee_name || rec.mentee_id);
-                }
+                if (rec && rec.mentee_id) mentees.set(rec.mentee_id, rec.mentee_name || rec.mentee_id);
             });
-
             filterEl.innerHTML = '<option value="ALL">All Mentees</option>';
             mentees.forEach((name, id) => {
-                const opt = document.createElement("option");
-                opt.value = id;
-                opt.textContent = `${name} (${id})`;
-                filterEl.appendChild(opt);
+                const option = document.createElement("option");
+                option.value = id;
+                option.textContent = `${name} (${id})`;
+                filterEl.appendChild(option);
             });
-            if (prevVal && (prevVal === "ALL" || mentees.has(prevVal))) {
-                filterEl.value = prevVal;
-            }
+            if (previous && (previous === "ALL" || mentees.has(previous))) filterEl.value = previous;
         }
 
         function renderSubmissionsList() {
             const container = document.getElementById("submissions-list-container");
             const badge = document.getElementById("records-count-badge");
             const filterMenteeId = document.getElementById("mentor-mentee-filter")?.value || "ALL";
-
             let list = Object.keys(workshopSubmissions).map(id => ({ id, ...workshopSubmissions[id] }));
-
-            if (!isMentorViewer) {
-                list = list.filter(rec => {
-                    const idMatch = currentUser.ps_id && (rec.mentee_id || "").toLowerCase() === currentUser.ps_id.toLowerCase();
-                    const nameMatch = !currentUser.ps_id && currentUser.ps_name && (rec.mentee_name || "").toLowerCase() === currentUser.ps_name.toLowerCase();
-                    return idMatch || nameMatch;
-                });
-            } else if (filterMenteeId !== "ALL") {
-                list = list.filter(rec => rec.mentee_id === filterMenteeId);
-            }
-
-            list.sort((a, b) => (b.created_at || 0) - (a.created_at || 0));
+            list = list.filter(rec => {
+                const authorMatch = currentUser.ps_id
+                    ? (rec.mentor_id || "").toString() === currentUser.ps_id.toString()
+                    : (rec.mentor_name || "").toString().toLowerCase() === (currentUser.ps_name || "").toString().toLowerCase();
+                return authorMatch && (filterMenteeId === "ALL" || rec.mentee_id === filterMenteeId);
+            });
+            list.sort((a, b) => Number(b.updated_at || b.created_at || 0) - Number(a.updated_at || a.created_at || 0));
             badge.innerText = list.length;
-
-            if (list.length === 0) {
-                container.innerHTML = `<div class="text-center text-gray-500 py-8 text-xs">No submitted evaluations found yet.</div>`;
+            if (!list.length) {
+                container.innerHTML = `<div class="text-center text-gray-500 py-8 text-xs">No mentor feedback drafts or submissions found.</div>`;
                 return;
             }
-
             container.innerHTML = "";
             list.forEach(rec => {
                 const locked = isRecordLocked(rec);
-                const deadlineStr = rec.lock_deadline ? new Date(rec.lock_deadline).toLocaleString() : "";
-                const submittedStr = rec.created_at ? new Date(rec.created_at).toLocaleString() : "";
-
-                const statusBadge = locked
-                    ? `<span class="bg-green-100 text-green-800 border border-green-300 text-[10px] font-bold px-2 py-0.5 rounded-full">✓ Locked &amp; Finalized</span>`
-                    : `<span class="bg-amber-100 text-amber-800 border border-amber-300 text-[10px] font-bold px-2 py-0.5 rounded-full">Draft (Auto-locks: ${deadlineStr})</span>`;
-
-                let actionButtonsHtml = `
-                    <button onclick="openViewModal('${rec.id}')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-1.5 rounded text-[11px] transition">
-                        View
-                    </button>
-                `;
-
+                const dateText = rec.created_at ? new Date(Number(rec.created_at)).toLocaleString() : "";
+                const statusText = locked ? "Locked & Finalised" : "Draft — Not yet sent";
+                const statusStyle = locked ? "bg-green-100 text-green-800 border-green-300" : "bg-amber-100 text-amber-800 border-amber-300";
+                let buttons = `<button onclick="openViewModal('${rec.id}')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-1.5 rounded text-[11px]">View</button>`;
                 if (locked) {
-                    actionButtonsHtml += `
-                        <button onclick="printRecord('${rec.id}')" class="bg-gray-700 hover:bg-gray-800 text-white font-bold px-3 py-1.5 rounded text-[11px] transition">
-                            Print
-                        </button>
-                        <button onclick="downloadRecordHtml('${rec.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded text-[11px] transition">
-                            Download
-                        </button>
-                    `;
-                } else if (!isMentorViewer) {
-                    actionButtonsHtml += `
-                        <button onclick="startEditRecord('${rec.id}')" class="bg-amber-500 hover:bg-amber-600 text-white font-bold px-3 py-1.5 rounded text-[11px] transition">
-                            Edit
-                        </button>
-                        <button onclick="confirmDeleteRecord('${rec.id}')" class="bg-red-500 hover:bg-red-600 text-white font-bold px-3 py-1.5 rounded text-[11px] transition">
-                            Delete
-                        </button>
-                        <button onclick="confirmLockRecord('${rec.id}')" class="bg-green-600 hover:bg-green-700 text-white font-bold px-3 py-1.5 rounded text-[11px] transition shadow-sm">
-                            Lock &amp; Submit for Mentors to Review
-                        </button>
-                    `;
+                    buttons += `<button onclick="printRecord('${rec.id}')" class="bg-gray-700 hover:bg-gray-800 text-white font-bold px-3 py-1.5 rounded text-[11px]">Print</button>
+                               <button onclick="downloadRecordHtml('${rec.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded text-[11px]">Download</button>`;
                 } else {
-                    actionButtonsHtml += `
-                        <span class="text-[10px] italic text-gray-500 self-center">Print/Download unlocks once mentee locks</span>
-                    `;
+                    buttons += `<button onclick="startEditRecord('${rec.id}')" class="bg-amber-500 hover:bg-amber-600 text-white font-bold px-3 py-1.5 rounded text-[11px]">Edit</button>
+                               <button onclick="confirmDeleteRecord('${rec.id}')" class="bg-red-500 hover:bg-red-600 text-white font-bold px-3 py-1.5 rounded text-[11px]">Delete</button>
+                               <button onclick="confirmLockRecord('${rec.id}')" class="bg-green-600 hover:bg-green-700 text-white font-bold px-3 py-1.5 rounded text-[11px] shadow-sm">Lock &amp; Submit for Mentee Review</button>`;
                 }
-
                 const card = document.createElement("div");
                 card.className = "border border-gray-200 rounded-lg p-3.5 bg-gray-50/60 hover:bg-white transition shadow-sm space-y-2.5";
                 card.innerHTML = `
                     <div class="flex flex-col gap-1.5">
-                        <div>
-                            <div class="font-bold text-gray-900 text-xs sm:text-sm">
-                                ${rec.module_number || ""} &bull; ${rec.module_section || ""}
-                                ${isMentorViewer ? `<span class="text-indigo-700 font-semibold"> &mdash; ${rec.mentee_name || ""}</span>` : ""}
-                            </div>
-                            <div class="text-[11px] text-gray-500">
-                                Session Date: <strong>${rec.session_date || "N/A"}</strong> &bull; Submitted: ${submittedStr}
-                            </div>
-                        </div>
-                        <div>${statusBadge}</div>
+                        <div class="font-bold text-gray-900 text-xs sm:text-sm">${escapeHtml(rec.module_number || "")} &bull; ${escapeHtml(rec.module_section || "")} &mdash; ${escapeHtml(rec.mentee_name || "Mentee")}</div>
+                        <div class="text-[11px] text-gray-500">Session Date: <strong>${escapeHtml(rec.session_date || "N/A")}</strong> &bull; Draft saved: ${escapeHtml(dateText)}</div>
+                        <div><span class="${statusStyle} border text-[10px] font-bold px-2 py-0.5 rounded-full">${statusText}</span></div>
+                        ${locked ? `<div class="text-[10px] text-gray-600">Email status: ${escapeHtml(rec.email_status || "Pending")}</div>` : ""}
                     </div>
-
                     <div class="grid grid-cols-3 gap-2 text-center bg-white border border-gray-200 rounded p-2 text-[11px]">
-                        <div>
-                            <div class="text-gray-500">Chat Responsiveness</div>
-                            <div class="font-bold text-indigo-800">Curve Point ${rec.cp_chat ?? "-"} / 3</div>
-                        </div>
-                        <div>
-                            <div class="text-gray-500">Concept Clarity</div>
-                            <div class="font-bold text-indigo-800">Curve Point ${rec.cp_concept ?? "-"} / 5</div>
-                        </div>
-                        <div>
-                            <div class="text-gray-500">Walking the Talk</div>
-                            <div class="font-bold text-indigo-800">Curve Point ${rec.cp_walking_talk ?? "-"} / 5</div>
-                        </div>
+                        <div><div class="text-gray-500">Chat Responsiveness</div><div class="font-bold text-indigo-800">Curve Point ${rec.cp_chat ?? "-"} / 3</div></div>
+                        <div><div class="text-gray-500">Concept Clarity</div><div class="font-bold text-indigo-800">Curve Point ${rec.cp_concept ?? "-"} / 5</div></div>
+                        <div><div class="text-gray-500">Walking the Talk</div><div class="font-bold text-indigo-800">Curve Point ${rec.cp_walking_talk ?? "-"} / 5</div></div>
                     </div>
-
-                    <div class="flex flex-wrap gap-2 pt-1">
-                        ${actionButtonsHtml}
-                    </div>
-                `;
+                    <div class="flex flex-wrap gap-2 pt-1">${buttons}</div>`;
                 container.appendChild(card);
             });
         }
@@ -1647,17 +1512,18 @@
                 <div class="space-y-3 text-xs text-gray-800">
                     <div class="border-b-2 border-indigo-800 pb-2 flex justify-between items-start">
                         <div>
-                            <h2 class="text-base font-bold text-indigo-900">Heartful Communication &mdash; Mentee Self-Evaluation</h2>
+                            <h2 class="text-base font-bold text-indigo-900">Heartful Communication &mdash; Mentor Feedback</h2>
                             <p class="text-[11px] text-gray-600">Batch: <strong>${rec.workshop_id || activeWorkshopId}</strong></p>
                         </div>
                         <div class="text-right text-[11px]">
-                            <div>Status: <strong>${locked ? "Locked & Finalized" : "Draft (Editable)"}</strong></div>
+                            <div>Status: <strong>${locked ? "Locked & Finalised" : "Draft (Editable — Not Sent)"}</strong></div>
                             <div>Submitted: ${rec.created_at ? new Date(rec.created_at).toLocaleString() : ""}</div>
                         </div>
                     </div>
 
                     <div class="grid grid-cols-2 gap-2 bg-gray-100 p-2.5 rounded border border-gray-200">
                         <div><span class="text-gray-500 block">Mentee Name:</span><strong>${rec.mentee_name || ""}</strong></div>
+                        <div><span class="text-gray-500 block">Mentor Name:</span><strong>${rec.mentor_name || ""}</strong></div>
                         <div><span class="text-gray-500 block">Session Date:</span><strong>${rec.session_date || ""}</strong></div>
                         <div><span class="text-gray-500 block">Module Number:</span><strong>${rec.module_number || ""}</strong></div>
                         <div><span class="text-gray-500 block">Module Section:</span><strong>${rec.module_section || ""}</strong></div>
@@ -1697,6 +1563,11 @@
                         <div>Kept check on time &amp; preserved core focus: <strong>${rec.tm_check_focus || "No"}</strong> &bull; Requested agreement for adjustments: <strong>${rec.tm_check_agreement || "No"}</strong></div>
                         <div class="bg-gray-50 p-2 rounded border mt-1 whitespace-pre-line"><strong>OFNR Feedback:</strong>\n${rec.ofnr_time_management || "-"}</div>
                     </div>
+                    <div class="border border-amber-300 bg-amber-50 rounded p-2.5 space-y-1">
+                        <div class="font-bold text-amber-900">Confidential — Presentation Related Topics (Mentor Only)</div>
+                        <div>Recommendation: <strong>${rec.presentation_recommendation || "Not recorded"}</strong></div>
+                        <div class="text-[10px] text-amber-800">This confidential recommendation is retained in the mentor's record and is not included in the mentee email.</div>
+                    </div>
                 </div>
             `;
         }
@@ -1727,7 +1598,7 @@
             const rec = workshopSubmissions[recId];
             if (!rec) return;
             if (!isRecordLocked(rec)) {
-                return showCustomAlert("Print is available once the self-evaluation is locked.");
+                return showCustomAlert("Print is available once mentor feedback is locked and finalised.");
             }
             const printArea = document.getElementById("print-area");
             printArea.innerHTML = buildRecordReportHtml(rec);
@@ -1743,12 +1614,12 @@
             const rec = workshopSubmissions[recId];
             if (!rec) return;
             if (!isRecordLocked(rec)) {
-                return showCustomAlert("Download is available once the self-evaluation is locked.");
+                return showCustomAlert("Download is available once mentor feedback is locked and finalised.");
             }
 
             const safeName = (rec.mentee_name || "Mentee").replace(/[^a-zA-Z0-9_-]/g, "_");
             const safeMod = (rec.module_number || "Module").replace(/[^a-zA-Z0-9_-]/g, "_");
-            const fileName = `Mentee_Self_Eval_${safeName}_${safeMod}_${rec.session_date || ""}.html`;
+            const fileName = `HC_Mentor_Feedback_${safeName}_${safeMod}_${rec.session_date || ""}.html`;
 
             const htmlDoc = `<!DOCTYPE html>
 <html lang="en">
