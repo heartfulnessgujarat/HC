@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="page-title">Heartful Communication | Portal · V4</title>
+    <title id="page-title">Heartful Communication | Portal · V4.1</title>
 
     <!-- Tailwind CSS for modern responsive design -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -390,7 +390,7 @@
 
     <!-- Footer -->
     <footer id="app-footer" class="text-center py-1.5 text-[10px] text-gray-500">
-        Heartful Communication - Participant Login System | HC Portal V4 · 24-Nov-2026
+        Heartful Communication - Participant Login System | HC Portal V4.1 · 25-Nov-2026
     </footer>
 
     <!-- Custom Message Box Modal -->
@@ -504,12 +504,12 @@
                 document.getElementById('page-title').innerText = `Heartful Communication - Workshop (${activeWorkshopId}) | Facilitator / Mentor Portal`;
                 if (headingEl) headingEl.textContent = "Facilitator / Mentor Login";
                 if (selectedLabelEl) selectedLabelEl.textContent = "Name of the Facilitator / Mentor:";
-                if (footerEl) footerEl.textContent = "Heartful Communication - Facilitator / Mentor Login System | HC Portal V4 · 24-Nov-2026";
+                if (footerEl) footerEl.textContent = "Heartful Communication - Facilitator / Mentor Login System | HC Portal V4.1 · 25-Nov-2026";
             } else {
                 document.getElementById('page-title').innerText = `Heartful Communication - Workshop (${activeWorkshopId}) | Participant Portal`;
                 if (headingEl) headingEl.textContent = "Participant Login";
                 if (selectedLabelEl) selectedLabelEl.textContent = "Name of the Participant:";
-                if (footerEl) footerEl.textContent = "Heartful Communication - Participant Login System | HC Portal V4 · 24-Nov-2026";
+                if (footerEl) footerEl.textContent = "Heartful Communication - Participant Login System | HC Portal V4.1 · 25-Nov-2026";
             }
         }
         applyPortalRoleLabels();
@@ -540,6 +540,9 @@
         let allParticipants = {};
         let allWorkshops = {};
         let currentActiveUser = null;
+        let facilitatorSubmissionRefreshTimer = null;
+        let facilitatorSubmissionsTabActive = false;
+        let facilitatorSubmissionRecords = [];
         let selectedParticipantKey = null;
         let cpSelectedKey = null;
         let rpSelectedKey = null;
@@ -1198,7 +1201,46 @@
                         <div class="text-center px-2 text-sm font-bold text-white">Facilitator / Mentor Resources</div>
                     </div>
                 `;
-                renderResourceRows(workshop, "f_resource_", false, "", resourcesContainer);
+                resourcesContainer.innerHTML = `
+                    <div id="facilitator-dashboard-tabs" class="flex gap-2 border-b border-gray-200 px-2 pt-2 pb-1.5">
+                        <button type="button" id="fac-tab-resources" onclick="switchFacilitatorDashboardTab('resources')"
+                            class="flex-1 rounded-md bg-indigo-600 text-white font-semibold text-[11px] px-2.5 py-2 shadow-sm">
+                            Resources
+                        </button>
+                        <button type="button" id="fac-tab-submissions" onclick="switchFacilitatorDashboardTab('submissions')"
+                            class="flex-1 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 font-semibold text-[11px] px-2.5 py-2">
+                            Submissions by Mentees
+                        </button>
+                    </div>
+                    <section id="facilitator-resources-pane" class="px-3 py-1"></section>
+                    <section id="facilitator-submissions-pane" class="hidden px-3 py-3">
+                        <div class="flex items-center justify-between gap-2 mb-2">
+                            <div>
+                                <h3 class="text-sm font-bold text-gray-800">Submissions by Mentees</h3>
+                                <p class="text-[10px] text-gray-500 mt-0.5">Automatically refreshes every 60 seconds while this section is open.</p>
+                            </div>
+                            <button type="button" onclick="loadFacilitatorSubmissions(true)"
+                                class="shrink-0 rounded bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-semibold px-2.5 py-1.5">
+                                Refresh now
+                            </button>
+                        </div>
+                        <div id="facilitator-submissions-status" class="text-[11px] text-gray-500 py-2">Select this tab to load submissions.</div>
+                        <div id="facilitator-submissions-list" class="space-y-3"></div>
+                    </section>
+                    <div id="facilitator-submission-view-modal" class="hidden fixed inset-0 z-50 bg-black bg-opacity-50 px-3 py-4 overflow-y-auto">
+                        <div class="bg-white rounded-lg shadow-xl max-w-lg w-full mx-auto my-4">
+                            <div class="flex items-center justify-between gap-3 border-b px-4 py-3">
+                                <h3 id="facilitator-submission-view-title" class="text-sm font-bold text-gray-800">Submission details</h3>
+                                <button type="button" onclick="closeFacilitatorSubmissionView()" class="text-gray-500 hover:text-gray-800 text-xl leading-none" aria-label="Close">&times;</button>
+                            </div>
+                            <div id="facilitator-submission-view-content" class="p-4 text-xs space-y-2 break-words"></div>
+                            <div class="border-t px-4 py-3 text-right">
+                                <button type="button" onclick="closeFacilitatorSubmissionView()" class="rounded bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold px-3 py-1.5">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                renderResourceRows(workshop, "f_resource_", false, "", document.getElementById('facilitator-resources-pane'));
             } else if (role === "T&S" || role === "TRUST & SAFETY") {
                 document.getElementById('workshop-title-display').innerText = "";
                 subtitleDisplay.innerHTML = `
@@ -1226,6 +1268,238 @@
 
                 renderResourceRows(workshop, "p_resource_", true, activeZoomLink, resourcesContainer);
             }
+        }
+
+        // Facilitator-only mentee submission viewer. Reads the existing Firebase
+        // records directly; it does not create or maintain a duplicate index.
+        function stopFacilitatorSubmissionRefresh() {
+            if (facilitatorSubmissionRefreshTimer) {
+                clearInterval(facilitatorSubmissionRefreshTimer);
+                facilitatorSubmissionRefreshTimer = null;
+            }
+            facilitatorSubmissionsTabActive = false;
+        }
+
+        function switchFacilitatorDashboardTab(tabName) {
+            const resourcesPane = document.getElementById('facilitator-resources-pane');
+            const submissionsPane = document.getElementById('facilitator-submissions-pane');
+            const resourcesButton = document.getElementById('fac-tab-resources');
+            const submissionsButton = document.getElementById('fac-tab-submissions');
+            if (!resourcesPane || !submissionsPane || !resourcesButton || !submissionsButton) return;
+
+            const isSubmissions = tabName === 'submissions';
+            resourcesPane.classList.toggle('hidden', isSubmissions);
+            submissionsPane.classList.toggle('hidden', !isSubmissions);
+            resourcesButton.className = isSubmissions
+                ? 'flex-1 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 font-semibold text-[11px] px-2.5 py-2'
+                : 'flex-1 rounded-md bg-indigo-600 text-white font-semibold text-[11px] px-2.5 py-2 shadow-sm';
+            submissionsButton.className = isSubmissions
+                ? 'flex-1 rounded-md bg-indigo-600 text-white font-semibold text-[11px] px-2.5 py-2 shadow-sm'
+                : 'flex-1 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 font-semibold text-[11px] px-2.5 py-2';
+
+            if (isSubmissions) {
+                facilitatorSubmissionsTabActive = true;
+                loadFacilitatorSubmissions(false);
+                if (!facilitatorSubmissionRefreshTimer) {
+                    facilitatorSubmissionRefreshTimer = setInterval(() => {
+                        if (facilitatorSubmissionsTabActive && currentActiveUser && isFacilitatorRoleValue(currentActiveUser.role)) {
+                            loadFacilitatorSubmissions(false);
+                        } else {
+                            stopFacilitatorSubmissionRefresh();
+                        }
+                    }, 60000);
+                }
+            } else {
+                stopFacilitatorSubmissionRefresh();
+            }
+        }
+
+        function facilitatorSubmissionEscape(value) {
+            return String(value == null ? '' : value)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        function facilitatorSubmissionDate(record) {
+            const raw = record.created_at_ms || record.created_at || record.updated_at_ms || record.updated_at || record.submitted_at || record.timestamp || '';
+            if (typeof raw === 'number' || (raw && /^\d{10,13}$/.test(String(raw)))) {
+                let ms = Number(raw);
+                if (ms < 100000000000) ms *= 1000;
+                const date = new Date(ms);
+                return isNaN(date.getTime()) ? String(raw) : date.toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+            }
+            if (raw) return String(raw);
+            return 'Date not recorded';
+        }
+
+        function normalizeFacilitatorSubmission(formType, ownerKey, submissionKey, record, firebasePath) {
+            const rec = record || {};
+            const participantId = rec.participant_id || rec.mentee_id || rec.ps_id || rec.user_key || ownerKey || '';
+            const participantName = rec.participant_name || rec.mentee_name || rec.ps_name || rec.name || participantId || 'Participant';
+            const formLabels = {
+                recording_link: 'Recording Link',
+                self_journey_weekly_report: 'Self Journey – Weekly Report',
+                mentee_feedback: 'Mentee Self-Evaluation'
+            };
+            let subTitle = '';
+            if (formType === 'recording_link') {
+                subTitle = [rec.section, rec.module_name].filter(Boolean).join(' · ');
+            } else if (formType === 'self_journey_weekly_report') {
+                subTitle = rec.week || '';
+            } else if (formType === 'mentee_feedback') {
+                subTitle = [rec.session_date, rec.module_section, rec.module_number ? ('Module ' + rec.module_number) : ''].filter(Boolean).join(' · ');
+            }
+            const status = rec.review_status || rec.status || (rec.submitted_for_review ? 'SUBMITTED' : 'SAVED');
+            return {
+                formType: formType,
+                formLabel: formLabels[formType] || formType,
+                participantId: String(participantId),
+                participantName: String(participantName),
+                submissionId: String(rec.submission_id || rec.record_id || submissionKey || ''),
+                submissionKey: String(submissionKey || rec.record_id || rec.submission_id || ''),
+                dateLabel: facilitatorSubmissionDate(rec),
+                dateSort: Number(rec.created_at_ms || rec.created_at || rec.updated_at_ms || rec.updated_at || rec.submitted_at || rec.timestamp || 0) || 0,
+                status: String(status),
+                subtitle: subTitle,
+                firebasePath: firebasePath,
+                record: rec
+            };
+        }
+
+        function collectFacilitatorSubmissions(formType, rootData, basePath) {
+            const results = [];
+            if (!rootData || typeof rootData !== 'object') return results;
+            Object.keys(rootData).forEach(ownerKey => {
+                const ownerData = rootData[ownerKey];
+                if (!ownerData || typeof ownerData !== 'object') return;
+                // The two form_submissions nodes are owner -> submission ID -> record.
+                // The legacy mentee_feedback node is workshop -> record ID -> record.
+                const records = formType === 'mentee_feedback' ? { [ownerKey]: ownerData } : ownerData;
+                Object.keys(records).forEach(submissionKey => {
+                    const rec = records[submissionKey];
+                    if (!rec || typeof rec !== 'object') return;
+                    const path = formType === 'mentee_feedback'
+                        ? basePath + '/' + ownerKey
+                        : basePath + '/' + ownerKey + '/' + submissionKey;
+                    results.push(normalizeFacilitatorSubmission(formType,
+                        formType === 'mentee_feedback' ? (rec.mentee_id || rec.participant_id || '') : ownerKey,
+                        submissionKey, rec, path));
+                });
+            });
+            return results;
+        }
+
+        function facilitatorSubmissionGroupSort(a, b) {
+            const nameCompare = a.participantName.localeCompare(b.participantName, undefined, { sensitivity: 'base' });
+            if (nameCompare) return nameCompare;
+            const formOrder = { recording_link: 1, mentee_feedback: 2, self_journey_weekly_report: 3 };
+            const formCompare = (formOrder[a.formType] || 99) - (formOrder[b.formType] || 99);
+            if (formCompare) return formCompare;
+            return b.dateSort - a.dateSort;
+        }
+
+        async function loadFacilitatorSubmissions(showLoading) {
+            const listEl = document.getElementById('facilitator-submissions-list');
+            const statusEl = document.getElementById('facilitator-submissions-status');
+            if (!listEl || !statusEl || !db || !currentActiveUser || !isFacilitatorRoleValue(currentActiveUser.role)) return;
+            const workshopKey = (currentActiveUser.workshop_id || activeWorkshopId || '').toString().trim().toUpperCase();
+            if (!workshopKey) {
+                statusEl.textContent = 'Workshop ID is unavailable for this facilitator account.';
+                return;
+            }
+            if (showLoading) statusEl.textContent = 'Refreshing submissions…';
+            try {
+                const paths = {
+                    recording_link: 'form_submissions/' + workshopKey + '/recording_link',
+                    self_journey_weekly_report: 'form_submissions/' + workshopKey + '/self_journey_weekly_report',
+                    mentee_feedback: 'control_tower/mentee_feedback/' + workshopKey
+                };
+                const keys = Object.keys(paths);
+                const snapshots = await Promise.all(keys.map(key => db.ref(paths[key]).once('value')));
+                const allRecords = [];
+                keys.forEach((key, index) => {
+                    allRecords.push(...collectFacilitatorSubmissions(key, snapshots[index].val(), paths[key]));
+                });
+                allRecords.sort(facilitatorSubmissionGroupSort);
+                facilitatorSubmissionRecords = allRecords;
+                renderFacilitatorSubmissionList(allRecords);
+                statusEl.textContent = allRecords.length
+                    ? ('Showing ' + allRecords.length + ' record(s). Last refreshed: ' + new Date().toLocaleTimeString('en-IN'))
+                    : ('No records were found in the existing submission paths for workshop ' + workshopKey + '.');
+            } catch (error) {
+                console.error('Facilitator submissions read failed:', error);
+                statusEl.textContent = 'Could not load submissions. Firebase read permission or network access may be required. ' + (error && error.message ? error.message : '');
+            }
+        }
+
+        function renderFacilitatorSubmissionList(records) {
+            const listEl = document.getElementById('facilitator-submissions-list');
+            if (!listEl) return;
+            listEl.innerHTML = '';
+            if (!records.length) {
+                listEl.innerHTML = '<div class="rounded border border-dashed border-gray-300 p-4 text-center text-xs text-gray-500">No submissions to display yet.</div>';
+                return;
+            }
+            const participants = new Map();
+            records.forEach(item => {
+                const pKey = item.participantId || item.participantName;
+                if (!participants.has(pKey)) participants.set(pKey, { name: item.participantName, id: item.participantId, forms: new Map() });
+                const p = participants.get(pKey);
+                if (!p.forms.has(item.formType)) p.forms.set(item.formType, []);
+                p.forms.get(item.formType).push(item);
+            });
+            participants.forEach(person => {
+                const participantCard = document.createElement('section');
+                participantCard.className = 'rounded-lg border border-gray-200 overflow-hidden';
+                let html = '<div class="bg-indigo-50 px-3 py-2 border-b border-indigo-100"><div class="font-bold text-xs text-gray-800">' + facilitatorSubmissionEscape(person.name) + '</div><div class="text-[10px] text-gray-500">Participant ID: ' + facilitatorSubmissionEscape(person.id || '—') + '</div></div><div class="p-2 space-y-2">';
+                person.forms.forEach((items, formType) => {
+                    html += '<div class="rounded border border-gray-100"><div class="bg-gray-50 px-2.5 py-1.5 text-[11px] font-bold text-gray-700">' + facilitatorSubmissionEscape(items[0].formLabel) + '<span class="ml-1 text-gray-400 font-normal">(' + items.length + ')</span></div><div class="divide-y divide-gray-100">';
+                    items.forEach(item => {
+                        html += '<div class="px-2.5 py-2 flex items-start justify-between gap-2"><div class="min-w-0"><div class="text-[10px] text-gray-500">' + facilitatorSubmissionEscape(item.dateLabel) + '</div>' + (item.subtitle ? '<div class="text-[11px] text-gray-700 mt-0.5">' + facilitatorSubmissionEscape(item.subtitle) + '</div>' : '') + '<div class="text-[10px] mt-0.5 text-indigo-700">Status: ' + facilitatorSubmissionEscape(item.status) + '</div></div><button type="button" data-submission-index="' + facilitatorSubmissionRecords.indexOf(item) + '" class="fac-submission-view-btn shrink-0 rounded bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-semibold px-2.5 py-1.5">View</button></div>';
+                    });
+                    html += '</div></div>';
+                });
+                html += '</div>';
+                participantCard.innerHTML = html;
+                listEl.appendChild(participantCard);
+            });
+            listEl.querySelectorAll('.fac-submission-view-btn').forEach(button => {
+                button.addEventListener('click', () => {
+                    const item = facilitatorSubmissionRecords[Number(button.getAttribute('data-submission-index'))];
+                    if (item) viewFacilitatorSubmission(item);
+                });
+            });
+        }
+
+        async function viewFacilitatorSubmission(item) {
+            const titleEl = document.getElementById('facilitator-submission-view-title');
+            const contentEl = document.getElementById('facilitator-submission-view-content');
+            const modal = document.getElementById('facilitator-submission-view-modal');
+            if (!titleEl || !contentEl || !modal || !item) return;
+            titleEl.textContent = item.formLabel + ' — ' + item.participantName;
+            contentEl.innerHTML = '<div class="text-gray-500">Loading the original Firebase record…</div>';
+            modal.classList.remove('hidden');
+            try {
+                const snapshot = await db.ref(item.firebasePath).once('value');
+                const record = snapshot.val();
+                if (!record || typeof record !== 'object') {
+                    contentEl.innerHTML = '<div class="text-amber-700">This record is no longer available at its original Firebase path.</div>';
+                    return;
+                }
+                const rows = Object.keys(record).sort().map(key => {
+                    const value = record[key];
+                    const displayValue = value && typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value == null ? '—' : value);
+                    return '<div class="grid grid-cols-1 sm:grid-cols-[130px_1fr] gap-1 border-b border-gray-100 py-1.5"><div class="font-semibold text-gray-600">' + facilitatorSubmissionEscape(key.replace(/_/g, ' ')) + '</div><div class="text-gray-800 whitespace-pre-wrap">' + facilitatorSubmissionEscape(displayValue) + '</div></div>';
+                }).join('');
+                contentEl.innerHTML = rows || '<div>No fields found in this record.</div>';
+            } catch (error) {
+                contentEl.innerHTML = '<div class="text-red-600">Unable to read the original record: ' + facilitatorSubmissionEscape(error && error.message ? error.message : error) + '</div>';
+            }
+        }
+
+        function closeFacilitatorSubmissionView() {
+            const modal = document.getElementById('facilitator-submission-view-modal');
+            if (modal) modal.classList.add('hidden');
         }
 
         function renderTshHub(workshop) {
@@ -1690,6 +1964,7 @@
         }
 
         function logout() {
+            stopFacilitatorSubmissionRefresh();
             currentActiveUser = null;
             selectedParticipantKey = null;
             flVerifiedEmail = "";
