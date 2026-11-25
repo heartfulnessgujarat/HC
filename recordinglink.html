@@ -246,7 +246,7 @@
     </main>
 
     <footer class="text-center py-2 text-[10px] text-gray-500">
-        Heartful Communication - Recording Submission Module | HC Portal V5.6 • PDF submission receipt • 25-Nov-2026
+        Heartful Communication - Recording Submission Module | HC Portal V5.5 • PDF blank-line correction • 25-Nov-2026
     </footer>
 
     <!-- View Modal -->
@@ -709,10 +709,16 @@
                         .replace(/[\r\n\t]+/g, " ")
                         .replace(/[^\x20-\x7E]/g, "?");
                 };
-                const pdfEscape = value => pdfText(value)
-                    .replace(/\\/g, "\\\\")
-                    .replace(/\(/g, "\\(")
-                    .replace(/\)/g, "\\)");
+                // Preserve intentional blank separator lines in the PDF.
+                // pdfText() returns "N/A" for missing data fields, but blank
+                // layout lines must remain blank rather than becoming "N/A".
+                const pdfEscape = value => {
+                    if (value === null || value === undefined || value === "") return "";
+                    return pdfText(value)
+                        .replace(/\\/g, "\\\\")
+                        .replace(/\(/g, "\\(")
+                        .replace(/\)/g, "\\)");
+                };
 
                 const workshopLabel =
                     rec.workshop_name ||
