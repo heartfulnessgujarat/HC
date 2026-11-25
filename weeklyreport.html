@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="page-title">Heartful Communication | Self Journey Weekly Report</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <style>
+        .hidden { display: none !important; }
+        body {
+            margin: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f9fafb;
+            color: #1f2937;
+            font-size: 13px;
+        }
+        #fixed-top-shell {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 40;
+            background-color: #f9fafb;
+            border-bottom: 1px solid #e5e7eb;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+        .fixed-inner {
+            max-width: 448px;
+            margin: 0 auto;
+            padding: 8px 12px;
+            box-sizing: border-box;
+        }
+        .app-shell {
+            max-width: 448px;
+            margin: 0 auto;
+            padding: 10px 12px 20px;
+            box-sizing: border-box;
+        }
+        .card-box {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+        }
+        .field-input, .field-select {
+            width: 100%;
+            padding: 7px 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 12px;
+            background: #ffffff;
+            box-sizing: border-box;
+        }
+        .btn-primary {
+            background-color: #4f46e5;
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            padding: 7px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-secondary {
+            background-color: #e5e7eb;
+            color: #374151;
+            border: none;
+            border-radius: 6px;
+            padding: 7px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .table-wrap {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+        }
+        th, td {
+            border-bottom: 1px solid #e5e7eb;
+            padding: 6px 6px;
+            text-align: left;
+            vertical-align: middle;
+        }
+        th {
+            background-color: #f3f4f6;
+            font-weight: 700;
+            color: #374151;
+        }
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px;
+            z-index: 50;
+        }
+        .modal-card {
+            background: #ffffff;
+            border-radius: 8px;
+            padding: 16px;
+            max-width: 340px;
+            width: 100%;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col justify-between text-xs">
+
+    <!-- Fixed Top Banner Image + Participant Profile Card + Back to Main Screen -->
+    <div id="fixed-top-shell">
+        <div class="fixed-inner space-y-1.5">
+            <div id="fixed-banner-wrap" class="bg-white rounded-lg shadow-sm overflow-hidden flex w-full hidden">
+                <img id="fixed-app-logo" src="" alt="App Logo" class="block w-full" style="width:100%; height:140px; max-height:140px; object-fit:cover; object-position:center;" />
+            </div>
+            <div class="bg-blue-50 border border-blue-200 text-blue-900 shadow-sm rounded-lg p-2 flex items-start justify-between gap-2">
+                <div id="fixed-profile-info" class="text-[11px] leading-snug overflow-hidden">
+                    <!-- Populated dynamically via JS -->
+                </div>
+                <div class="flex flex-shrink-0 flex-col gap-1">
+                    <button type="button" onclick="goBackToMainScreen()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-bold py-1.5 px-2 rounded transition shadow leading-tight text-center">
+                        Back to<br>Main Screen
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <main id="main-content" class="max-w-md mx-auto px-3 py-2 flex-grow w-full app-shell" style="padding-top: 195px;">
+        <!-- Mode Switcher -->
+        <div class="flex gap-2 mb-2.5">
+            <button type="button" id="tab-btn-form" onclick="setViewMode('form')"
+                class="flex-1 py-1.5 px-2 rounded-md text-xs font-bold bg-indigo-600 text-white btn-primary">
+                Fill Self Journey Report
+            </button>
+            <button type="button" id="tab-btn-my" onclick="setViewMode('my')"
+                class="flex-1 py-1.5 px-2 rounded-md text-xs font-semibold bg-white text-gray-700 border border-gray-200 btn-secondary">
+                My Submissions
+            </button>
+        </div>
+
+        <!-- FORM 1 CARD -->
+        <div id="form-section" class="bg-white rounded-lg shadow-md border border-gray-200 p-3 mb-3 card-box">
+            <div class="flex items-center justify-between mb-2.5">
+                <h2 id="form-card-heading" class="text-xs sm:text-sm font-bold text-gray-800">Submit Self Journey Report</h2>
+                <span id="edit-badge" class="hidden text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-semibold">
+                    Editing
+                </span>
+            </div>
+
+            <form id="self-journey-form" onsubmit="handleSelfJourneySubmit(event)" class="space-y-2.5">
+                <div>
+                    <label for="f1-week" class="block text-gray-700 text-[11px] font-bold mb-1">
+                        Select Week <span class="text-red-500">*</span>
+                    </label>
+                    <select id="f1-week" required class="w-full px-2.5 py-1.5 text-xs border rounded-md bg-white field-select">
+                        <option value="">-- Select Week --</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="f1-reflections-text" class="block text-gray-700 text-[11px] font-bold mb-1">
+                        Submit your reflections <span class="text-red-500">*</span>
+                    </label>
+                    <p class="text-[10px] text-gray-600 mb-1">You are encouraged to share any personal insights, shift in perspective, or incidents which may have revealed something for you.</p>
+                    <textarea id="f1-reflections-text" required rows="7" maxlength="10000"
+                        placeholder="Write your weekly self journey reflections here..."
+                        class="w-full px-2.5 py-1.5 text-xs border rounded-md field-input"></textarea>
+                </div>
+
+                <p id="form-status" class="text-xs text-blue-600 font-medium text-center hidden"></p>
+
+                <div class="flex items-center gap-2 pt-1">
+                    <button type="submit" id="btn-save-recording"
+                        class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1.5 px-3 rounded-md text-xs btn-primary">
+                        Submit
+                    </button>
+                    <button type="button" id="btn-cancel-edit" onclick="cancelEdit()"
+                        class="hidden bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-1.5 px-3 rounded-md text-xs btn-secondary">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- OWN SUBMISSIONS TABLE CARD -->
+        <div id="submissions-section" class="bg-white rounded-lg shadow-md border border-gray-200 p-3 card-box">
+            <div class="flex items-center justify-between mb-1.5">
+                <h2 class="text-xs sm:text-sm font-bold text-gray-800">My Self Journey Reports</h2>
+                <span id="my-count-badge" class="text-[11px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-semibold">0</span>
+            </div>
+            <p class="text-[10px] text-gray-500 mb-2.5">
+                Your reports are linked to your login. You can view, edit, or delete them before mentor review.
+            </p>
+
+            <div class="overflow-x-auto table-wrap">
+                <table class="min-w-full border border-gray-200 text-[11px] text-left">
+                    <thead class="bg-gray-100 text-gray-700">
+                        <tr>
+                            <th class="py-1.5 px-2 border-b">Week</th>
+                            <th class="py-1.5 px-2 border-b">Reflection Preview</th>
+                            <th class="py-1.5 px-2 border-b">Link</th>
+                            <th class="py-1.5 px-2 border-b">Review Status</th>
+                            <th class="py-1.5 px-2 border-b">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="my-submissions-tbody" class="divide-y divide-gray-100">
+                        <tr>
+                            <td colspan="5" class="py-3 px-2 text-center text-gray-400 italic">Loading your submissions...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Back to Main Screen Button at Bottom -->
+        <div class="pt-1 pb-2">
+            <button type="button" onclick="goBackToMainScreen()" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg transition text-xs btn-secondary">
+                Back to Main Screen
+            </button>
+        </div>
+    </main>
+
+    <footer class="text-center py-2 text-[10px] text-gray-500">
+        Heartful Communication - Self Journey Weekly Report | HC Portal SJ V1.0 • 25-Nov-2026
+    </footer>
+
+    <!-- View Modal -->
+    <div id="view-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-3 modal-backdrop">
+        <div class="bg-white rounded-lg shadow-xl max-w-xs w-full p-4 text-xs modal-card">
+            <h3 class="text-sm font-bold text-gray-800 mb-2">Submission Details</h3>
+            <div id="view-modal-content" class="space-y-1.5 text-gray-700 mb-3 break-all"></div>
+            <div class="text-right">
+                <button onclick="closeViewModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1.5 px-4 rounded text-xs btn-primary">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Review submission confirmation: explicit Yes / No -->
+    <div id="review-confirm-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-3 modal-backdrop">
+        <div class="bg-white rounded-lg shadow-xl max-w-xs w-full p-4 text-center text-xs modal-card">
+            <h3 class="text-sm font-bold text-gray-800 mb-2">Submit Self Journey Report to Mentors for Review?</h3>
+            <p class="text-gray-700 mb-4">Once you submit this report for mentor review, you will no longer be able to edit or delete this entry. Do you want to continue?</p>
+            <div class="flex gap-2 justify-center">
+                <button type="button" onclick="confirmSubmitForReview()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1.5 px-5 rounded text-xs btn-primary">Yes</button>
+                <button type="button" onclick="cancelSubmitForReview()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-1.5 px-5 rounded text-xs btn-secondary">No</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom delete confirmation modal (avoids browser-native confirmation) -->
+    <div id="delete-confirm-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-3 modal-backdrop">
+        <div class="bg-white rounded-lg shadow-xl max-w-xs w-full p-4 text-center text-xs modal-card">
+            <h3 class="text-sm font-bold text-gray-800 mb-2">Delete Self Journey Report?</h3>
+            <p class="text-gray-700 mb-4">Do you want to delete this Self Journey report? This action cannot be undone.</p>
+            <div class="flex gap-2 justify-center">
+                <button type="button" onclick="confirmDeleteSubmission()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-1.5 px-5 rounded text-xs">Yes, Delete</button>
+                <button type="button" onclick="cancelDeleteSubmission()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-1.5 px-5 rounded text-xs btn-secondary">No</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert Modal -->
+    <div id="alert-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-3 modal-backdrop">
+        <div class="bg-white rounded-lg shadow-xl max-w-xs w-full p-4 text-center text-xs modal-card">
+            <p id="alert-modal-msg" class="text-gray-800 mb-3 whitespace-pre-line font-medium"></p>
+            <button onclick="closeAlertModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1.5 px-4 rounded text-xs btn-primary">
+                OK
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAt_HbqtG_kMn41NC1wPy5KDFNsDp5HTb8",
+            authDomain: "hc-app-72298.firebaseapp.com",
+            databaseURL: "https://hc-app-72298-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "hc-app-72298",
+            storageBucket: "hc-app-72298.firebasestorage.app",
+            messagingSenderId: "1013251414152",
+            appId: "1:1013251414152:web:3e598848e31a81bb43273d"
+        };
+
+        let db = null;
+        if (typeof firebase !== "undefined") {
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            }
+            db = firebase.database();
+        }
+
+        const params = new URLSearchParams(window.location.search);
+        const workshopId = (params.get("wid") || window.location.hash.replace("#", "") || "DEFAULT").trim();
+        const forwardedUserName = (params.get("uname") || "").trim();
+        const forwardedUserId = (params.get("uid") || "").trim();
+        const forwardedRole = (params.get("role") || "").trim();
+        const viewParam = (params.get("view") || "").trim().toLowerCase();
+        const FORM_ID = "self_journey_weekly_report";
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwZwp6CgVUqLM9LUWob9FvgiioA3S5sACYHlkOD7RiopRucNaHzP8IsAcKMEARKbunH3A/exec";
+        const SESSION_STORAGE_KEY = "hc_portal_active_session";
+
+        function sanitizeKey(val) {
+            return (val || "unknown").toString().trim().replace(/[.#$\[\]\/]/g, "_").replace(/\s+/g, "_");
+        }
+
+        const safeWorkshopKey = sanitizeKey(workshopId);
+        let currentProfile = {
+            ps_name: forwardedUserName,
+            ps_id: forwardedUserId,
+            ps_mob: "",
+            ps_email: "",
+            ps_centre: "",
+            ps_state: "",
+            ps_country: "",
+            role: forwardedRole || "Participant"
+        };
+        let activeUserKey = sanitizeKey(forwardedUserId || forwardedUserName || "guest");
+
+        let editingId = null;
+        let pendingReviewSubmissionId = null;
+        let pendingDeleteSubmissionId = null;
+        let submissionsStore = {};
+        let currentViewMode = viewParam === "my" ? "my" : "form";
+
+        function syncFixedHeaderOffset() {
+            const fixedEl = document.getElementById("fixed-top-shell");
+            const mainEl = document.getElementById("main-content");
+            if (fixedEl && mainEl) {
+                mainEl.style.paddingTop = (fixedEl.offsetHeight + 8) + "px";
+            }
+        }
+
+        function maskMobile(mob) {
+            if (!mob) return "***";
+            let s = mob.toString().trim();
+            if (s.length <= 4) return "****";
+            return s.substring(0, 2) + "****" + s.substring(s.length - 2);
+        }
+
+        function maskEmail(email) {
+            if (!email || !email.includes("@")) return "***@***.com";
+            let parts = email.toString().trim().split("@");
+            let maskedName = parts[0].length > 2 ? parts[0].substring(0, 2) + "***" : "***";
+            return maskedName + "@" + parts[1];
+        }
+
+        function renderFixedProfileCard() {
+            const infoEl = document.getElementById("fixed-profile-info");
+            if (!infoEl) return;
+            const pName = currentProfile.ps_name || "Participant";
+            const pId = currentProfile.ps_id || "N/A";
+            const pMob = maskMobile(currentProfile.ps_mob);
+            const pEmail = maskEmail(currentProfile.ps_email);
+            const pCentre = currentProfile.ps_centre || "N/A";
+            const pState = currentProfile.ps_state || "N/A";
+            const pCountry = currentProfile.ps_country || "N/A";
+
+            infoEl.innerHTML = `
+                <div><strong>Name:</strong> ${pName}</div>
+                <div><strong>Unique ID Number:</strong> ${pId}</div>
+                <div><strong>Mobile Number:</strong> ${pMob}</div>
+                <div><strong>Email Address:</strong> ${pEmail}</div>
+                <div><strong>Centre:</strong> ${pCentre}</div>
+                <div><strong>State / Province:</strong> ${pState}</div>
+                <div><strong>Country:</strong> ${pCountry}</div>
+            `;
+            syncFixedHeaderOffset();
+        }
+
+        function applyFixedBannerLogo(wsObj) {
+            const wrap = document.getElementById("fixed-banner-wrap");
+            const img = document.getElementById("fixed-app-logo");
+            if (!wrap || !img) return;
+            if (wsObj && wsObj.logo_status === "ON" && wsObj.logo_url) {
+                img.onload = syncFixedHeaderOffset;
+                img.src = wsObj.logo_url;
+                wrap.classList.remove("hidden");
+            } else {
+                wrap.classList.add("hidden");
+            }
+            syncFixedHeaderOffset();
+        }
+
+        function goBackToMainScreen() {
+            let portalRole = (forwardedRole || currentProfile.role || "participant").toString().trim().toLowerCase();
+            if (portalRole.includes("facilitator") || portalRole.includes("mentor")) {
+                portalRole = "facilitator";
+            } else {
+                portalRole = "participant";
+            }
+            try {
+                const raw = sessionStorage.getItem(SESSION_STORAGE_KEY);
+                const parsed = raw ? JSON.parse(raw) : {};
+                const mergedUser = { ...(parsed.user || {}), ...currentProfile };
+                sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify({
+                    ...parsed,
+                    workshopId: workshopId,
+                    portalRole: portalRole,
+                    user: mergedUser
+                }));
+            } catch (_) {}
+
+            const q = new URLSearchParams();
+            q.set("role", portalRole);
+            q.set("return", "dashboard");
+            if (currentProfile.ps_id) q.set("uid", currentProfile.ps_id);
+            if (currentProfile.ps_name) q.set("uname", currentProfile.ps_name);
+            const hashPart = workshopId && workshopId !== "DEFAULT" ? `#${encodeURIComponent(workshopId)}` : "";
+            window.location.href = `index.html?${q.toString()}${hashPart}`;
+        }
+
+        function showAlert(msg) {
+            document.getElementById("alert-modal-msg").innerText = msg;
+            document.getElementById("alert-modal").classList.remove("hidden");
+        }
+
+        function closeAlertModal() {
+            document.getElementById("alert-modal").classList.add("hidden");
+        }
+
+        function closeViewModal() {
+            document.getElementById("view-modal").classList.add("hidden");
+        }
+
+        function setViewMode(mode) {
+            currentViewMode = mode;
+            const formSec = document.getElementById("form-section");
+            const subSec = document.getElementById("submissions-section");
+            const btnForm = document.getElementById("tab-btn-form");
+            const btnMy = document.getElementById("tab-btn-my");
+
+            if (mode === "my") {
+                formSec.classList.add("hidden");
+                subSec.classList.remove("hidden");
+                btnMy.className = "flex-1 py-1.5 px-2 rounded-md text-xs font-bold bg-indigo-600 text-white btn-primary";
+                btnForm.className = "flex-1 py-1.5 px-2 rounded-md text-xs font-semibold bg-white text-gray-700 border border-gray-200 btn-secondary";
+            } else {
+                formSec.classList.remove("hidden");
+                subSec.classList.remove("hidden");
+                btnForm.className = "flex-1 py-1.5 px-2 rounded-md text-xs font-bold bg-indigo-600 text-white btn-primary";
+                btnMy.className = "flex-1 py-1.5 px-2 rounded-md text-xs font-semibold bg-white text-gray-700 border border-gray-200 btn-secondary";
+            }
+        }
+
+        function parseCommaList(rawStr) {
+            if (!rawStr) return [];
+            return rawStr.toString().split(",").map(s => s.trim()).filter(Boolean);
+        }
+
+        function populateSelectOptions(selectEl, items, placeholderText, preselectVal = "") {
+            selectEl.innerHTML = `<option value="">${placeholderText}</option>`;
+            items.forEach(item => {
+                const opt = document.createElement("option");
+                opt.value = item;
+                opt.textContent = item;
+                if (preselectVal && preselectVal.toLowerCase() === item.toLowerCase()) {
+                    opt.selected = true;
+                }
+                selectEl.appendChild(opt);
+            });
+        }
+
+        function hydrateSessionUserFromStorage() {
+            try {
+                const raw = sessionStorage.getItem(SESSION_STORAGE_KEY);
+                if (!raw) return;
+                const parsed = JSON.parse(raw);
+                if (parsed && parsed.user) {
+                    currentProfile = { ...currentProfile, ...parsed.user };
+                }
+            } catch (_) {}
+        }
+
+        function syncActiveUserKey() {
+            const identifier = currentProfile.ps_id || forwardedUserId || currentProfile.ps_name || forwardedUserName || "guest";
+            activeUserKey = sanitizeKey(identifier);
+        }
+
+        function loadDataFromFirebase() {
+            hydrateSessionUserFromStorage();
+            renderFixedProfileCard();
+            syncActiveUserKey();
+
+            if (!db) {
+                return;
+            }
+
+            db.ref("control_tower/workshops").once("value").then(snap => {
+                let allWs = snap.val();
+                if (!allWs || Object.keys(allWs).length === 0) {
+                    return db.ref("workshops").once("value").then(fbSnap => fbSnap.val() || {});
+                }
+                return allWs;
+            }).then(allWs => {
+                let ws = allWs[workshopId];
+                if (!ws) {
+                    const matchKey = Object.keys(allWs).find(k => k.toLowerCase() === workshopId.toLowerCase());
+                    if (matchKey) ws = allWs[matchKey];
+                }
+                ws = ws || {};
+
+                applyFixedBannerLogo(ws);
+
+                const wsTitle = ws.workshop_name || `Workshop (${workshopId})`;
+                document.getElementById("page-title").innerText = `${wsTitle} | Self Journey Report`;
+
+                const weeks = Array.from({length: 20}, (_, i) => "Week" + (i + 1));
+                populateSelectOptions(document.getElementById("f1-week"), weeks, "-- Select Week --");
+            }).catch(err => {
+                console.error("Workshop load error:", err);
+            });
+
+            db.ref("control_tower/participants").once("value").then(snap => {
+                let rawParticipants = snap.val();
+                if (!rawParticipants || Object.keys(rawParticipants).length === 0) {
+                    return db.ref("participants").once("value").then(fbSnap => fbSnap.val() || {});
+                }
+                return rawParticipants;
+            }).then(rawParticipants => {
+                const targetId = (currentProfile.ps_id || forwardedUserId || "").toString().trim().toLowerCase();
+                const targetName = (currentProfile.ps_name || forwardedUserName || "").toString().trim().toLowerCase();
+
+                for (const [key, p] of Object.entries(rawParticipants || {})) {
+                    if (!p || typeof p !== "object") continue;
+                    const pId = (p.ps_id || "").toString().trim().toLowerCase();
+                    const pName = (p.ps_name || "").toString().trim().toLowerCase();
+                    if ((targetId && pId === targetId) || (!targetId && targetName && pName === targetName)) {
+                        currentProfile = { ...currentProfile, ...p };
+                        break;
+                    }
+                }
+                renderFixedProfileCard();
+                syncActiveUserKey();
+                loadMySubmissions();
+            }).catch(err => {
+                console.error("Participants load error:", err);
+                loadMySubmissions();
+            });
+        }
+
+        function escapeHtml(value) {
+            return (value ?? "").toString().replace(/[&<>\"']/g, ch => ({
+                "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;"
+            }[ch]));
+        }
+
+        function normalizeDuplicateValue(value) {
+            return (value || "").toString().trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+        }
+
+        function isSubmittedForReview(record) {
+            return !!(record && (record.submitted_for_review === true ||
+                (record.review_status || "").toString().toUpperCase() === "SUBMITTED"));
+        }
+
+        function submitForMentorReview(submissionId) {
+            const rec = submissionsStore[submissionId];
+            if (!rec) return;
+            if (isSubmittedForReview(rec)) return showAlert("This report has already been submitted for mentor review.");
+            pendingReviewSubmissionId = submissionId;
+            document.getElementById("review-confirm-modal").classList.remove("hidden");
+        }
+
+        function cancelSubmitForReview() {
+            pendingReviewSubmissionId = null;
+            document.getElementById("review-confirm-modal").classList.add("hidden");
+        }
+
+        function confirmSubmitForReview() {
+            const submissionId = pendingReviewSubmissionId;
+            cancelSubmitForReview();
+
+            if (!submissionId || !db) {
+                return showAlert("Unable to process this request. Please try again.");
+            }
+
+            const rec = submissionsStore[submissionId];
+            if (!rec) {
+                return showAlert("This report entry is not currently loaded. Please refresh your submissions and try again.");
+            }
+
+            if (isSubmittedForReview(rec)) {
+                return showAlert("This report has already been submitted for mentor review.");
+            }
+
+            // Use the owner key captured for this row, not a mutable global key.
+            const entryOwnerKey = rec._firebase_owner_key || rec.user_key || activeUserKey;
+            const entryPath = `form_submissions/${safeWorkshopKey}/${FORM_ID}/${entryOwnerKey}/${submissionId}`;
+            const entryRef = db.ref(entryPath);
+
+            // Read the exact saved record first. The previous transaction callback
+            // aborted when its first local-cache value was null, before Firebase
+            // could resolve the actual server record.
+            entryRef.once("value").then(snapshot => {
+                const current = snapshot.val();
+                if (!current || typeof current !== "object") {
+                    console.error("Review entry missing at expected Firebase path:", entryPath);
+                    throw new Error("The saved report could not be retrieved. Please refresh your submissions and retry.");
+                }
+
+                if (isSubmittedForReview(current)) {
+                    return { alreadySubmitted: true };
+                }
+
+                return entryRef.update({
+                    submitted_for_review: true,
+                    review_status: "SUBMITTED",
+                    submitted_for_review_at_ms: Date.now(),
+                    submission_source: "MANUAL",
+                    notification_status: "PENDING"
+                }).then(() => entryRef.once("value")).then(updatedSnapshot => {
+                    const savedRecord = updatedSnapshot.val();
+                    if (!savedRecord || !isSubmittedForReview(savedRecord)) {
+                        throw new Error("Firebase did not confirm the review status update.");
+                    }
+                    return { alreadySubmitted: false };
+                });
+            }).then(result => {
+                if (result.alreadySubmitted) {
+                    loadMySubmissions();
+                    return showAlert("This report has already been submitted for mentor review.");
+                }
+
+                loadMySubmissions();
+                showAlert("Your Self Journey report has been submitted to mentors for review. Edit and Delete are now disabled. A confirmation email will be sent to you, and mentors will be notified.");
+
+                fetch(WEB_APP_URL, {
+                    method: "POST",
+                    mode: "no-cors",
+                    body: JSON.stringify({
+                        action: "sendSelfJourneyReviewNotification",
+                        workshopKey: safeWorkshopKey,
+                        ownerKey: entryOwnerKey,
+                        submissionId: submissionId
+                    })
+                }).catch(err => console.warn(
+                    "Self Journey review email request failed; scheduled backend will retry:", err
+                ));
+            }).catch(err => {
+                console.error("Review submission failed. Firebase path:", entryPath, err);
+                showAlert(err.message || "Could not submit this report for mentor review. Please try again.");
+            });
+        }
+
+        function downloadSelfJourneyReceipt(submissionId) {
+            const rec = submissionsStore[submissionId];
+            if (!rec) {
+                return showAlert("This submission could not be found. Please refresh your submissions and try again.");
+            }
+            if (!isSubmittedForReview(rec)) {
+                return showAlert("Please submit this report for mentor review before downloading its PDF receipt.");
+            }
+
+            try {
+                const generatedAt = new Date().toLocaleString();
+
+                // Keep the generated PDF content ASCII-safe for the built-in Helvetica font.
+                const pdfText = value => {
+                    if (value === null || value === undefined || value === "") return "N/A";
+                    return String(value)
+                        .replace(/[\r\n\t]+/g, " ")
+                        .replace(/[^\x20-\x7E]/g, "?");
+                };
+                // Preserve intentional blank separator lines in the PDF.
+                // pdfText() returns "N/A" for missing data fields, but blank
+                // layout lines must remain blank rather than becoming "N/A".
+                const pdfEscape = value => {
+                    if (value === null || value === undefined || value === "") return "";
+                    return pdfText(value)
+                        .replace(/\\/g, "\\\\")
+                        .replace(/\(/g, "\\(")
+                        .replace(/\)/g, "\\)");
+                };
+
+                const workshopLabel =
+                    rec.workshop_name ||
+                    rec.workshop_title ||
+                    rec.workshop ||
+                    ("Workshop " + (rec.workshop_id || workshopId || safeWorkshopKey));
+
+                const receiptLines = [
+                    "HEARTFUL COMMUNICATION",
+                    "SELF JOURNEY WEEKLY REPORT RECEIPT",
+                    "",
+                    "Participant Name: " + pdfText(rec.participant_name || (currentProfile && currentProfile.ps_name)),
+                    "Unique ID: " + pdfText(rec.participant_id || (currentProfile && currentProfile.ps_id)),
+                    "Workshop: " + pdfText(workshopLabel),
+                    "Workshop ID: " + pdfText(rec.workshop_id || workshopId || safeWorkshopKey),
+                    "Week: " + pdfText(rec.week),
+                    "Reflections: " + pdfText(rec.reflections),
+                    
+                    "Entry Created: " + pdfText(rec.created_at),
+                    "Last Updated: " + pdfText(rec.updated_at || rec.created_at),
+                    "Mentor Review Status: Submitted for Review",
+                    "Review Submitted At: " + pdfText(
+                        rec.submitted_for_review_at ||
+                        (rec.submitted_for_review_at_ms
+                            ? new Date(Number(rec.submitted_for_review_at_ms)).toLocaleString()
+                            : "N/A")
+                    ),
+                    "PDF Generated / Downloaded At: " + pdfText(generatedAt),
+                    "Submission ID: " + pdfText(rec.submission_id || submissionId),
+                    "",
+                    "This PDF is a receipt for the Self Journey report shown above."
+                ];
+
+                const wrapped = [];
+                receiptLines.forEach(line => {
+                    if (!line) { wrapped.push(""); return; }
+                    while (line.length > 82) {
+                        let cut = line.lastIndexOf(" ", 82);
+                        if (cut < 25) cut = 82;
+                        wrapped.push(line.slice(0, cut));
+                        line = line.slice(cut).trim();
+                    }
+                    wrapped.push(line);
+                });
+
+                // Build a valid PDF and calculate cross-reference offsets in actual bytes.
+                let content = "BT\n/F1 15 Tf\n50 790 Td\n(" + pdfEscape(wrapped[0]) + ") Tj\n/F1 10 Tf\n";
+                wrapped.slice(1).forEach(line => {
+                    content += "0 -18 Td\n(" + pdfEscape(line) + ") Tj\n";
+                });
+                content += "ET";
+
+                const objects = [
+                    "<< /Type /Catalog /Pages 2 0 R >>",
+                    "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+                    "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>",
+                    "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+                    "<< /Length " + new TextEncoder().encode(content).length + " >>\nstream\n" + content + "\nendstream"
+                ];
+
+                const encoder = new TextEncoder();
+                let pdfTextAll = "%PDF-1.4\n";
+                const offsets = [0];
+                objects.forEach((obj, idx) => {
+                    offsets.push(encoder.encode(pdfTextAll).length);
+                    pdfTextAll += (idx + 1) + " 0 obj\n" + obj + "\nendobj\n";
+                });
+
+                const xrefOffset = encoder.encode(pdfTextAll).length;
+                let xref = "xref\n0 " + (objects.length + 1) + "\n0000000000 65535 f \n";
+                for (let n = 1; n < offsets.length; n++) {
+                    xref += String(offsets[n]).padStart(10, "0") + " 00000 n \n";
+                }
+                xref += "trailer\n<< /Size " + (objects.length + 1) +
+                    " /Root 1 0 R >>\nstartxref\n" + xrefOffset + "\n%%EOF";
+
+                const blob = new Blob([pdfTextAll, xref], { type: "application/pdf" });
+                const url = URL.createObjectURL(blob);
+                const participantKey = pdfText(rec.participant_id || (currentProfile && currentProfile.ps_id))
+                    .replace(/[^a-z0-9_-]/gi, "_");
+                const weekKey = pdfText(rec.week).replace(/[^a-z0-9_-]/gi, "_");
+                
+                const fileName = "HC_Self_Journey_Receipt_" + participantKey + "_" + weekKey + ".pdf";
+
+                const link = document.createElement("a");
+                link.href = url;
+                link.download = fileName;
+                link.style.display = "none";
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                window.setTimeout(() => URL.revokeObjectURL(url), 60000);
+            } catch (err) {
+                console.error("PDF receipt generation error:", err);
+                showAlert("PDF receipt generation failed: " + (err && err.message ? err.message : "Please try again."));
+            }
+        }
+
+        function cancelEdit() {
+            editingId = null;
+            document.getElementById("edit-badge").classList.add("hidden");
+            document.getElementById("btn-cancel-edit").classList.add("hidden");
+            document.getElementById("btn-save-recording").textContent = "Submit";
+            document.getElementById("form-card-heading").innerText = "Submit Self Journey Report";
+            document.getElementById("f1-week").value = "";
+            document.getElementById("f1-reflections-text").value = "";
+        }
+
+        function startEdit(submissionId) {
+            const rec = submissionsStore[submissionId];
+            if (!rec) return;
+            if (isSubmittedForReview(rec)) return showAlert("This entry has been submitted for mentor review and can no longer be edited.");
+            setViewMode("form");
+            editingId = submissionId;
+            document.getElementById("edit-badge").classList.remove("hidden");
+            document.getElementById("btn-cancel-edit").classList.remove("hidden");
+            document.getElementById("btn-save-recording").textContent = "Update";
+            document.getElementById("form-card-heading").innerText = "Edit Submission";
+
+            document.getElementById("f1-week").value = rec.week || "";
+            document.getElementById("f1-reflections-text").value = rec.reflections || "";
+            
+            document.getElementById("form-section").scrollIntoView({ behavior: "smooth" });
+        }
+
+        function handleSelfJourneySubmit(event) {
+            event.preventDefault();
+            if (!db) return showAlert("Database connection not ready.");
+
+            const participantName = (currentProfile.ps_name || forwardedUserName || "").toString().trim();
+            const weekVal = document.getElementById("f1-week").value.trim();
+            const reflections = document.getElementById("f1-reflections-text").value.trim();
+
+            if (!participantName) return showAlert("Participant details not found. Please open from your portal screen.");
+            if (!weekVal) return showAlert("Please select a week.");
+            if (!reflections) return showAlert("Please enter your reflections.");
+            if (editingId && isSubmittedForReview(submissionsStore[editingId])) {
+                return showAlert("This report has already been submitted for mentor review and cannot be edited.");
+            }
+
+            const ownerKey = sanitizeKey(currentProfile.ps_id || forwardedUserId || participantName);
+            activeUserKey = ownerKey;
+            const statusEl = document.getElementById("form-status");
+            const saveBtn = document.getElementById("btn-save-recording");
+            saveBtn.disabled = true;
+            statusEl.textContent = editingId ? "Updating..." : "Submitting...";
+            statusEl.classList.remove("hidden");
+
+            const existingRecord = editingId ? submissionsStore[editingId] : null;
+            const writeOwnerKey = existingRecord
+                ? (existingRecord._firebase_owner_key || existingRecord.user_key || ownerKey)
+                : ownerKey;
+            const basePath = `form_submissions/${safeWorkshopKey}/${FORM_ID}/${writeOwnerKey}`;
+            const nowStr = new Date().toLocaleString();
+
+            if (editingId) {
+                const existing = submissionsStore[editingId] || {};
+                const updated = {
+                    ...existing,
+                    participant_id: currentProfile.ps_id || forwardedUserId || existing.participant_id || "",
+                    participant_name: participantName,
+                    week: weekVal,
+                    reflections: reflections,
+                    updated_at: nowStr,
+                    updated_at_ms: Date.now()
+                };
+                db.ref(`${basePath}/${editingId}`).set(updated).then(() => {
+                    saveBtn.disabled = false;
+                    statusEl.classList.add("hidden");
+                    cancelEdit();
+                    loadMySubmissions();
+                    showAlert("Self Journey report updated.");
+                }).catch(err => {
+                    saveBtn.disabled = false;
+                    statusEl.classList.add("hidden");
+                    showAlert("Error updating: " + err.message);
+                });
+            } else {
+                const newRef = db.ref(basePath).push();
+                const record = {
+                    submission_id: newRef.key,
+                    form_id: FORM_ID,
+                    workshop_id: workshopId,
+                    user_key: ownerKey,
+                    participant_id: currentProfile.ps_id || forwardedUserId || "",
+                    participant_name: participantName,
+                    week: weekVal,
+                    reflections: reflections,
+                    created_at: nowStr,
+                    created_at_ms: Date.now(),
+                    updated_at: nowStr,
+                    updated_at_ms: Date.now(),
+                    review_status: "PENDING",
+                    submitted_for_review: false,
+                    notification_status: "WAITING_48_HOURS"
+                };
+                newRef.set(record).then(() => {
+                    saveBtn.disabled = false;
+                    statusEl.classList.add("hidden");
+                    cancelEdit();
+                    loadMySubmissions();
+                    showAlert("Self Journey report submitted.\n\nIf you do not click ‘Submit to Mentors for Review’ within 48 hours, this report will automatically be submitted to mentors for review.");
+                }).catch(err => {
+                    saveBtn.disabled = false;
+                    statusEl.classList.add("hidden");
+                    showAlert("Error submitting: " + err.message);
+                });
+            }
+        }
+
+        function viewSubmission(submissionId) {
+            const rec = submissionsStore[submissionId];
+            if (!rec) return;
+            document.getElementById("view-modal-content").innerHTML = `
+                <div><strong>Name:</strong> ${escapeHtml(rec.participant_name || "-")}</div>
+                <div><strong>Week:</strong> ${escapeHtml(rec.week || "-")}</div>
+                <div><strong>Reflections:</strong><br>${escapeHtml(rec.reflections || "-").replace(/\\n/g, "<br>")}</div>
+                <div><strong>Submitted:</strong> ${escapeHtml(rec.created_at || "-")}</div>
+            `
+            document.getElementById("view-modal").classList.remove("hidden");
+        }
+
+        function deleteSubmission(submissionId) {
+            const rec = submissionsStore[submissionId];
+            if (!rec) return;
+            if (isSubmittedForReview(rec)) {
+                return showAlert("This entry has been submitted for mentor review and can no longer be deleted.");
+            }
+            pendingDeleteSubmissionId = submissionId;
+            document.getElementById("delete-confirm-modal").classList.remove("hidden");
+        }
+
+        function cancelDeleteSubmission() {
+            pendingDeleteSubmissionId = null;
+            document.getElementById("delete-confirm-modal").classList.add("hidden");
+        }
+
+        function confirmDeleteSubmission() {
+            const submissionId = pendingDeleteSubmissionId;
+            cancelDeleteSubmission();
+            if (!db || !submissionId) return;
+
+            const rec = submissionsStore[submissionId];
+            if (!rec) return showAlert("This entry is no longer in your submissions list. Please refresh.");
+            if (isSubmittedForReview(rec)) {
+                return showAlert("This entry has been submitted for mentor review and can no longer be deleted.");
+            }
+
+            const ownerKey = rec._firebase_owner_key || rec.user_key || activeUserKey;
+            const path = `form_submissions/${safeWorkshopKey}/${FORM_ID}/${ownerKey}/${submissionId}`;
+            db.ref(path).remove().then(() => {
+                if (editingId === submissionId) cancelEdit();
+                loadMySubmissions();
+                showAlert("Self Journey report deleted.");
+            }).catch(err => {
+                console.error("Delete failed at Firebase path:", path, err);
+                showAlert("Could not delete this Self Journey report: " + err.message);
+            });
+        }
+
+        function loadMySubmissions() {
+            const tbody = document.getElementById("my-submissions-tbody");
+            const badge = document.getElementById("my-count-badge");
+            submissionsStore = {};
+
+            if (!db) return;
+
+            // Capture the owner key used for this Firebase read. Each row retains
+            // this exact path so later actions cannot accidentally use a changed
+            // global activeUserKey.
+            const ownerKeyAtLoad = activeUserKey;
+            const path = `form_submissions/${safeWorkshopKey}/${FORM_ID}/${ownerKeyAtLoad}`;
+            db.ref(path).once("value").then(snap => {
+                const data = snap.val() || {};
+                const entries = Object.keys(data).map(id => {
+                    submissionsStore[id] = {
+                        ...data[id],
+                        _firebase_owner_key: ownerKeyAtLoad
+                    };
+                    return { id, ...data[id] };
+                }).reverse();
+
+                badge.textContent = entries.length;
+                if (entries.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" class="py-3 px-2 text-center text-gray-400 italic">No submissions yet.</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = "";
+                entries.forEach(item => {
+                    const submitted = isSubmittedForReview(item);
+                    const statusLabel = submitted ? "Submitted for Review" : "Pending";
+                    const statusClass = submitted ? "text-green-700 bg-green-50" : "text-amber-700 bg-amber-50";
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `
+                        <td class="py-1.5 px-2">${escapeHtml(item.week || "-")}</td>
+                        <td class="py-1.5 px-2">${escapeHtml((item.reflections || "-").slice(0, 90))}</td>
+                        <td class="py-1.5 px-2" style="max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                            <span class="text-gray-500">—</span>
+                        </td>
+                        <td class="py-1.5 px-2"><span class="text-[10px] font-semibold px-1.5 py-1 rounded ${statusClass}">${statusLabel}</span></td>
+                        <td class="py-1.5 px-2" style="white-space:nowrap;">
+                            <div class="flex flex-wrap gap-1">
+                                <button type="button" onclick="viewSubmission('${item.id}')" class="border rounded px-1.5 py-1" title="View">View</button>
+                                <button type="button" onclick="startEdit('${item.id}')" class="border rounded px-1.5 py-1 ${submitted ? "opacity-40 cursor-not-allowed" : ""}" ${submitted ? "disabled" : ""} title="Edit">Edit</button>
+                                <button type="button" onclick="deleteSubmission('${item.id}')" class="border rounded px-1.5 py-1 ${submitted ? "opacity-40 cursor-not-allowed" : ""}" ${submitted ? "disabled" : ""} title="Delete">Delete</button>
+                                <button type="button" onclick="submitForMentorReview('${item.id}')" class="border rounded px-1.5 py-1 bg-indigo-50 text-indigo-700 ${submitted ? "opacity-40 cursor-not-allowed" : ""}" ${submitted ? "disabled" : ""} title="Submit to Mentors for Review">Submit to Mentors for Review</button>
+                                <button type="button" onclick="downloadSelfJourneyReceipt('${item.id}')" class="border rounded px-1.5 py-1 ${submitted ? "bg-green-50 text-green-700" : "opacity-40 cursor-not-allowed"}" ${submitted ? "" : "disabled"} title="Download submission details as PDF">Download PDF</button>
+                            </div>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }).catch(err => {
+                console.error("Submissions load error:", err);
+                tbody.innerHTML = `<tr><td colspan="5" class="py-3 px-2 text-center text-red-500">Could not load submissions.</td></tr>`;
+            });
+        }
+
+        window.addEventListener("resize", syncFixedHeaderOffset);
+        window.addEventListener("DOMContentLoaded", () => {
+            setViewMode(currentViewMode);
+            loadDataFromFirebase();
+            syncFixedHeaderOffset();
+        });
+    </script>
+</body>
+</html>
