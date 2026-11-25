@@ -678,7 +678,7 @@
 
     <!-- Footer -->
     <footer class="text-center py-2 text-[11px] text-gray-500 no-print">
-        Heartful Communication • Mentor Feedback Portal | HC Portal · Mentor Feedback V1.1 · Draft → Review → Finalise workflow · 26-Nov-2026
+        Heartful Communication • Mentor Feedback Portal | HC Portal · Mentor Feedback V1.2 · Confirmation callback fix · 26-Nov-2026
     </footer>
 
     <script>
@@ -1693,9 +1693,11 @@ ${buildRecordReportHtml(rec)}
             document.getElementById("confirm-modal-message").innerText = message || "";
             confirmYesCallback = onYes;
             document.getElementById("confirm-btn-yes").onclick = () => {
+                // Preserve the action before closeConfirmModal() clears the shared callback.
+                const actionToRun = confirmYesCallback;
                 closeConfirmModal();
-                if (typeof confirmYesCallback === "function") {
-                    confirmYesCallback();
+                if (typeof actionToRun === "function") {
+                    actionToRun();
                 }
             };
             document.getElementById("confirm-modal").classList.remove("hidden");
