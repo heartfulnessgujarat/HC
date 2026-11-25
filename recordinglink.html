@@ -154,7 +154,7 @@
         <!-- FORM 1 CARD -->
         <div id="form-section" class="bg-white rounded-lg shadow-md border border-gray-200 p-3 mb-3 card-box">
             <div class="flex items-center justify-between mb-2.5">
-                <h2 id="form-card-heading" class="text-xs sm:text-sm font-bold text-gray-800">Submit Recording Link-V5.5</h2>
+                <h2 id="form-card-heading" class="text-xs sm:text-sm font-bold text-gray-800">Submit Recording Link</h2>
                 <span id="edit-badge" class="hidden text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-semibold">
                     Editing
                 </span>
@@ -246,7 +246,7 @@
     </main>
 
     <footer class="text-center py-2 text-[10px] text-gray-500">
-        Heartful Communication - Recording Submission Module | HC Portal V5.5 • PDF submission receipt • 25-Nov-2026
+        Heartful Communication - Recording Submission Module | HC Portal V5.4 • PDF submission receipt • 25-Nov-2026
     </footer>
 
     <!-- View Modal -->
@@ -700,121 +700,115 @@
             }
 
             try {
-                // Capture the exact local date/time when the PDF download is initiated.
-                const downloadTimestamp = new Date();
-                const generatedAt = downloadTimestamp.toLocaleString();
+                const generatedAt = new Date().toLocaleString();
 
-                const safeText = value => {
+                // Keep the generated PDF content ASCII-safe for the built-in Helvetica font.
+                const pdfText = value => {
                     if (value === null || value === undefined || value === "") return "N/A";
-                    // Standard PDF Helvetica fonts support Latin-1 only. Keep readable
-                    // Latin text and replace unsupported glyphs rather than breaking the PDF.
-                    return String(value).replace(/[^\x20-\xFF]/g, "?");
+                    return String(value)
+                        .replace(/[\r\n\t]+/g, " ")
+                        .replace(/[^\x20-\x7E]/g, "?");
                 };
+                const pdfEscape = value => pdfText(value)
+                    .replace(/\\/g, "\\\\")
+                    .replace(/\(/g, "\\(")
+                    .replace(/\)/g, "\\)");
 
-                const lines = [
+                const workshopLabel =
+                    rec.workshop_name ||
+                    rec.workshop_title ||
+                    rec.workshop ||
+                    ("Workshop " + (rec.workshop_id || workshopId || safeWorkshopKey));
+
+                const receiptLines = [
                     "HEARTFUL COMMUNICATION",
                     "RECORDING SUBMISSION RECEIPT",
                     "",
-                    "Participant Name: " + safeText(rec.participant_name || currentProfile.ps_name),
-                    "Unique ID: " + safeText(rec.participant_id || currentProfile.ps_id),
-                    "Workshop Name: " + safeText(activeWorkshopName || ("Workshop " + workshopId)),
-                    "Workshop ID: " + safeText(rec.workshop_id || workshopId),
-                    "Section: " + safeText(rec.section),
-                    "Module: " + safeText(rec.module_name),
-                    "Recording Link: " + safeText(rec.recording_link),
-                    "Form Submitted: " + safeText(rec.created_at),
-                    "Last Updated: " + safeText(rec.updated_at || rec.created_at),
+                    "Participant Name: " + pdfText(rec.participant_name || (currentProfile && currentProfile.ps_name)),
+                    "Unique ID: " + pdfText(rec.participant_id || (currentProfile && currentProfile.ps_id)),
+                    "Workshop: " + pdfText(workshopLabel),
+                    "Workshop ID: " + pdfText(rec.workshop_id || workshopId || safeWorkshopKey),
+                    "Section: " + pdfText(rec.section),
+                    "Module: " + pdfText(rec.module_name),
+                    "Recording Link: " + pdfText(rec.recording_link),
+                    "Entry Created: " + pdfText(rec.created_at),
+                    "Last Updated: " + pdfText(rec.updated_at || rec.created_at),
                     "Mentor Review Status: Submitted for Review",
-                    "Review Submitted At: " + safeText(
+                    "Review Submitted At: " + pdfText(
                         rec.submitted_for_review_at ||
                         (rec.submitted_for_review_at_ms
                             ? new Date(Number(rec.submitted_for_review_at_ms)).toLocaleString()
                             : "N/A")
                     ),
-                    "PDF Downloaded / Generated At: " + generatedAt,
-                    "Submission ID: " + safeText(rec.submission_id || submissionId),
+                    "PDF Generated / Downloaded At: " + pdfText(generatedAt),
+                    "Submission ID: " + pdfText(rec.submission_id || submissionId),
                     "",
-                    "This receipt records the details of the submitted recording entry."
+                    "This PDF is a receipt for the recording submission shown above."
                 ];
 
-                // Wrap long lines so they remain within the printable page.
-                const wrappedLines = [];
-                lines.forEach(line => {
-                    if (!line) {
-                        wrappedLines.push("");
-                        return;
+                const wrapped = [];
+                receiptLines.forEach(line => {
+                    if (!line) { wrapped.push(""); return; }
+                    while (line.length > 82) {
+                        let cut = line.lastIndexOf(" ", 82);
+                        if (cut < 25) cut = 82;
+                        wrapped.push(line.slice(0, cut));
+                        line = line.slice(cut).trim();
                     }
-                    while (line.length > 88) {
-                        let splitAt = line.lastIndexOf(" ", 88);
-                        if (splitAt < 30) splitAt = 88;
-                        wrappedLines.push(line.slice(0, splitAt));
-                        line = line.slice(splitAt).trim();
-                    }
-                    wrappedLines.push(line);
+                    wrapped.push(line);
                 });
 
-                const escapePdfText = text => text
-                    .replace(/\\/g, "\\\\")
-                    .replace(/\(/g, "\\(")
-                    .replace(/\)/g, "\\)");
-
-                let stream = "BT\n/F1 16 Tf\n50 790 Td\n(" +
-                    escapePdfText(wrappedLines[0]) + ") Tj\n/F1 11 Tf\n";
-                let y = 0;
-                wrappedLines.slice(1).forEach(line => {
-                    y -= 19;
-                    stream += "0 -19 Td\n(" + escapePdfText(line) + ") Tj\n";
+                // Build a valid PDF and calculate cross-reference offsets in actual bytes.
+                let content = "BT\n/F1 15 Tf\n50 790 Td\n(" + pdfEscape(wrapped[0]) + ") Tj\n/F1 10 Tf\n";
+                wrapped.slice(1).forEach(line => {
+                    content += "0 -18 Td\n(" + pdfEscape(line) + ") Tj\n";
                 });
-                stream += "ET";
+                content += "ET";
 
                 const objects = [
                     "<< /Type /Catalog /Pages 2 0 R >>",
                     "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
                     "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>",
                     "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
-                    "<< /Length " + stream.length + " >>\nstream\n" + stream + "\nendstream"
+                    "<< /Length " + new TextEncoder().encode(content).length + " >>\nstream\n" + content + "\nendstream"
                 ];
 
-                let pdf = "%PDF-1.4\n";
-                let pdfParts = [pdf];
+                const encoder = new TextEncoder();
+                let pdfTextAll = "%PDF-1.4\n";
                 const offsets = [0];
-                let byteOffset = pdf.length;
-
-                objects.forEach((object, index) => {
-                    const objectText = (index + 1) + " 0 obj\n" + object + "\nendobj\n";
-                    offsets.push(byteOffset);
-                    pdfParts.push(objectText);
-                    byteOffset += objectText.length;
+                objects.forEach((obj, idx) => {
+                    offsets.push(encoder.encode(pdfTextAll).length);
+                    pdfTextAll += (idx + 1) + " 0 obj\n" + obj + "\nendobj\n";
                 });
 
-                const xrefOffset = byteOffset;
+                const xrefOffset = encoder.encode(pdfTextAll).length;
                 let xref = "xref\n0 " + (objects.length + 1) + "\n0000000000 65535 f \n";
-                for (let i = 1; i <= objects.length; i++) {
-                    xref += String(offsets[i]).padStart(10, "0") + " 00000 n \n";
+                for (let n = 1; n < offsets.length; n++) {
+                    xref += String(offsets[n]).padStart(10, "0") + " 00000 n \n";
                 }
                 xref += "trailer\n<< /Size " + (objects.length + 1) +
                     " /Root 1 0 R >>\nstartxref\n" + xrefOffset + "\n%%EOF";
-                pdfParts.push(xref);
 
-                const pdfBlob = new Blob(pdfParts, { type: "application/pdf" });
-                const downloadUrl = URL.createObjectURL(pdfBlob);
-                const fileName = [
-                    "HC-Recording-Receipt",
-                    safeText(rec.participant_id || currentProfile.ps_id).replace(/[^a-z0-9_-]/gi, "_"),
-                    "Section-" + safeText(rec.section).replace(/[^a-z0-9_-]/gi, "_"),
-                    "Module-" + safeText(rec.module_name).replace(/[^a-z0-9_-]/gi, "_")
-                ].join("_") + ".pdf";
+                const blob = new Blob([pdfTextAll, xref], { type: "application/pdf" });
+                const url = URL.createObjectURL(blob);
+                const participantKey = pdfText(rec.participant_id || (currentProfile && currentProfile.ps_id))
+                    .replace(/[^a-z0-9_-]/gi, "_");
+                const sectionKey = pdfText(rec.section).replace(/[^a-z0-9_-]/gi, "_");
+                const moduleKey = pdfText(rec.module_name).replace(/[^a-z0-9_-]/gi, "_");
+                const fileName = "HC_Recording_Receipt_" + participantKey +
+                    "_Section_" + sectionKey + "_Module_" + moduleKey + ".pdf";
 
-                const anchor = document.createElement("a");
-                anchor.href = downloadUrl;
-                anchor.download = fileName;
-                document.body.appendChild(anchor);
-                anchor.click();
-                anchor.remove();
-                setTimeout(() => URL.revokeObjectURL(downloadUrl), 30000);
+                const link = document.createElement("a");
+                link.href = url;
+                link.download = fileName;
+                link.style.display = "none";
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                window.setTimeout(() => URL.revokeObjectURL(url), 60000);
             } catch (err) {
-                console.error("PDF generation/download failed:", err);
-                showAlert("The PDF receipt could not be generated. Please try again.");
+                console.error("PDF receipt generation error:", err);
+                showAlert("PDF receipt generation failed: " + (err && err.message ? err.message : "Please try again."));
             }
         }
 
