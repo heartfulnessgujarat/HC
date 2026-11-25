@@ -6,7 +6,7 @@
     <title id="page-title">Heartful Communication | Recording Link Submission</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>\n    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
     <style>
         .hidden { display: none !important; }
         body {
@@ -246,7 +246,7 @@
     </main>
 
     <footer class="text-center py-2 text-[10px] text-gray-500">
-        Heartful Communication - Recording Submission Module | HC Portal V5.3 • Review path correction • 25-Nov-2026
+        Heartful Communication - Recording Submission Module | HC Portal V5.4 • PDF submission receipt • 25-Nov-2026
     </footer>
 
     <!-- View Modal -->
@@ -692,8 +692,95 @@
 
         function openRecordingDownload(submissionId) {
             const rec = submissionsStore[submissionId];
-            if (!rec || !isSubmittedForReview(rec)) return;
-            if (rec.recording_link) window.open(rec.recording_link, "_blank", "noopener");
+            if (!rec) {
+                return showAlert("This submission could not be found. Please refresh your submissions and try again.");
+            }
+            if (!isSubmittedForReview(rec)) {
+                return showAlert("Please submit this recording for mentor review before downloading its PDF receipt.");
+            }
+
+            if (!window.jspdf || !window.jspdf.jsPDF) {
+                return showAlert("The PDF generator could not be loaded. Please check your internet connection and refresh the page.");
+            }
+
+            try {
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({ unit: "mm", format: "a4" });
+                const pageWidth = pdf.internal.pageSize.getWidth();
+                const left = 18;
+                const right = pageWidth - 18;
+                const contentWidth = right - left;
+                let y = 20;
+
+                const safeText = value => (value === null || value === undefined || value === "")
+                    ? "N/A" : String(value);
+
+                pdf.setFont("helvetica", "bold");
+                pdf.setFontSize(17);
+                pdf.text("Heartful Communication", left, y);
+                y += 8;
+                pdf.setFontSize(13);
+                pdf.text("Recording Submission Report", left, y);
+                y += 5;
+                pdf.setDrawColor(90, 90, 160);
+                pdf.line(left, y, right, y);
+                y += 10;
+
+                pdf.setFont("helvetica", "normal");
+                pdf.setFontSize(10);
+                const details = [
+                    ["Participant Name", safeText(rec.participant_name || currentProfile.ps_name)],
+                    ["Unique ID", safeText(rec.participant_id || currentProfile.ps_id)],
+                    ["Workshop ID", safeText(rec.workshop_id || workshopId)],
+                    ["Section", safeText(rec.section)],
+                    ["Module", safeText(rec.module_name)],
+                    ["Recording Link", safeText(rec.recording_link)],
+                    ["Form Submitted", safeText(rec.created_at)],
+                    ["Last Updated", safeText(rec.updated_at || rec.created_at)],
+                    ["Mentor Review Status", "Submitted for Review"],
+                    ["Review Submitted At", safeText(rec.submitted_for_review_at || rec.submitted_for_review_at_ms
+                        ? (rec.submitted_for_review_at || new Date(Number(rec.submitted_for_review_at_ms)).toLocaleString())
+                        : "N/A")],
+                    ["Submission ID", safeText(rec.submission_id || submissionId)]
+                ];
+
+                details.forEach(([label, value]) => {
+                    pdf.setFont("helvetica", "bold");
+                    pdf.text(label + ":", left, y);
+                    pdf.setFont("helvetica", "normal");
+
+                    const labelWidth = 43;
+                    const wrapped = pdf.splitTextToSize(value, contentWidth - labelWidth);
+                    pdf.text(wrapped, left + labelWidth, y);
+                    y += Math.max(6, wrapped.length * 5);
+
+                    if (y > 265) {
+                        pdf.addPage();
+                        y = 20;
+                    }
+                });
+
+                y += 8;
+                pdf.setDrawColor(210, 210, 210);
+                pdf.line(left, y, right, y);
+                y += 7;
+                pdf.setFontSize(9);
+                pdf.setTextColor(90, 90, 90);
+                pdf.text("This document confirms the details recorded in the Heartful Communication recording submission form.", left, y, {
+                    maxWidth: contentWidth
+                });
+
+                const filenameParts = [
+                    "HC-Recording",
+                    safeText(rec.participant_id || currentProfile.ps_id).replace(/[^a-z0-9_-]/gi, "_"),
+                    "Section-" + safeText(rec.section).replace(/[^a-z0-9_-]/gi, "_"),
+                    "Module-" + safeText(rec.module_name).replace(/[^a-z0-9_-]/gi, "_")
+                ];
+                pdf.save(filenameParts.join("_") + ".pdf");
+            } catch (err) {
+                console.error("PDF generation failed:", err);
+                showAlert("The PDF could not be generated. Please try again.");
+            }
         }
 
         function cancelEdit() {
@@ -917,7 +1004,7 @@
                                 <button type="button" onclick="startEdit('${item.id}')" class="border rounded px-1.5 py-1 ${submitted ? "opacity-40 cursor-not-allowed" : ""}" ${submitted ? "disabled" : ""} title="Edit">Edit</button>
                                 <button type="button" onclick="deleteSubmission('${item.id}')" class="border rounded px-1.5 py-1 ${submitted ? "opacity-40 cursor-not-allowed" : ""}" ${submitted ? "disabled" : ""} title="Delete">Delete</button>
                                 <button type="button" onclick="submitForMentorReview('${item.id}')" class="border rounded px-1.5 py-1 bg-indigo-50 text-indigo-700 ${submitted ? "opacity-40 cursor-not-allowed" : ""}" ${submitted ? "disabled" : ""} title="Submit to Mentors for Review">Submit to Mentors for Review</button>
-                                <button type="button" onclick="openRecordingDownload('${item.id}')" class="border rounded px-1.5 py-1 ${submitted ? "bg-green-50 text-green-700" : "opacity-40 cursor-not-allowed"}" ${submitted ? "" : "disabled"} title="Download / open recording">Download</button>
+                                <button type="button" onclick="openRecordingDownload('${item.id}')" class="border rounded px-1.5 py-1 ${submitted ? "bg-green-50 text-green-700" : "opacity-40 cursor-not-allowed"}" ${submitted ? "" : "disabled"} title="Download submission details as PDF">Download PDF</button>
                             </div>
                         </td>
                     `;
