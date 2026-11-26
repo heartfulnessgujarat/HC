@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- HC Mentee Self-Evaluation linked to Recording Link | V2.1 | Record-Key & Lock Submit Fix | 26-Nov-2026 -->
+<!-- HC Mentee Self-Evaluation linked to Recording Link | V2.2 | Confirm Callback & Lock State Fix | 26-Nov-2026 -->
 <html lang="en">
 
 <head>
@@ -633,7 +633,7 @@
 
     <!-- Footer -->
     <footer class="text-center py-2 text-[11px] text-gray-500 no-print">
-        Heartful Communication • Mentee Self-Evaluation Portal | HC Portal V4.2 • 26-Nov-2026
+        Heartful Communication • Mentee Self-Evaluation Portal | HC Portal V4.3 • 26-Nov-2026
     </footer>
 
     <script>
@@ -1130,7 +1130,10 @@
         }
 
         function feedbackForRecording(recordingId, exceptId = "") {
-            return Object.keys(workshopSubmissions || {}).map(id => ({id, ...(workshopSubmissions[id] || {})}))
+            // Firebase child key is authoritative; a stored "id" field must
+            // never replace it when locating the linked feedback record.
+            return Object.keys(workshopSubmissions || {})
+                .map(id => ({ ...(workshopSubmissions[id] || {}), id }))
                 .find(r => r.id !== exceptId && r.recording_submission_id === recordingId) || null;
         }
 
@@ -1147,7 +1150,7 @@
                 const o = document.createElement("option");
                 o.value = r.id;
                 o.textContent = `${r.recording_date || "Date unavailable"} | ${r.module_name || "Module"} | ${r.section || "Section"}` +
-                    (prior ? (isRecordLocked(prior) ? " — Completed/locked" : " — Draft exists; continue editing") : "");
+                    (prior ? (isRecordLocked(prior) ? " — Mentee feedback submitted (not selectable)" : " — Draft exists; continue editing") : "");
                 if (prior) o.disabled = true;
                 if (prior && prior.id === editingRecordId) o.disabled = false;
                 s.appendChild(o);
@@ -1558,7 +1561,11 @@
                     const updates = {
                         status: "locked",
                         is_locked: true,
+                        submitted_for_review: true,
+                        review_status: "SUBMITTED",
+                        feedback_status: "SUBMITTED_FOR_MENTOR_REVIEW",
                         locked_at: now,
+                        submitted_for_review_at: now,
                         locked_reason: "manual_lock"
                     };
                     const recordRef = db.ref(`control_tower/mentee_feedback/${wsKey}/${recId}`);
@@ -1921,9 +1928,11 @@ ${buildRecordReportHtml(rec)}
             document.getElementById("confirm-modal-message").innerText = message || "";
             confirmYesCallback = onYes;
             document.getElementById("confirm-btn-yes").onclick = () => {
+                // Capture the callback before closeConfirmModal clears it.
+                const callbackToRun = confirmYesCallback;
                 closeConfirmModal();
-                if (typeof confirmYesCallback === "function") {
-                    confirmYesCallback();
+                if (typeof callbackToRun === "function") {
+                    callbackToRun();
                 }
             };
             document.getElementById("confirm-modal").classList.remove("hidden");
