@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="page-title">Heartful Communication | Mentor Feedback Form · V1.4 · Complete Question Numbering · 26-Nov-2026</title>
+    <title id="page-title">Heartful Communication | Mentor Feedback Form · V1.5 · Mentor-Specific Review Lock · 26-Nov-2026</title>
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -661,7 +661,7 @@
 
     <!-- Footer -->
     <footer class="text-center py-2 text-[11px] text-gray-500 no-print">
-        Heartful Communication • Mentor Feedback Portal | HC Portal · Mentor Feedback V1.4 · Recording-linked feedback · 26-Nov-2026
+        Heartful Communication • Mentor Feedback Portal | HC Portal · Mentor Feedback V1.5 · Mentor-specific recording eligibility · 26-Nov-2026
     </footer>
 
     <script>
@@ -1278,9 +1278,19 @@
         }
 
         function mentorFeedbackForRecording(recordingId, excludeRecordId = "") {
-            return Object.keys(workshopSubmissions || {}).map(id => ({...(workshopSubmissions[id] || {}), id}))
-                .find(rec => rec.id !== excludeRecordId && rec.recording_submission_id === recordingId &&
-                    (rec.mentor_id || "").toString() === (currentUser.ps_id || "").toString()) || null;
+            // Feedback eligibility is mentor-specific. A record from another
+            // allocated or standby mentor must NOT lock this recording for me.
+            const activeMentorId = (currentUser.ps_id || "").toString().trim().toUpperCase();
+            const targetRecordingId = (recordingId || "").toString().trim();
+            const excludedId = (excludeRecordId || "").toString().trim();
+            if (!activeMentorId || !targetRecordingId) return null;
+            return Object.keys(workshopSubmissions || {})
+                .map(firebaseKey => ({...(workshopSubmissions[firebaseKey] || {}), id: firebaseKey}))
+                .find(rec =>
+                    rec.id !== excludedId &&
+                    (rec.recording_submission_id || "").toString().trim() === targetRecordingId &&
+                    (rec.mentor_id || "").toString().trim().toUpperCase() === activeMentorId
+                ) || null;
         }
 
         function renderMentorRecordingOptions() {
@@ -1321,7 +1331,7 @@
             details.classList.remove("hidden");
             const prior = mentorFeedbackForRecording(selectedRecordingSubmissionId, editingRecordId || "");
             status.className = "text-[11px] font-semibold rounded p-2 " + (prior ? "bg-amber-50 text-amber-800" : "bg-green-50 text-green-800");
-            status.textContent = prior ? (isRecordLocked(prior) ? "You have already finalised mentor feedback for this recording." : "A draft exists for this recording. Continue editing it from Submissions.") : "This recording is available for your mentor feedback.";
+            status.textContent = prior ? (isRecordLocked(prior) ? "You have already finalised mentor feedback for this recording. Other mentors may still review it." : "A draft exists for this recording. Continue editing it from Submissions.") : "This recording is available for your mentor feedback.";
             status.classList.remove("hidden");
             const menteeSelect = document.getElementById("mentor-mentee-select");
             if (menteeSelect && mentee) {
@@ -1355,9 +1365,14 @@
 
             const wasEditing = !!editingRecordId;
             if (!wasEditing && formData.recording_submission_id) {
-                const duplicate = Object.keys(workshopSubmissions).map(id => ({...(workshopSubmissions[id] || {}), id}))
-                    .find(rec => rec.recording_submission_id === formData.recording_submission_id &&
-                        (rec.mentor_id || "").toString() === (currentUser.ps_id || "").toString());
+                const activeMentorId = (currentUser.ps_id || "").toString().trim().toUpperCase();
+                const targetRecordingId = (formData.recording_submission_id || "").toString().trim();
+                const duplicate = Object.keys(workshopSubmissions)
+                    .map(firebaseKey => ({...(workshopSubmissions[firebaseKey] || {}), id: firebaseKey}))
+                    .find(rec =>
+                        (rec.recording_submission_id || "").toString().trim() === targetRecordingId &&
+                        (rec.mentor_id || "").toString().trim().toUpperCase() === activeMentorId
+                    );
                 if (duplicate) {
                     btn.disabled = false;
                     btn.innerText = "Submit Mentor Feedback";
