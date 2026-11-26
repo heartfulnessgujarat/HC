@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- HC Mentee Self-Evaluation linked to Recording Link | V2.2 | Confirm Callback & Lock State Fix | 26-Nov-2026 -->
+<!-- HC Mentee Self-Evaluation linked to Recording Link | V2.3 | Time Management Yes/No Matrix | 26-Nov-2026 -->
 <html lang="en">
 
 <head>
@@ -513,22 +513,34 @@
                 </div>
             </div>
 
-            <!-- 9. Time Management (Presentation) -->
+            <!-- 9. Time Management (Presentation) | Google Forms-style Yes/No matrix -->
             <div class="border border-gray-200 rounded-lg p-3.5 space-y-3">
                 <h2 class="font-bold text-sm text-indigo-900 border-b border-gray-100 pb-1.5">
                     9. "Time Management" (Presentation)
                 </h2>
 
-                <div class="space-y-2 bg-gray-50 p-3 rounded border border-gray-200">
-                    <div class="text-[11px] font-semibold text-gray-700">Please confirm both items below:</div>
-                    <label class="flex items-start space-x-2.5 cursor-pointer">
-                        <input type="checkbox" id="tm-check-focus" class="mt-0.5 h-4 w-4 text-indigo-600 rounded">
-                        <span>Did I keep a check on time and adjust if necessary, ensuring the core learning focus for the session is preserved?</span>
-                    </label>
-                    <label class="flex items-start space-x-2.5 cursor-pointer">
-                        <input type="checkbox" id="tm-check-agreement" class="mt-0.5 h-4 w-4 text-indigo-600 rounded">
-                        <span>Did I request agreement for any adjustments as needed?</span>
-                    </label>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-xs border-collapse">
+                        <thead>
+                            <tr class="bg-gray-100 text-gray-700">
+                                <th class="text-left p-2 border border-gray-200">Checkpoints</th>
+                                <th class="text-center p-2 border border-gray-200 w-16">Yes</th>
+                                <th class="text-center p-2 border border-gray-200 w-16">No</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="p-2 border border-gray-200">Did I keep a check on time and adjust if necessary, ensuring the core learning focus for the session is preserved?</td>
+                                <td class="p-2 border border-gray-200 text-center"><input type="radio" name="tm_check_focus" value="Yes" class="h-4 w-4 text-indigo-600"></td>
+                                <td class="p-2 border border-gray-200 text-center"><input type="radio" name="tm_check_focus" value="No" class="h-4 w-4 text-indigo-600"></td>
+                            </tr>
+                            <tr class="bg-gray-50/50">
+                                <td class="p-2 border border-gray-200">Did I request agreement for any adjustments as needed?</td>
+                                <td class="p-2 border border-gray-200 text-center"><input type="radio" name="tm_check_agreement" value="Yes" class="h-4 w-4 text-indigo-600"></td>
+                                <td class="p-2 border border-gray-200 text-center"><input type="radio" name="tm_check_agreement" value="No" class="h-4 w-4 text-indigo-600"></td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
 
                 <div>
@@ -1338,8 +1350,8 @@
 
                 const cpWalkingTalk = getRadioValue("cp_walking_talk");
 
-                const tmCheckFocus = document.getElementById("tm-check-focus").checked ? "Yes" : "No";
-                const tmCheckAgreement = document.getElementById("tm-check-agreement").checked ? "Yes" : "No";
+                const tmCheckFocus = getRadioValue("tm_check_focus");
+                const tmCheckAgreement = getRadioValue("tm_check_agreement");
                 const ofnrTimeManagement = document.getElementById("ofnr-time-management").value.trim();
 
                 if (!sessionDate || !moduleSection || !moduleNumber) return showCustomAlert("The selected Recording Link is missing its date, module or section. Please update that recording submission first.");
@@ -1352,8 +1364,8 @@
                 if (!cpConcept) return showCustomAlert("Please select a Curve Point for Concept Clarity.");
                 if (!ofnrConcept) return showCustomAlert("Please enter Detail Feedback in OFNR on Concept Clarity.");
                 if (!cpWalkingTalk) return showCustomAlert("Please select a Curve Point for Walking the Talk.");
-                if (!document.getElementById("tm-check-focus").checked || !document.getElementById("tm-check-agreement").checked) {
-                    return showCustomAlert("Please check both Time Management items before submitting.");
+                if (!tmCheckFocus || !tmCheckAgreement) {
+                    return showCustomAlert("Please select Yes or No for both Time Management checkpoints.");
                 }
                 if (!ofnrTimeManagement) return showCustomAlert("Please enter Detail Feedback in OFNR on Time Management.");
 
@@ -1477,8 +1489,8 @@
             document.getElementById("ofnr-tech-capability").value = "";
             document.getElementById("ofnr-chat").value = "";
             document.getElementById("ofnr-concept").value = "";
-            document.getElementById("tm-check-focus").checked = false;
-            document.getElementById("tm-check-agreement").checked = false;
+            setRadioValue("tm_check_focus", "");
+            setRadioValue("tm_check_agreement", "");
             document.getElementById("ofnr-time-management").value = "";
         }
 
@@ -1517,8 +1529,8 @@
 
             setRadioValue("cp_walking_talk", rec.cp_walking_talk);
 
-            document.getElementById("tm-check-focus").checked = (rec.tm_check_focus === "Yes");
-            document.getElementById("tm-check-agreement").checked = (rec.tm_check_agreement === "Yes");
+            setRadioValue("tm_check_focus", rec.tm_check_focus || "");
+            setRadioValue("tm_check_agreement", rec.tm_check_agreement || "");
             document.getElementById("ofnr-time-management").value = rec.ofnr_time_management || "";
 
             switchTab("form");
