@@ -4,10 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="page-title">Heartful Communication | Mentor Feedback Form · V1.0 · 26-Nov-2026</title>
+    <title id="page-title">Heartful Communication | Mentor Feedback Form · V1.3 · 26-Nov-2026</title>
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Client-side PDF generation for locked mentor-feedback records -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -1481,7 +1483,7 @@
                 let buttons = `<button onclick="openViewModal('${rec.id}')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-1.5 rounded text-[11px]">View</button>`;
                 if (locked) {
                     buttons += `<button onclick="printRecord('${rec.id}')" class="bg-gray-700 hover:bg-gray-800 text-white font-bold px-3 py-1.5 rounded text-[11px]">Print</button>
-                               <button onclick="downloadRecordHtml('${rec.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded text-[11px]">Download</button>`;
+                               <button onclick="downloadRecordPdf('${rec.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded text-[11px]">Download</button>`;
                 } else {
                     buttons += `<button onclick="startEditRecord('${rec.id}')" class="bg-amber-500 hover:bg-amber-600 text-white font-bold px-3 py-1.5 rounded text-[11px]">Edit</button>
                                <button onclick="confirmDeleteRecord('${rec.id}')" class="bg-red-500 hover:bg-red-600 text-white font-bold px-3 py-1.5 rounded text-[11px]">Delete</button>
@@ -1583,7 +1585,7 @@
             if (locked) {
                 footerHtml += `
                     <button onclick="printRecord('${recId}')" class="bg-gray-700 hover:bg-gray-800 text-white font-bold px-3 py-1.5 rounded text-xs">Print</button>
-                    <button onclick="downloadRecordHtml('${recId}')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded text-xs">Download</button>
+                    <button onclick="downloadRecordPdf('${recId}')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded text-xs">Download</button>
                 `;
             }
             document.getElementById("view-modal-footer").innerHTML = footerHtml;
@@ -1610,44 +1612,41 @@
             }, 500);
         }
 
-        function downloadRecordHtml(recId) {
+        async function downloadRecordPdf(recId) {
             const rec = workshopSubmissions[recId];
             if (!rec) return;
             if (!isRecordLocked(rec)) {
-                return showCustomAlert("Download is available once mentor feedback is locked and finalised.");
+                return showCustomAlert("PDF download is available once mentor feedback is locked and finalised.");
+            }
+            if (typeof html2pdf === "undefined") {
+                return showCustomAlert("The PDF service could not be loaded. Please check your internet connection and try again.");
             }
 
             const safeName = (rec.mentee_name || "Mentee").replace(/[^a-zA-Z0-9_-]/g, "_");
             const safeMod = (rec.module_number || "Module").replace(/[^a-zA-Z0-9_-]/g, "_");
-            const fileName = `HC_Mentor_Feedback_${safeName}_${safeMod}_${rec.session_date || ""}.html`;
+            const fileName = `HC_Mentor_Feedback_${safeName}_${safeMod}_${rec.session_date || ""}.pdf`;
 
-            const htmlDoc = `<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>${fileName}</title>
-<style>
-  body { font-family: Arial, sans-serif; margin: 24px; color: #1f2937; font-size: 13px; }
-  h2 { color: #312e81; margin-bottom: 4px; }
-  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #f3f4f6; padding: 12px; border-radius: 6px; margin: 12px 0; }
-  .box { border: 1px solid #d1d5db; border-radius: 6px; padding: 12px; margin-bottom: 12px; }
-  .ofnr { background: #f9fafb; border: 1px solid #e5e7eb; padding: 8px; border-radius: 4px; white-space: pre-line; margin-top: 6px; }
-</style>
-</head>
-<body>
-${buildRecordReportHtml(rec)}
-</body>
-</html>`;
+            // Render the same full record report used by View/Print into a temporary
+            // off-screen element; html2pdf captures it and downloads a real PDF file.
+            const exportHost = document.createElement("div");
+            exportHost.style.cssText = "position:fixed;left:-10000px;top:0;width:760px;background:#ffffff;color:#1f2937;padding:24px;z-index:-1;";
+            exportHost.innerHTML = buildRecordReportHtml(rec);
+            document.body.appendChild(exportHost);
 
-            const blob = new Blob([htmlDoc], { type: "text/html;charset=utf-8" });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = fileName;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+            try {
+                await html2pdf().set({
+                    margin: [10, 10, 12, 10],
+                    filename: fileName,
+                    image: { type: "jpeg", quality: 0.98 },
+                    html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff", logging: false },
+                    jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+                    pagebreak: { mode: ["css", "legacy"] }
+                }).from(exportHost).save();
+            } catch (err) {
+                showCustomAlert("PDF generation failed: " + (err.message || err));
+            } finally {
+                if (exportHost.parentNode) exportHost.parentNode.removeChild(exportHost);
+            }
         }
 
         function switchTab(tab) {
