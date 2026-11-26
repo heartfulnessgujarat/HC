@@ -1412,13 +1412,44 @@
                 const paths = {
                     recording_link: 'form_submissions/' + workshopKey + '/recording_link',
                     self_journey_weekly_report: 'form_submissions/' + workshopKey + '/self_journey_weekly_report',
-                    mentee_feedback: 'control_tower/mentee_feedback/' + workshopKey
+                    mentee_feedback: 'control_tower/mentee_feedback/' + workshopKey,
+                    mentor_feedback: 'control_tower/mentor_feedback/' + workshopKey
                 };
                 const keys = Object.keys(paths);
                 const snapshots = await Promise.all(keys.map(key => db.ref(paths[key]).once('value')));
                 const allRecords = [];
-                keys.forEach((key, index) => {
+                keys.filter(key => key !== 'mentor_feedback').forEach(key => {
+                    const index = keys.indexOf(key);
                     allRecords.push(...collectFacilitatorSubmissions(key, snapshots[index].val(), paths[key]));
+                });
+
+                // Match mentor feedback to its source Recording Link submission.
+                // Draft feedback means the mentor has started but has not finalised it;
+                // FINALIZED means the mentor action is complete.
+                const mentorFeedbackByRecording = {};
+                const mentorFeedbackRoot = snapshots[keys.indexOf('mentor_feedback')].val() || {};
+                Object.keys(mentorFeedbackRoot).forEach(feedbackId => {
+                    const feedback = mentorFeedbackRoot[feedbackId] || {};
+                    const sourceRecordingId = String(feedback.recording_submission_id || feedback.recording_id || '').trim();
+                    if (!sourceRecordingId) return;
+                    const feedbackStatus = String(feedback.status || '').toUpperCase();
+                    const isFinal = feedbackStatus === 'FINALIZED' || feedbackStatus === 'LOCKED' || feedbackStatus === 'SUBMITTED';
+                    const previous = mentorFeedbackByRecording[sourceRecordingId];
+                    if (!previous || isFinal || (!previous.isFinal && feedback.updated_at > previous.updatedAt)) {
+                        mentorFeedbackByRecording[sourceRecordingId] = {
+                            isFinal: isFinal,
+                            updatedAt: Number(feedback.updated_at || feedback.updated_at_ms || feedback.created_at || 0),
+                            status: isFinal ? 'COMPLETED' : 'DRAFT'
+                        };
+                    }
+                });
+                allRecords.filter(item => item.formType === 'recording_link').forEach(item => {
+                    const sourceIds = [item.submissionKey, item.submissionId, item.record && item.record.record_id, item.record && item.record.submission_id]
+                        .filter(Boolean).map(value => String(value).trim());
+                    const matched = sourceIds.map(id => mentorFeedbackByRecording[id]).find(Boolean);
+                    item.mentorFeedbackStatus = !matched ? 'PENDING — Mentor feedback not submitted'
+                        : matched.isFinal ? 'COMPLETED — Mentor feedback submitted'
+                        : 'DRAFT — Mentor must finalise feedback';
                 });
                 allRecords.sort(facilitatorSubmissionGroupSort);
                 facilitatorSubmissionRecords = allRecords;
@@ -1455,7 +1486,7 @@
                 person.forms.forEach((items, formType) => {
                     html += '<div class="rounded border border-gray-100"><div class="bg-gray-50 px-2.5 py-1.5 text-[11px] font-bold text-gray-700">' + facilitatorSubmissionEscape(items[0].formLabel) + '<span class="ml-1 text-gray-400 font-normal">(' + items.length + ')</span></div><div class="divide-y divide-gray-100">';
                     items.forEach(item => {
-                        html += '<div class="px-2.5 py-2 flex items-start justify-between gap-2"><div class="min-w-0"><div class="text-[10px] text-gray-500">' + facilitatorSubmissionEscape(item.dateLabel) + '</div>' + (item.subtitle ? '<div class="text-[11px] text-gray-700 mt-0.5">' + facilitatorSubmissionEscape(item.subtitle) + '</div>' : '') + '<div class="text-[10px] mt-0.5 text-indigo-700">Status: ' + facilitatorSubmissionEscape(item.status) + '</div></div><button type="button" data-submission-index="' + facilitatorSubmissionRecords.indexOf(item) + '" class="fac-submission-view-btn shrink-0 rounded bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-semibold px-2.5 py-1.5">View</button></div>';
+                        html += '<div class="px-2.5 py-2 flex items-start justify-between gap-2"><div class="min-w-0"><div class="text-[10px] text-gray-500">' + facilitatorSubmissionEscape(item.dateLabel) + '</div>' + (item.subtitle ? '<div class="text-[11px] text-gray-700 mt-0.5">' + facilitatorSubmissionEscape(item.subtitle) + '</div>' : '') + '<div class="text-[10px] mt-0.5 text-indigo-700">Status: ' + facilitatorSubmissionEscape(item.status) + '</div>' + (item.formType === 'recording_link' ? '<div class="text-[10px] mt-1 font-semibold ' + (item.mentorFeedbackStatus && item.mentorFeedbackStatus.indexOf('COMPLETED') === 0 ? 'text-green-700' : 'text-amber-700') + '">Mentor Feedback: ' + facilitatorSubmissionEscape(item.mentorFeedbackStatus || 'PENDING — Mentor feedback not submitted') + '</div>' : '') + '</div><button type="button" data-submission-index="' + facilitatorSubmissionRecords.indexOf(item) + '" class="fac-submission-view-btn shrink-0 rounded bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-semibold px-2.5 py-1.5">View</button></div>';
                     });
                     html += '</div></div>';
                 });
