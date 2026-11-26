@@ -114,41 +114,22 @@
                 </p>
             </div>
 
-            <!-- Mentee identity is selected from the live Participant node; mentor identity comes from login. -->
-            <div class="border border-indigo-200 rounded-lg p-3.5 bg-indigo-50/50">
-                <label for="mentor-mentee-select" class="block font-bold text-gray-800 mb-1">Select Name of Mentee <span class="text-red-600">*</span></label>
-                <select id="mentor-mentee-select" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    <option value="">Loading mentees from Participant records...</option>
+            <!-- Recording-based mentor feedback: all identifying/session metadata is inherited from the participant's submitted recording. -->
+            <div class="border border-indigo-200 rounded-lg p-3.5 bg-indigo-50/50 space-y-2">
+                <label for="mentor-recording-select" class="block font-bold text-indigo-900">1. Select the Recording Link submission to review <span class="text-red-600">*</span></label>
+                <select id="mentor-recording-select" onchange="handleMentorRecordingSelectionChange()" class="w-full px-3 py-2 border border-indigo-300 rounded-md bg-white text-xs">
+                    <option value="">Loading submitted recordings...</option>
                 </select>
-                <p class="text-[10px] text-gray-500 mt-1">Mentor identity is taken from your facilitator login.</p>
+                <div id="mentor-recording-details" class="hidden bg-white border border-indigo-100 rounded p-2.5 text-xs space-y-1"></div>
+                <div id="mentor-recording-status" class="hidden text-[11px] font-semibold rounded p-2"></div>
+                <p class="text-[10px] text-gray-500">The mentee, recording date, module, section, and recording link are fetched from the selected submission. Mentor identity comes from your facilitator login.</p>
             </div>
-
-            <!-- 1. Date of the Session -->
-            <div class="border border-gray-200 rounded-lg p-3.5 bg-gray-50/40">
-                <label for="session-date" class="block font-bold text-gray-800 mb-1">
-                    1. Date of the session
-                </label>
-                <input type="date" id="session-date" class="w-full sm:w-64 px-3 py-1.5 border border-gray-300 rounded-md bg-white text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            </div>
-
-            <!-- 2. Section of the Module (Fetched dynamically from workshop node) -->
-            <div class="border border-gray-200 rounded-lg p-3.5 bg-gray-50/40">
-                <label class="block font-bold text-gray-800 mb-2">
-                    2. Select Section of the Module for which you presented
-                </label>
-                <div class="grid grid-cols-2 gap-2" id="module-section-options">
-                    <div class="text-[11px] text-gray-400 italic">Loading sections...</div>
-                </div>
-            </div>
-
-            <!-- 3. Module Number (Fetched dynamically from workshop node) -->
-            <div class="border border-gray-200 rounded-lg p-3.5 bg-gray-50/40">
-                <label class="block font-bold text-gray-800 mb-2">
-                    3. Select Module Number
-                </label>
-                <div class="grid grid-cols-2 gap-2" id="module-number-options">
-                    <div class="text-[11px] text-gray-400 italic">Loading modules...</div>
-                </div>
+            <!-- Compatibility fields retained but hidden: values are populated from the selected recording. -->
+            <div class="hidden" aria-hidden="true">
+                <select id="mentor-mentee-select"><option value="">Select mentee</option></select>
+                <input type="date" id="session-date">
+                <div id="module-section-options"></div>
+                <div id="module-number-options"></div>
             </div>
 
             <!-- 4. Video/Audio Clarity (Presentation) -->
@@ -680,7 +661,7 @@
 
     <!-- Footer -->
     <footer class="text-center py-2 text-[11px] text-gray-500 no-print">
-        Heartful Communication • Mentor Feedback Portal | HC Portal · Mentor Feedback V1.2 · Confirmation callback fix · 26-Nov-2026
+        Heartful Communication • Mentor Feedback Portal | HC Portal · Mentor Feedback V1.4 · Recording-linked feedback · 26-Nov-2026
     </footer>
 
     <script>
@@ -752,6 +733,8 @@
         };
         let isMentorViewer = false;
         let workshopSubmissions = {};
+        let recordingSubmissions = {};
+        let selectedRecordingSubmissionId = "";
         let editingRecordId = null;
         let submissionsListenerStarted = false;
 
@@ -1031,7 +1014,7 @@
 
                 resolveLoggedInUser();
                 populateMenteeSelector();
-                if (isMentorViewer) listenToWorkshopSubmissions();
+                if (isMentorViewer) { listenToWorkshopSubmissions(); loadMentorRecordingSubmissions(); }
             }).catch(err => {
                 console.error("Firebase initialization error:", err);
                 renderDynamicSectionAndModuleOptions({});
@@ -1166,6 +1149,7 @@
                 workshopSubmissions = snap.val() || {};
                 populateMentorMenteeFilter();
                 renderSubmissionsList();
+                renderMentorRecordingOptions();
             }, err => {
                 console.error("Mentor feedback submissions listener error:", err);
                 document.getElementById("submissions-list-container").innerHTML =
@@ -1191,21 +1175,28 @@
         }
 
         function collectMentorFeedbackForm() {
-            const menteeSelect = document.getElementById("mentor-mentee-select");
-            const selected = menteeSelect && menteeSelect.options[menteeSelect.selectedIndex];
-            if (!selected || !selected.value) {
-                showCustomAlert("Please select the mentee.");
+            const recordingId = document.getElementById("mentor-recording-select")?.value || selectedRecordingSubmissionId;
+            const recording = recordingSubmissions[recordingId];
+            if (!recordingId || !recording) {
+                showCustomAlert("Please select a submitted Recording Link first.");
                 return null;
             }
-            const mentee = allParticipants[selected.value] || {};
+            const linkedMentee = findMenteeForRecording(recording);
+            if (!linkedMentee) {
+                showCustomAlert("The participant linked to this recording could not be matched in the Participant records. Please verify the Participant node.");
+                return null;
+            }
             const formData = {
-                mentee_key: selected.value,
-                mentee_id: (selected.dataset.participantId || mentee.ps_id || mentee.uid || mentee.id || selected.value).toString(),
-                mentee_name: (mentee.ps_name || mentee.uname || mentee.name || selected.textContent).toString(),
-                mentee_email: (selected.dataset.email || mentee.ps_email || mentee.email || "").toString(),
-                session_date: document.getElementById("session-date").value.trim(),
-                module_section: getRadioValue("module_section"),
-                module_number: getRadioValue("module_number"),
+                recording_submission_id: recordingId,
+                recording_link: (recording.recording_link || recording.link || "").toString(),
+                recording_date: (recording.recording_date || "").toString(),
+                mentee_key: linkedMentee.key,
+                mentee_id: linkedMentee.id,
+                mentee_name: linkedMentee.name,
+                mentee_email: linkedMentee.email,
+                session_date: (recording.recording_date || "").toString(),
+                module_section: (recording.section || "").toString(),
+                module_number: (recording.module_name || recording.module_number || "").toString(),
                 va_within_frame: getRadioValue("va_within_frame"),
                 va_visible_audible: getRadioValue("va_visible_audible"),
                 ofnr_video_audio: document.getElementById("ofnr-video-audio").value.trim(),
@@ -1223,11 +1214,8 @@
                 ofnr_time_management: document.getElementById("ofnr-time-management").value.trim(),
                 presentation_recommendation: getRadioValue("presentation_recommendation")
             };
-
             const required = [
-                [formData.session_date, "Please select the Date of the session."],
-                [formData.module_section, "Please select the Section of the Module."],
-                [formData.module_number, "Please select the Module Number."],
+                [formData.recording_submission_id, "Please select a submitted Recording Link."],
                 [formData.va_within_frame && formData.va_visible_audible, "Please answer both Video / Audio Clarity questions."],
                 [formData.ofnr_video_audio, "Please enter detailed OFNR feedback on Video / Audio Clarity."],
                 [formData.tech_multitask && formData.tech_pptx, "Please answer both Technical Capability questions."],
@@ -1241,11 +1229,110 @@
                 [formData.presentation_recommendation, "Please select the Presentation Related Topics recommendation."]
             ];
             const missing = required.find(item => !item[0]);
-            if (missing) {
-                showCustomAlert(missing[1]);
-                return null;
-            }
+            if (missing) { showCustomAlert(missing[1]); return null; }
             return formData;
+        }
+
+        function findMenteeForRecording(recording) {
+            const sourceId = (recording.participant_id || recording.ps_id || recording.user_id || "").toString().trim().toLowerCase();
+            const sourceName = (recording.participant_name || recording.ps_name || "").toString().trim().toLowerCase();
+            const sourceEmail = (recording.participant_email || recording.ps_email || recording.email || "").toString().trim().toLowerCase();
+            for (const [key, p] of Object.entries(allParticipants || {})) {
+                if (!p || typeof p !== "object") continue;
+                const id = (p.ps_id || p.uid || p.id || key || "").toString().trim();
+                const name = (p.ps_name || p.uname || p.name || "").toString().trim();
+                const email = (p.ps_email || p.email || "").toString().trim();
+                if ((sourceId && (id.toLowerCase() === sourceId || key.toString().trim().toLowerCase() === sourceId)) ||
+                    (!sourceId && sourceEmail && email.toLowerCase() === sourceEmail) ||
+                    (!sourceId && !sourceEmail && sourceName && name.toLowerCase() === sourceName)) {
+                    return {key, id, name, email};
+                }
+            }
+            return null;
+        }
+
+        function loadMentorRecordingSubmissions() {
+            const wsKey = (activeWorkshopId || "").toString().trim().toUpperCase();
+            const select = document.getElementById("mentor-recording-select");
+            if (!wsKey || !db || !select) return;
+            select.innerHTML = '<option value="">Loading submitted recordings...</option>';
+            db.ref(`form_submissions/${wsKey}/recording_link`).once("value").then(snap => {
+                const root = snap.val() || {};
+                const eligible = {};
+                Object.keys(root).forEach(ownerKey => {
+                    const records = root[ownerKey];
+                    if (!records || typeof records !== "object") return;
+                    Object.keys(records).forEach(submissionId => {
+                        const r = records[submissionId];
+                        if (!r || typeof r !== "object") return;
+                        const ready = r.submitted_for_review === true || (r.review_status || "").toString().toUpperCase() === "SUBMITTED";
+                        if (ready) eligible[submissionId] = {...r, recording_submission_id: submissionId, _recording_owner_key: ownerKey};
+                    });
+                });
+                recordingSubmissions = eligible;
+                renderMentorRecordingOptions();
+            }).catch(err => {
+                console.error("Mentor recording list lookup failed:", err);
+                select.innerHTML = '<option value="">Could not load recordings. Refresh and retry.</option>';
+            });
+        }
+
+        function mentorFeedbackForRecording(recordingId, excludeRecordId = "") {
+            return Object.keys(workshopSubmissions || {}).map(id => ({...(workshopSubmissions[id] || {}), id}))
+                .find(rec => rec.id !== excludeRecordId && rec.recording_submission_id === recordingId &&
+                    (rec.mentor_id || "").toString() === (currentUser.ps_id || "").toString()) || null;
+        }
+
+        function renderMentorRecordingOptions() {
+            const select = document.getElementById("mentor-recording-select");
+            if (!select) return;
+            const keep = selectedRecordingSubmissionId || (editingRecordId && workshopSubmissions[editingRecordId]?.recording_submission_id) || "";
+            select.innerHTML = '<option value="">-- Select a submitted recording --</option>';
+            Object.keys(recordingSubmissions).map(id => ({id, ...recordingSubmissions[id]}))
+                .sort((a,b) => Number(b.created_at_ms || b.created_at || 0) - Number(a.created_at_ms || a.created_at || 0))
+                .forEach(r => {
+                    const prior = mentorFeedbackForRecording(r.id, editingRecordId || "");
+                    const option = document.createElement("option");
+                    option.value = r.id;
+                    option.textContent = `${r.recording_date || "Date unavailable"} | ${r.module_name || "Module"} | ${r.section || "Section"} | ${r.participant_name || r.ps_name || "Participant"}` +
+                        (prior ? (isRecordLocked(prior) ? " — Mentor feedback finalised" : " — Draft exists; edit from Submissions") : "");
+                    if (prior) option.disabled = true;
+                    if (prior && prior.id === editingRecordId) option.disabled = false;
+                    select.appendChild(option);
+                });
+            if (keep && recordingSubmissions[keep]) { select.value = keep; selectedRecordingSubmissionId = keep; }
+            else { select.value = ""; selectedRecordingSubmissionId = ""; }
+            handleMentorRecordingSelectionChange();
+        }
+
+        function handleMentorRecordingSelectionChange() {
+            selectedRecordingSubmissionId = document.getElementById("mentor-recording-select")?.value || "";
+            const r = recordingSubmissions[selectedRecordingSubmissionId];
+            const details = document.getElementById("mentor-recording-details");
+            const status = document.getElementById("mentor-recording-status");
+            if (!details || !status) return;
+            if (!r) { details.classList.add("hidden"); status.classList.add("hidden"); return; }
+            const mentee = findMenteeForRecording(r);
+            details.innerHTML = `<div><b>Mentee:</b> ${escapeHtml(r.participant_name || r.ps_name || (mentee && mentee.name) || "N/A")}</div>` +
+                `<div><b>Recording Date:</b> ${escapeHtml(r.recording_date || "N/A")}</div>` +
+                `<div><b>Module:</b> ${escapeHtml(r.module_name || r.module_number || "N/A")}</div>` +
+                `<div><b>Section:</b> ${escapeHtml(r.section || "N/A")}</div>` +
+                `<div><b>Recording:</b> ${(r.recording_link || r.link) ? `<a class="text-indigo-700 underline break-all" href="${escapeHtml(r.recording_link || r.link)}" target="_blank" rel="noopener">Open recording</a>` : "N/A"}</div>`;
+            details.classList.remove("hidden");
+            const prior = mentorFeedbackForRecording(selectedRecordingSubmissionId, editingRecordId || "");
+            status.className = "text-[11px] font-semibold rounded p-2 " + (prior ? "bg-amber-50 text-amber-800" : "bg-green-50 text-green-800");
+            status.textContent = prior ? (isRecordLocked(prior) ? "You have already finalised mentor feedback for this recording." : "A draft exists for this recording. Continue editing it from Submissions.") : "This recording is available for your mentor feedback.";
+            status.classList.remove("hidden");
+            const menteeSelect = document.getElementById("mentor-mentee-select");
+            if (menteeSelect && mentee) {
+                let opt = Array.from(menteeSelect.options).find(o => o.value === mentee.key);
+                if (!opt) { opt = new Option(mentee.name, mentee.key); opt.dataset.participantId = mentee.id; opt.dataset.email = mentee.email; menteeSelect.add(opt); }
+                menteeSelect.value = mentee.key;
+            }
+            const dateEl = document.getElementById("session-date");
+            if (dateEl) dateEl.value = /^\d{4}-\d{2}-\d{2}$/.test(r.recording_date || "") ? r.recording_date : "";
+            setRadioValue("module_section", r.section || "");
+            setRadioValue("module_number", r.module_name || r.module_number || "");
         }
 
         function handleFormSubmit() {
@@ -1267,6 +1354,18 @@
             btn.innerText = editingRecordId ? "Updating Draft..." : "Saving Draft...";
 
             const wasEditing = !!editingRecordId;
+            if (!wasEditing && formData.recording_submission_id) {
+                const duplicate = Object.keys(workshopSubmissions).map(id => ({...(workshopSubmissions[id] || {}), id}))
+                    .find(rec => rec.recording_submission_id === formData.recording_submission_id &&
+                        (rec.mentor_id || "").toString() === (currentUser.ps_id || "").toString());
+                if (duplicate) {
+                    btn.disabled = false;
+                    btn.innerText = "Submit Mentor Feedback";
+                    return showCustomAlert(isRecordLocked(duplicate) ?
+                        "You have already finalised feedback for this recording." :
+                        "A draft already exists for this recording. Please open it from Submissions and choose Edit.");
+                }
+            }
             const wsKey = activeWorkshopId.toString().trim().toUpperCase();
             const now = Date.now();
             const workshopObj = findWorkshopEntry(allWorkshops, activeWorkshopId) || {};
@@ -1312,6 +1411,9 @@
 
         function resetFormFields() {
             document.getElementById("mentor-mentee-select").value = "";
+            selectedRecordingSubmissionId = "";
+            const recordingSelect = document.getElementById("mentor-recording-select"); if (recordingSelect) recordingSelect.value = "";
+            handleMentorRecordingSelectionChange();
             document.getElementById("session-date").value = "";
             ["module_section", "module_number", "va_within_frame", "va_visible_audible", "tech_multitask", "tech_pptx", "cp_chat", "cp_concept", "cp_walking_talk", "tm_check_focus", "tm_check_agreement", "presentation_recommendation"].forEach(name => {
                 document.querySelectorAll(`input[name="${name}"]`).forEach(el => el.checked = false);
@@ -1334,6 +1436,9 @@
             editingRecordId = recId;
             document.getElementById("edit-mode-banner").classList.remove("hidden");
             document.getElementById("btn-submit-form").innerText = "Update Draft Mentor Feedback";
+            selectedRecordingSubmissionId = rec.recording_submission_id || "";
+            const recordingSelect = document.getElementById("mentor-recording-select"); if (recordingSelect) recordingSelect.value = selectedRecordingSubmissionId;
+            handleMentorRecordingSelectionChange();
             document.getElementById("mentor-mentee-select").value = rec.mentee_key || "";
             document.getElementById("session-date").value = rec.session_date || "";
             ["module_section", "module_number", "va_within_frame", "va_visible_audible", "tech_multitask", "tech_pptx", "cp_chat", "cp_concept", "cp_walking_talk", "tm_check_focus", "tm_check_agreement", "presentation_recommendation"].forEach(name => setRadioValue(name, rec[name]));
@@ -1407,6 +1512,7 @@
             }).then(() => {
                 closeCustomAlert();
                 showCustomAlert("Mentor feedback has been locked and finalised. The feedback email was sent to the selected mentee. The confidential Presentation Related Topics recommendation was not included in the mentee's email.", "Locked & Sent");
+                renderMentorRecordingOptions();
             }).catch(err => {
                 console.error("Finalise/send mentor feedback failed:", err);
                 recordRef.update({ email_status: "FAILED", email_error: err.message || String(err), email_last_attempt_at: Date.now() }).catch(() => {});
@@ -1529,6 +1635,7 @@
                         <div><span class="text-gray-500 block">Session Date:</span><strong>${rec.session_date || ""}</strong></div>
                         <div><span class="text-gray-500 block">Module Number:</span><strong>${rec.module_number || ""}</strong></div>
                         <div><span class="text-gray-500 block">Module Section:</span><strong>${rec.module_section || ""}</strong></div>
+                        <div class="col-span-2"><span class="text-gray-500 block">Recording Link:</span><a href="${rec.recording_link || '#'}" target="_blank" rel="noopener">Open selected recording</a></div>
                     </div>
 
                     <div class="border rounded p-2.5 space-y-1">
