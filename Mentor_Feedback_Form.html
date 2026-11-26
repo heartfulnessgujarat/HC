@@ -1612,43 +1612,142 @@
             }, 500);
         }
 
-        async function downloadRecordPdf(recId) {
+        function downloadRecordPdf(recId) {
             const rec = workshopSubmissions[recId];
             if (!rec) return;
             if (!isRecordLocked(rec)) {
                 return showCustomAlert("PDF download is available once mentor feedback is locked and finalised.");
             }
-            if (typeof html2pdf === "undefined") {
-                return showCustomAlert("The PDF service could not be loaded. Please check your internet connection and try again.");
-            }
-
-            const safeName = (rec.mentee_name || "Mentee").replace(/[^a-zA-Z0-9_-]/g, "_");
-            const safeMod = (rec.module_number || "Module").replace(/[^a-zA-Z0-9_-]/g, "_");
-            const fileName = `HC_Mentor_Feedback_${safeName}_${safeMod}_${rec.session_date || ""}.pdf`;
-
-            // html2canvas cannot reliably capture an element placed far outside
-            // the viewport or behind the page (left:-10000px / z-index:-1).
-            // Mount the report in the visible viewport for capture, then remove it.
-            const exportHost = document.createElement("div");
-            exportHost.style.cssText = "position:fixed;left:12px;top:12px;width:760px;max-width:calc(100vw - 24px);max-height:calc(100vh - 24px);overflow:auto;background:#ffffff;color:#1f2937;padding:24px;z-index:2147483000;box-shadow:0 0 0 200vmax rgba(15,23,42,0.35);";
-            exportHost.innerHTML = buildRecordReportHtml(rec);
-            document.body.appendChild(exportHost);
 
             try {
-                // Allow layout and fonts to settle before html2canvas snapshots it.
-                await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-                await html2pdf().set({
-                    margin: [10, 10, 12, 10],
-                    filename: fileName,
-                    image: { type: "jpeg", quality: 0.98 },
-                    html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff", logging: false, scrollX: 0, scrollY: 0, windowWidth: 900 },
-                    jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-                    pagebreak: { mode: ["css", "legacy"] }
-                }).from(exportHost).save();
+                // Direct PDF generation adapted from the working Recording Link PDF method.
+                // It writes PDF text/data directly; no html2canvas or off-screen DOM capture.
+                const clean = value => {
+                    if (value === null || value === undefined || value === "") return "N/A";
+                    return String(value).replace(/[\r\n\t]+/g, " ").replace(/[^\x20-\x7E]/g, "?");
+                };
+                const escapePdf = value => {
+                    if (value === null || value === undefined || value === "") return "";
+                    return clean(value)
+                        .replace(/\\/g, "\\\\")
+                        .replace(/\(/g, "\\(")
+                        .replace(/\)/g, "\\)");
+                };
+                const safeName = clean(rec.mentee_name || "Mentee").replace(/[^a-zA-Z0-9_-]/g, "_");
+                const safeMod = clean(rec.module_number || "Module").replace(/[^a-zA-Z0-9_-]/g, "_");
+                const fileName = `HC_Mentor_Feedback_${safeName}_${safeMod}_${rec.session_date || ""}.pdf`;
+                const generatedAt = new Date().toLocaleString();
+
+                const lines = [
+                    "HEARTFUL COMMUNICATION",
+                    "MENTOR FEEDBACK REPORT",
+                    "",
+                    "Workshop / Batch: " + clean(rec.workshop_id || activeWorkshopId),
+                    "Status: LOCKED & FINALISED",
+                    "Feedback Finalised: " + clean(rec.locked_at || rec.finalised_at || rec.updated_at || rec.created_at),
+                    "PDF Generated: " + clean(generatedAt),
+                    "",
+                    "MENTEE AND SESSION DETAILS",
+                    "Mentee Name: " + clean(rec.mentee_name),
+                    "Mentor Name: " + clean(rec.mentor_name),
+                    "Session Date: " + clean(rec.session_date),
+                    "Module Number: " + clean(rec.module_number),
+                    "Module Section: " + clean(rec.module_section),
+                    "",
+                    "4. VIDEO / AUDIO CLARITY (PRESENTATION)",
+                    "Presenting within the frame: " + clean(rec.va_within_frame),
+                    "Visible and audible clearly: " + clean(rec.va_visible_audible),
+                    "OFNR Feedback: " + clean(rec.ofnr_video_audio),
+                    "",
+                    "5. TECHNICAL CAPABILITY (PRESENTATION)",
+                    "Multitasking (screen share/chat/emoticons): " + clean(rec.tech_multitask),
+                    "Working knowledge of pptx: " + clean(rec.tech_pptx),
+                    "OFNR Feedback: " + clean(rec.ofnr_tech_capability),
+                    "",
+                    "6. RESPONSIVENESS TO CHAT (PRESENTATION)",
+                    "Curve Point: " + clean(rec.cp_chat) + " / 3",
+                    "OFNR Feedback: " + clean(rec.ofnr_chat),
+                    "",
+                    "7. CONCEPT CLARITY (PRESENTATION)",
+                    "Curve Point: " + clean(rec.cp_concept) + " / 5",
+                    "OFNR Feedback: " + clean(rec.ofnr_concept),
+                    "",
+                    "8. WALKING THE TALK (PRESENTATION)",
+                    "Curve Point: " + clean(rec.cp_walking_talk) + " / 5",
+                    "",
+                    "9. TIME MANAGEMENT (PRESENTATION)",
+                    "Kept check on time and preserved core focus: " + clean(rec.tm_check_focus),
+                    "Requested agreement for adjustments: " + clean(rec.tm_check_agreement),
+                    "OFNR Feedback: " + clean(rec.ofnr_time_management),
+                    "",
+                    "CONFIDENTIAL — MENTOR ONLY (NOT INCLUDED IN MENTEE EMAIL)",
+                    "Presentation Related Topics recommendation: " + clean(rec.presentation_recommendation),
+                    "",
+                    "This report is generated from the locked Mentor Feedback submission.",
+                    "Submission ID: " + clean(rec.record_id || rec.id || recId)
+                ];
+
+                // Wrap long values into printable lines; preserve blank separators.
+                const wrapped = [];
+                lines.forEach(line => {
+                    if (line === "") { wrapped.push(""); return; }
+                    while (line.length > 88) {
+                        let cut = line.lastIndexOf(" ", 88);
+                        if (cut < 35) cut = 88;
+                        wrapped.push(line.slice(0, cut));
+                        line = line.slice(cut).trim();
+                    }
+                    wrapped.push(line);
+                });
+
+                // 48 lines/page, with a fresh text block per page and page numbering.
+                const pageLines = [];
+                for (let p = 0; p < wrapped.length; p += 48) pageLines.push(wrapped.slice(p, p + 48));
+                const encoder = new TextEncoder();
+                const objects = [];
+                const pageObjectNums = [];
+                const contentObjectNums = [];
+                const catalogNum = 1, pagesNum = 2, fontNum = 3;
+                let nextNum = 4;
+                pageLines.forEach(() => { pageObjectNums.push(nextNum++); contentObjectNums.push(nextNum++); });
+                objects[catalogNum] = "<< /Type /Catalog /Pages " + pagesNum + " 0 R >>";
+                objects[pagesNum] = "<< /Type /Pages /Kids [" + pageObjectNums.map(n => n + " 0 R").join(" ") + "] /Count " + pageLines.length + " >>";
+                objects[fontNum] = "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>";
+
+                pageLines.forEach((page, idx) => {
+                    let stream = "BT\n/F1 14 Tf\n50 790 Td\n(" + escapePdf(page[0] || "HEARTFUL COMMUNICATION") + ") Tj\n/F1 9.5 Tf\n";
+                    page.slice(1).forEach(line => { stream += "0 -15 Td\n(" + escapePdf(line) + ") Tj\n"; });
+                    stream += "0 -18 Td\n/F1 8 Tf\n(Page " + (idx + 1) + " of " + pageLines.length + ") Tj\nET";
+                    objects[pageObjectNums[idx]] = "<< /Type /Page /Parent " + pagesNum + " 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 " + fontNum + " 0 R >> >> /Contents " + contentObjectNums[idx] + " 0 R >>";
+                    objects[contentObjectNums[idx]] = "<< /Length " + encoder.encode(stream).length + " >>\nstream\n" + stream + "\nendstream";
+                });
+
+                let pdf = "%PDF-1.4\n";
+                const offsets = [0];
+                for (let n = 1; n < objects.length; n++) {
+                    if (!objects[n]) continue;
+                    offsets[n] = encoder.encode(pdf).length;
+                    pdf += n + " 0 obj\n" + objects[n] + "\nendobj\n";
+                }
+                const xrefOffset = encoder.encode(pdf).length;
+                let xref = "xref\n0 " + objects.length + "\n0000000000 65535 f \n";
+                for (let n = 1; n < objects.length; n++) {
+                    xref += String(offsets[n] || 0).padStart(10, "0") + " 00000 " + (offsets[n] ? "n" : "f") + " \n";
+                }
+                xref += "trailer\n<< /Size " + objects.length + " /Root " + catalogNum + " 0 R >>\nstartxref\n" + xrefOffset + "\n%%EOF";
+                const blob = new Blob([pdf, xref], { type: "application/pdf" });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                link.href = url;
+                link.download = fileName;
+                link.style.display = "none";
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 60000);
             } catch (err) {
+                console.error("Mentor feedback PDF generation error:", err);
                 showCustomAlert("PDF generation failed: " + (err.message || err));
-            } finally {
-                if (exportHost.parentNode) exportHost.parentNode.removeChild(exportHost);
             }
         }
 
