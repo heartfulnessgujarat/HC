@@ -182,6 +182,15 @@
                 </div>
 
                 <div>
+                    <label for="f1-recording-date" class="block text-gray-700 text-[11px] font-bold mb-1">
+                        Date of Recording <span class="text-red-500">*</span>
+                    </label>
+                    <input type="date" id="f1-recording-date" required max=""
+                        class="w-full px-2.5 py-1.5 text-xs border rounded-md field-input">
+                    <p class="text-[10px] text-gray-500 mt-1">Select the date on which you recorded this presentation.</p>
+                </div>
+
+                <div>
                     <label for="f1-recording-link" class="block text-gray-700 text-[11px] font-bold mb-1">
                         Please provide Google Drive Link of your Recording <span class="text-red-500">*</span>
                     </label>
@@ -221,6 +230,7 @@
                 <table class="min-w-full border border-gray-200 text-[11px] text-left">
                     <thead class="bg-gray-100 text-gray-700">
                         <tr>
+                            <th class="py-1.5 px-2 border-b">Date</th>
                             <th class="py-1.5 px-2 border-b">Sec</th>
                             <th class="py-1.5 px-2 border-b">Mod</th>
                             <th class="py-1.5 px-2 border-b">Link</th>
@@ -230,7 +240,7 @@
                     </thead>
                     <tbody id="my-submissions-tbody" class="divide-y divide-gray-100">
                         <tr>
-                            <td colspan="5" class="py-3 px-2 text-center text-gray-400 italic">Loading your submissions...</td>
+                            <td colspan="6" class="py-3 px-2 text-center text-gray-400 italic">Loading your submissions...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -246,7 +256,7 @@
     </main>
 
     <footer class="text-center py-2 text-[10px] text-gray-500">
-        Heartful Communication - Recording Submission Module | HC Portal V5.51 • PDF blank-line correction • 25-Nov-2026
+        Heartful Communication - Recording Submission Module | HC Portal V5.52 • Recording Date Field • 26-Nov-2026
     </footer>
 
     <!-- View Modal -->
@@ -734,6 +744,7 @@
                     "Unique ID: " + pdfText(rec.participant_id || (currentProfile && currentProfile.ps_id)),
                     "Workshop: " + pdfText(workshopLabel),
                     "Workshop ID: " + pdfText(rec.workshop_id || workshopId || safeWorkshopKey),
+                    "Recording Date: " + pdfText(formatRecordingDate(rec.recording_date)),
                     "Section: " + pdfText(rec.section),
                     "Module: " + pdfText(rec.module_name),
                     "Recording Link: " + pdfText(rec.recording_link),
@@ -818,6 +829,27 @@
             }
         }
 
+        // Recording dates are stored canonically as YYYY-MM-DD. Display them as DD-MM-YYYY.
+        function getTodayISODate() {
+            const now = new Date();
+            const localYear = now.getFullYear();
+            const localMonth = String(now.getMonth() + 1).padStart(2, "0");
+            const localDay = String(now.getDate()).padStart(2, "0");
+            return `${localYear}-${localMonth}-${localDay}`;
+        }
+
+        function formatRecordingDate(value) {
+            if (!value) return "Not recorded";
+            const parts = String(value).split("-");
+            if (parts.length === 3 && parts[0].length === 4) return `${parts[2]}-${parts[1]}-${parts[0]}`;
+            return String(value);
+        }
+
+        function setRecordingDateMax() {
+            const dateInput = document.getElementById("f1-recording-date");
+            if (dateInput) dateInput.max = getTodayISODate();
+        }
+
         function cancelEdit() {
             editingId = null;
             document.getElementById("edit-badge").classList.add("hidden");
@@ -826,6 +858,7 @@
             document.getElementById("form-card-heading").innerText = "Submit Recording Link";
             document.getElementById("f1-section").value = "";
             document.getElementById("f1-module").value = "";
+            document.getElementById("f1-recording-date").value = "";
             document.getElementById("f1-recording-link").value = "";
         }
 
@@ -842,6 +875,7 @@
 
             document.getElementById("f1-section").value = rec.section || "";
             document.getElementById("f1-module").value = rec.module_name || "";
+            document.getElementById("f1-recording-date").value = rec.recording_date || "";
             document.getElementById("f1-recording-link").value = rec.recording_link || "";
             document.getElementById("form-section").scrollIntoView({ behavior: "smooth" });
         }
@@ -853,11 +887,14 @@
             const participantName = (currentProfile.ps_name || forwardedUserName || "").toString().trim();
             const sectionVal = document.getElementById("f1-section").value.trim();
             const moduleVal = document.getElementById("f1-module").value.trim();
+            const recordingDate = document.getElementById("f1-recording-date").value;
             const recordingLink = document.getElementById("f1-recording-link").value.trim();
 
             if (!participantName) return showAlert("Participant details not found. Please open from your portal screen.");
             if (!sectionVal) return showAlert("Please select a section.");
             if (!moduleVal) return showAlert("Please select a module number.");
+            if (!recordingDate) return showAlert("Please select the date of recording.");
+            if (recordingDate > getTodayISODate()) return showAlert("The recording date cannot be in the future.");
             if (!/^https?:\/\//i.test(recordingLink)) {
                 return showAlert("Please enter a valid link starting with http:// or https://.");
             }
@@ -892,6 +929,7 @@
                     participant_name: participantName,
                     section: sectionVal,
                     module_name: moduleVal,
+                    recording_date: recordingDate,
                     recording_link: recordingLink,
                     updated_at: nowStr,
                     updated_at_ms: Date.now()
@@ -918,6 +956,7 @@
                     participant_name: participantName,
                     section: sectionVal,
                     module_name: moduleVal,
+                    recording_date: recordingDate,
                     recording_link: recordingLink,
                     created_at: nowStr,
                     created_at_ms: Date.now(),
@@ -945,8 +984,9 @@
             const rec = submissionsStore[submissionId];
             if (!rec) return;
             document.getElementById("view-modal-content").innerHTML = `
-                <div><strong>Name:</strong> ${rec.participant_name || "-"}</div>
-                <div><strong>Section:</strong> ${rec.section || "-"}</div>
+                <div><strong>Name:</strong> ${escapeHtml(rec.participant_name || "-")}</div>
+                <div><strong>Recording Date:</strong> ${escapeHtml(formatRecordingDate(rec.recording_date))}</div>
+                <div><strong>Section:</strong> ${escapeHtml(rec.section || "-")}</div>
                 <div><strong>Module:</strong> ${rec.module_name || "-"}</div>
                 <div><strong>Link:</strong> <a href="${rec.recording_link}" target="_blank" style="color:#4f46e5;text-decoration:underline;">${rec.recording_link || "-"}</a></div>
                 <div><strong>Submitted:</strong> ${rec.created_at || "-"}</div>
@@ -1016,7 +1056,7 @@
 
                 badge.textContent = entries.length;
                 if (entries.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="5" class="py-3 px-2 text-center text-gray-400 italic">No submissions yet.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="6" class="py-3 px-2 text-center text-gray-400 italic">No submissions yet.</td></tr>`;
                     return;
                 }
 
@@ -1027,6 +1067,7 @@
                     const statusClass = submitted ? "text-green-700 bg-green-50" : "text-amber-700 bg-amber-50";
                     const tr = document.createElement("tr");
                     tr.innerHTML = `
+                        <td class="py-1.5 px-2">${escapeHtml(formatRecordingDate(item.recording_date))}</td>
                         <td class="py-1.5 px-2">${escapeHtml(item.section || "-")}</td>
                         <td class="py-1.5 px-2">${escapeHtml(item.module_name || "-")}</td>
                         <td class="py-1.5 px-2" style="max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
@@ -1047,12 +1088,13 @@
                 });
             }).catch(err => {
                 console.error("Submissions load error:", err);
-                tbody.innerHTML = `<tr><td colspan="5" class="py-3 px-2 text-center text-red-500">Could not load submissions.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" class="py-3 px-2 text-center text-red-500">Could not load submissions.</td></tr>`;
             });
         }
 
         window.addEventListener("resize", syncFixedHeaderOffset);
         window.addEventListener("DOMContentLoaded", () => {
+            setRecordingDateMax();
             setViewMode(currentViewMode);
             loadDataFromFirebase();
             syncFixedHeaderOffset();
