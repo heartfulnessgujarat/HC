@@ -1626,19 +1626,22 @@
             const safeMod = (rec.module_number || "Module").replace(/[^a-zA-Z0-9_-]/g, "_");
             const fileName = `HC_Mentor_Feedback_${safeName}_${safeMod}_${rec.session_date || ""}.pdf`;
 
-            // Render the same full record report used by View/Print into a temporary
-            // off-screen element; html2pdf captures it and downloads a real PDF file.
+            // html2canvas cannot reliably capture an element placed far outside
+            // the viewport or behind the page (left:-10000px / z-index:-1).
+            // Mount the report in the visible viewport for capture, then remove it.
             const exportHost = document.createElement("div");
-            exportHost.style.cssText = "position:fixed;left:-10000px;top:0;width:760px;background:#ffffff;color:#1f2937;padding:24px;z-index:-1;";
+            exportHost.style.cssText = "position:fixed;left:12px;top:12px;width:760px;max-width:calc(100vw - 24px);max-height:calc(100vh - 24px);overflow:auto;background:#ffffff;color:#1f2937;padding:24px;z-index:2147483000;box-shadow:0 0 0 200vmax rgba(15,23,42,0.35);";
             exportHost.innerHTML = buildRecordReportHtml(rec);
             document.body.appendChild(exportHost);
 
             try {
+                // Allow layout and fonts to settle before html2canvas snapshots it.
+                await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
                 await html2pdf().set({
                     margin: [10, 10, 12, 10],
                     filename: fileName,
                     image: { type: "jpeg", quality: 0.98 },
-                    html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff", logging: false },
+                    html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff", logging: false, scrollX: 0, scrollY: 0, windowWidth: 900 },
                     jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
                     pagebreak: { mode: ["css", "legacy"] }
                 }).from(exportHost).save();
