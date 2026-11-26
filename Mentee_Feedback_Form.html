@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<!-- HC Mentee Self-Evaluation linked to Recording Link | V2.0 | 26-Nov-2026 -->
 <html lang="en">
 
 <head>
@@ -113,16 +112,32 @@
                 </p>
             </div>
 
-            <div class="border border-indigo-200 rounded-lg p-3.5 bg-indigo-50/50 space-y-2">
-                <label for="recording-submission-select" class="block font-bold text-indigo-900">
-                    1. Select the Recording Link submission for this self-evaluation
+            <!-- 1. Date of the Session -->
+            <div class="border border-gray-200 rounded-lg p-3.5 bg-gray-50/40">
+                <label for="session-date" class="block font-bold text-gray-800 mb-1">
+                    1. Date of the session
                 </label>
-                <select id="recording-submission-select" onchange="handleRecordingSelectionChange()" class="w-full px-3 py-2 border border-indigo-300 rounded-md bg-white text-xs">
-                    <option value="">Loading your eligible recording submissions...</option>
-                </select>
-                <p class="text-[11px] text-gray-600">Choose the recording you watched. Date, module, section and recording link will be fetched automatically.</p>
-                <div id="selected-recording-details" class="hidden rounded-md border border-indigo-100 bg-white p-2.5 text-[11px] leading-relaxed"></div>
-                <div id="recording-feedback-state" class="hidden text-[11px] font-semibold rounded p-2"></div>
+                <input type="date" id="session-date" class="w-full sm:w-64 px-3 py-1.5 border border-gray-300 rounded-md bg-white text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+
+            <!-- 2. Section of the Module (Fetched dynamically from workshop node) -->
+            <div class="border border-gray-200 rounded-lg p-3.5 bg-gray-50/40">
+                <label class="block font-bold text-gray-800 mb-2">
+                    2. Select Section of the Module for which you presented
+                </label>
+                <div class="grid grid-cols-2 gap-2" id="module-section-options">
+                    <div class="text-[11px] text-gray-400 italic">Loading sections...</div>
+                </div>
+            </div>
+
+            <!-- 3. Module Number (Fetched dynamically from workshop node) -->
+            <div class="border border-gray-200 rounded-lg p-3.5 bg-gray-50/40">
+                <label class="block font-bold text-gray-800 mb-2">
+                    3. Select Module Number
+                </label>
+                <div class="grid grid-cols-2 gap-2" id="module-number-options">
+                    <div class="text-[11px] text-gray-400 italic">Loading modules...</div>
+                </div>
             </div>
 
             <!-- 4. Video/Audio Clarity (Presentation) -->
@@ -633,7 +648,7 @@
 
     <!-- Footer -->
     <footer class="text-center py-2 text-[11px] text-gray-500 no-print">
-        Heartful Communication • Mentee Self-Evaluation Portal | HC Portal V4 • 24-Nov-2026
+        Heartful Communication • Mentee Self-Evaluation Portal | HC Portal V4.1 • 26-Nov-2026
     </footer>
 
     <script>
@@ -706,8 +721,6 @@
         let isMentorViewer = false;
         let workshopSubmissions = {};
         let editingRecordId = null;
-        let recordingSubmissions = {};
-        let selectedRecordingSubmissionId = "";
 
         function syncFixedHeaderOffset() {
             const fixedEl = document.getElementById("fixed-top-shell");
@@ -978,19 +991,17 @@
                     const wsTitle = workshop.workshop_name || `Workshop (${activeWorkshopId})`;
                     document.getElementById("page-title").innerText = `${wsTitle} | Mentee Self-Evaluation`;
                     applyFixedBannerLogo(workshop);
-                    // Date, module and section are inherited from the selected Recording Link.
+                    renderDynamicSectionAndModuleOptions(workshop);
                 } else {
-                    // Date, module and section are inherited from the selected Recording Link.
+                    renderDynamicSectionAndModuleOptions({});
                 }
 
                 resolveLoggedInUser();
-                loadEligibleRecordingSubmissions();
                 listenToWorkshopSubmissions();
             }).catch(err => {
                 console.error("Firebase initialization error:", err);
                 renderDynamicSectionAndModuleOptions({});
                 resolveLoggedInUser();
-                loadEligibleRecordingSubmissions();
                 listenToWorkshopSubmissions();
                 showCustomAlert("Unable to load workshop data. Please check your internet connection.");
             });
@@ -1092,101 +1103,9 @@
                 checkAndAutoLockExpiredSubmissions();
                 populateMentorMenteeFilter();
                 renderSubmissionsList();
-                renderRecordingSubmissionOptions();
             });
         }
 
-
-        function loadEligibleRecordingSubmissions() {
-            const wsKey = (activeWorkshopId || "").toString().trim().toUpperCase();
-            const uid = (currentUser.ps_id || "").toString().trim().toLowerCase();
-            const uname = (currentUser.ps_name || "").toString().trim().toLowerCase();
-            if (!wsKey || (!uid && !uname)) return;
-
-            db.ref(`form_submissions/${wsKey}/recording_link`).once("value").then(snap => {
-                const root = snap.val() || {};
-                const eligible = {};
-                Object.keys(root).forEach(ownerKey => {
-                    const ownerRecords = root[ownerKey];
-                    if (!ownerRecords || typeof ownerRecords !== "object") return;
-                    Object.keys(ownerRecords).forEach(submissionId => {
-                        const r = ownerRecords[submissionId];
-                        if (!r || typeof r !== "object") return;
-                        const rid = (r.participant_id || r.ps_id || r.user_id || ownerKey).toString().trim().toLowerCase();
-                        const rname = (r.participant_name || r.ps_name || "").toString().trim().toLowerCase();
-                        const ownerMatch = (uid && rid === uid) || (!uid && uname && rname === uname);
-                        const reviewReady = r.submitted_for_review === true ||
-                            (r.review_status || "").toString().toUpperCase() === "SUBMITTED";
-                        if (ownerMatch && reviewReady) eligible[submissionId] = {...r, recording_submission_id: submissionId, _recording_owner_key: ownerKey};
-                    });
-                });
-                recordingSubmissions = eligible;
-                renderRecordingSubmissionOptions();
-            }).catch(err => {
-                console.error("Recording Link lookup failed:", err);
-                const s = document.getElementById("recording-submission-select");
-                if (s) s.innerHTML = '<option value="">Could not load recordings. Refresh and retry.</option>';
-            });
-        }
-
-        function feedbackForRecording(recordingId, exceptId = "") {
-            return Object.keys(workshopSubmissions || {}).map(id => ({id, ...(workshopSubmissions[id] || {})}))
-                .find(r => r.id !== exceptId && r.recording_submission_id === recordingId) || null;
-        }
-
-        function renderRecordingSubmissionOptions() {
-            const s = document.getElementById("recording-submission-select");
-            if (!s) return;
-            const keep = selectedRecordingSubmissionId ||
-                (editingRecordId && workshopSubmissions[editingRecordId] && workshopSubmissions[editingRecordId].recording_submission_id) || "";
-            s.innerHTML = '<option value="">-- Select a submitted recording --</option>';
-            const rows = Object.keys(recordingSubmissions).map(id => ({id, ...recordingSubmissions[id]}))
-                .sort((a,b) => Number(b.created_at_ms || b.created_at || 0) - Number(a.created_at_ms || a.created_at || 0));
-            rows.forEach(r => {
-                const prior = feedbackForRecording(r.id, editingRecordId || "");
-                const o = document.createElement("option");
-                o.value = r.id;
-                o.textContent = `${r.recording_date || "Date unavailable"} | ${r.module_name || "Module"} | ${r.section || "Section"}` +
-                    (prior ? (isRecordLocked(prior) ? " — Completed/locked" : " — Draft exists; continue editing") : "");
-                if (prior) o.disabled = true;
-                if (prior && prior.id === editingRecordId) o.disabled = false;
-                s.appendChild(o);
-            });
-            if (keep && recordingSubmissions[keep]) {
-                s.value = keep;
-                selectedRecordingSubmissionId = keep;
-            } else {
-                s.value = "";
-                selectedRecordingSubmissionId = "";
-            }
-            updateSelectedRecordingDetails();
-        }
-
-        function handleRecordingSelectionChange() {
-            selectedRecordingSubmissionId = document.getElementById("recording-submission-select").value || "";
-            updateSelectedRecordingDetails();
-        }
-
-        function updateSelectedRecordingDetails() {
-            const box = document.getElementById("selected-recording-details");
-            const status = document.getElementById("recording-feedback-state");
-            const r = recordingSubmissions[selectedRecordingSubmissionId];
-            if (!box || !status) return;
-            if (!r) { box.classList.add("hidden"); status.classList.add("hidden"); return; }
-            box.innerHTML = `<div><b>Recording Date:</b> ${escapeHtml(r.recording_date || "N/A")}</div>
-                <div><b>Module:</b> ${escapeHtml(r.module_name || "N/A")}</div>
-                <div><b>Section:</b> ${escapeHtml(r.section || "N/A")}</div>
-                <div><b>Recording:</b> ${r.recording_link ? `<a class="text-indigo-700 underline break-all" href="${escapeHtml(r.recording_link)}" target="_blank" rel="noopener">Open recording</a>` : "N/A"}</div>`;
-            box.classList.remove("hidden");
-            const prior = feedbackForRecording(selectedRecordingSubmissionId, editingRecordId || "");
-            status.className = "text-[11px] font-semibold rounded p-2";
-            status.textContent = prior ? (isRecordLocked(prior) ?
-                "This recording's self-evaluation is already locked and submitted." :
-                "A draft already exists for this recording. Continue editing it from Submitted Evaluations.") :
-                "This recording is available for a new self-evaluation.";
-            status.classList.add(prior ? "bg-amber-50" : "bg-green-50", prior ? "text-amber-800" : "text-green-800");
-            status.classList.remove("hidden");
-        }
         function isRecordLocked(rec) {
             if (!rec) return false;
             if (rec.status === "locked" || rec.is_locked === true) return true;
@@ -1307,17 +1226,9 @@
                     return;
                 }
 
-                const recordingSubmissionId = selectedRecordingSubmissionId ||
-                    document.getElementById("recording-submission-select").value || "";
-                const sourceRecording = recordingSubmissions[recordingSubmissionId];
-                if (!sourceRecording) return showCustomAlert("Please select one of your Recording Link submissions that has been submitted for mentor review.");
-                const priorFeedback = feedbackForRecording(recordingSubmissionId, editingRecordId || "");
-                if (priorFeedback) return showCustomAlert(isRecordLocked(priorFeedback) ?
-                    "This recording's self-evaluation has already been locked and submitted." :
-                    "A draft self-evaluation already exists for this recording. Please edit it from Submitted Evaluations.");
-                const sessionDate = (sourceRecording.recording_date || "").toString().trim();
-                const moduleSection = (sourceRecording.section || "").toString().trim();
-                const moduleNumber = (sourceRecording.module_name || "").toString().trim();
+                const sessionDate = document.getElementById("session-date").value.trim();
+                const moduleSection = getRadioValue("module_section");
+                const moduleNumber = getRadioValue("module_number");
 
                 const vaWithinFrame = getRadioValue("va_within_frame");
                 const vaVisibleAudible = getRadioValue("va_visible_audible");
@@ -1339,7 +1250,9 @@
                 const tmCheckAgreement = document.getElementById("tm-check-agreement").checked ? "Yes" : "No";
                 const ofnrTimeManagement = document.getElementById("ofnr-time-management").value.trim();
 
-                if (!sessionDate || !moduleSection || !moduleNumber) return showCustomAlert("The selected Recording Link is missing its date, module or section. Please update that recording submission first.");
+                if (!sessionDate) return showCustomAlert("Please select the Date of the session.");
+                if (!moduleSection) return showCustomAlert("Please select the Section of the Module.");
+                if (!moduleNumber) return showCustomAlert("Please select the Module Number.");
                 if (!vaWithinFrame || !vaVisibleAudible) return showCustomAlert("Please answer both Yes/No questions under Video/Audio Clarity.");
                 if (!ofnrVideoAudio) return showCustomAlert("Please enter Detail Feedback in OFNR on Video/Audio Clarity.");
                 if (!techMultitask || !techPptx) return showCustomAlert("Please answer both Yes/No questions under Technical Capability.");
@@ -1368,13 +1281,8 @@
                     mentee_name: currentUser.ps_name,
                     mentee_email: currentUser.ps_email || getMenteeEmailById(currentUser.ps_id, currentUser.ps_name) || "",
                     session_date: sessionDate,
-                    recording_date: sessionDate,
                     module_section: moduleSection,
                     module_number: moduleNumber,
-                    recording_submission_id: recordingSubmissionId,
-                    recording_link: sourceRecording.recording_link || "",
-                    recording_submitted_at: sourceRecording.created_at || "",
-                    recording_submitted_at_ms: sourceRecording.created_at_ms || 0,
 
                     va_within_frame: vaWithinFrame,
                     va_visible_audible: vaVisibleAudible,
@@ -1461,13 +1369,8 @@
         }
 
         function resetFormFields() {
-            if (!editingRecordId) {
-                selectedRecordingSubmissionId = "";
-                const recordingSelect = document.getElementById("recording-submission-select");
-                if (recordingSelect) recordingSelect.value = "";
-                updateSelectedRecordingDetails();
-            }
-            ["va_within_frame", "va_visible_audible", "tech_multitask", "tech_pptx", "cp_chat", "cp_concept", "cp_walking_talk"].forEach(name => {
+            document.getElementById("session-date").value = "";
+            ["module_section", "module_number", "va_within_frame", "va_visible_audible", "tech_multitask", "tech_pptx", "cp_chat", "cp_concept", "cp_walking_talk"].forEach(name => {
                 document.querySelectorAll(`input[name="${name}"]`).forEach(el => el.checked = false);
             });
             document.getElementById("ofnr-video-audio").value = "";
@@ -1490,13 +1393,9 @@
             document.getElementById("edit-mode-banner").classList.remove("hidden");
             document.getElementById("btn-submit-form").innerText = "Update Draft Self-Evaluation";
 
-            if (rec.recording_submission_id && recordingSubmissions[rec.recording_submission_id]) {
-                selectedRecordingSubmissionId = rec.recording_submission_id;
-                renderRecordingSubmissionOptions();
-            } else {
-                showCustomAlert("This historical evaluation is not linked to a Recording Link submission. It remains viewable; new linked evaluations must be created from a recording.");
-                return;
-            }
+            document.getElementById("session-date").value = rec.session_date || "";
+            setRadioValue("module_section", rec.module_section);
+            setRadioValue("module_number", rec.module_number);
 
             setRadioValue("va_within_frame", rec.va_within_frame);
             setRadioValue("va_visible_audible", rec.va_visible_audible);
@@ -1531,7 +1430,18 @@
 
         function confirmLockRecord(recId) {
             const rec = workshopSubmissions[recId];
-            if (!rec) return;
+            if (!rec) {
+                console.error("Lock & Submit: record not found", recId, activeWorkshopId);
+                return showCustomAlert(
+                    "This evaluation could not be located. Please refresh My Submissions and try again."
+                );
+            }
+            if (!activeWorkshopId) {
+                console.error("Lock & Submit: active workshop ID is missing.");
+                return showCustomAlert(
+                    "Workshop details are missing from your session. Please return to the portal and reopen this form."
+                );
+            }
             if (isRecordLocked(rec)) {
                 return showCustomAlert("This evaluation is already locked.");
             }
@@ -1550,14 +1460,24 @@
                         locked_at: now,
                         locked_reason: "manual_lock"
                     };
-                    db.ref(`control_tower/mentee_feedback/${wsKey}/${recId}`).update(updates).then(() => {
-                        renderRecordingSubmissionOptions();
-                        triggerLockEmailNotifications(recId, { ...rec, ...updates });
-                        showCustomAlert(
-                            "Your Self-Evaluation has been locked and submitted for mentors to review!\n\nEmail notifications have been sent to all mentors and a confirmation copy has been sent to you.",
-                            "Locked & Submitted"
-                        );
-                    }).catch(err => showCustomAlert("Failed to lock evaluation: " + err.message));
+                    const recordRef = db.ref(`control_tower/mentee_feedback/${wsKey}/${recId}`);
+                    recordRef.update(updates)
+                        .then(() => {
+                            workshopSubmissions[recId] = { ...rec, ...updates };
+                            renderSubmissionsList();
+                            triggerLockEmailNotifications(recId, { ...rec, ...updates });
+                            showCustomAlert(
+                                "Your Self-Evaluation has been locked and submitted for mentors to review!\n\nEmail notifications have been initiated.",
+                                "Locked & Submitted"
+                            );
+                        })
+                        .catch(err => {
+                            console.error("Lock & Submit failed:", err);
+                            showCustomAlert(
+                                "The evaluation could not be submitted for mentor review. Please try again.\n\nError: " +
+                                (err && err.message ? err.message : String(err))
+                            );
+                        });
                 }
             );
         }
@@ -1575,8 +1495,7 @@
                 () => {
                     const wsKey = activeWorkshopId.toUpperCase();
                     db.ref(`control_tower/mentee_feedback/${wsKey}/${recId}`).remove().then(() => {
-                        renderRecordingSubmissionOptions();
-                        showCustomAlert("Draft evaluation deleted. Its recording is available again.");
+                        showCustomAlert("Draft evaluation deleted.");
                     }).catch(err => showCustomAlert("Failed to delete evaluation: " + err.message));
                 }
             );
@@ -1611,7 +1530,12 @@
             const badge = document.getElementById("records-count-badge");
             const filterMenteeId = document.getElementById("mentor-mentee-filter")?.value || "ALL";
 
-            let list = Object.keys(workshopSubmissions).map(id => ({ id, ...workshopSubmissions[id] }));
+            // Keep the Firebase child key as the action target. The stored record's
+            // own "id" field must not override the actual Firebase key.
+            let list = Object.keys(workshopSubmissions).map(id => ({
+                ...workshopSubmissions[id],
+                id: id
+            }));
 
             if (!isMentorViewer) {
                 list = list.filter(rec => {
