@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="page-title">Heartful Communication | Mentor Feedback Form · V1.8 · Recording Submission Empty State · 27-Nov-2026</title>
+    <title id="page-title">Heartful Communication | Mentor Feedback Form · V1.9 · Duplicate Message + My Submissions · 27-Nov-2026</title>
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -84,7 +84,7 @@
                 Mentor Feedback Form
             </button>
             <button id="tab-btn-records" onclick="switchTab('records')" class="flex-1 py-2 px-3 rounded-md text-xs font-semibold bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 transition">
-                Submissions <span id="records-count-badge" class="ml-1 bg-gray-200 text-gray-800 text-[10px] px-1.5 py-0.5 rounded-full">0</span>
+                My Submissions <span id="records-count-badge" class="ml-1 bg-gray-200 text-gray-800 text-[10px] px-1.5 py-0.5 rounded-full">0</span>
             </button>
         </div>
 
@@ -656,7 +656,7 @@
 
     <!-- Footer -->
     <footer class="text-center py-2 text-[11px] text-gray-500 no-print">
-        Heartful Communication • Mentor Feedback Portal | HC Portal · Mentor Feedback V1.7 · URL-authoritative identity · 27-Nov-2026
+        Heartful Communication • Mentor Feedback Portal | HC Portal · Mentor Feedback V1.9 · Duplicate Message + My Submissions · 27-Nov-2026
     </footer>
 
     <script>
@@ -1160,8 +1160,14 @@
                 renderMentorRecordingOptions();
             }, err => {
                 console.error("Mentor feedback submissions listener error:", err);
-                document.getElementById("submissions-list-container").innerHTML =
-                    `<div class="text-center text-red-600 py-6 text-xs">Could not load mentor feedback submissions. Please refresh the page.</div>`;
+                const submissionsContainer = document.getElementById("submissions-list-container");
+                if (submissionsContainer) {
+                    submissionsContainer.replaceChildren();
+                    const errorMessage = document.createElement("div");
+                    errorMessage.className = "text-center text-red-600 py-6 text-xs";
+                    errorMessage.textContent = "Could not load mentor feedback submissions. Please refresh the page.";
+                    submissionsContainer.appendChild(errorMessage);
+                }
             });
         }
 
@@ -1283,10 +1289,12 @@
                 renderMentorRecordingOptions();
             }).catch(err => {
                 console.error("Mentor recording list lookup failed:", err);
-                select.innerHTML = '<option value="">Could not load recordings. Refresh and retry.</option>';
+                // Show the failure once in the inline status area; keep the
+                // dropdown prompt neutral to avoid a duplicate message.
+                select.innerHTML = '<option value="">Recording list unavailable</option>';
                 const emptyState = document.getElementById("mentor-recording-empty-state");
                 if (emptyState) {
-                    emptyState.textContent = "We could not load the mentees’ Recording Link submissions. Please refresh the page and try again.";
+                    emptyState.textContent = "Could not load submitted recordings. Please refresh the page and try again.";
                     emptyState.classList.remove("hidden");
                 }
             });
