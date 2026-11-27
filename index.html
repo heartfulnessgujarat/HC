@@ -1406,21 +1406,42 @@
             Object.keys(rootData).forEach(ownerKey => {
                 const ownerData = rootData[ownerKey];
                 if (!ownerData || typeof ownerData !== 'object') return;
-                // The two form_submissions nodes are owner -> submission ID -> record.
-                // The legacy mentee_feedback node is workshop -> record ID -> record.
-                const records = formType === 'mentee_feedback' ? { [ownerKey]: ownerData } : ownerData;
-                Object.keys(records).forEach(submissionKey => {
-                    const rec = records[submissionKey];
+                // Current form_submissions structure: owner key -> submission ID -> record.
+                Object.keys(ownerData).forEach(submissionKey => {
+                    const rec = ownerData[submissionKey];
                     if (!rec || typeof rec !== 'object') return;
-                    const path = formType === 'mentee_feedback'
-                        ? basePath + '/' + ownerKey
-                        : basePath + '/' + ownerKey + '/' + submissionKey;
-                    results.push(normalizeFacilitatorSubmission(formType,
-                        formType === 'mentee_feedback' ? (rec.mentee_id || rec.participant_id || '') : ownerKey,
-                        submissionKey, rec, path));
+                    const path = basePath + '/' + ownerKey + '/' + submissionKey;
+                    results.push(normalizeFacilitatorSubmission(formType, ownerKey, submissionKey, rec, path));
                 });
             });
             return results;
+        }
+
+        function collectLegacyMenteeFeedback(rootData, basePath) {
+            const results = [];
+            Object.keys(rootData || {}).forEach(recordKey => {
+                const rec = rootData[recordKey];
+                if (!rec || typeof rec !== 'object') return;
+                results.push(normalizeFacilitatorSubmission(
+                    'mentee_feedback', rec.mentee_id || rec.participant_id || rec.user_key || '',
+                    recordKey, rec, basePath + '/' + recordKey));
+            });
+            return results;
+        }
+
+        function flattenMentorFeedbackForStatus(newRoot, legacyRoot) {
+            const records = [];
+            Object.keys(newRoot || {}).forEach(ownerKey => {
+                Object.keys(newRoot[ownerKey] || {}).forEach(recordKey => {
+                    const rec = newRoot[ownerKey][recordKey];
+                    if (rec && typeof rec === 'object') records.push(rec);
+                });
+            });
+            Object.keys(legacyRoot || {}).forEach(recordKey => {
+                const rec = legacyRoot[recordKey];
+                if (rec && typeof rec === 'object') records.push(rec);
+            });
+            return records;
         }
 
         function facilitatorSubmissionGroupSort(a, b) {
@@ -1446,16 +1467,29 @@
                 const paths = {
                     recording_link: 'form_submissions/' + workshopKey + '/recording_link',
                     self_journey_weekly_report: 'form_submissions/' + workshopKey + '/self_journey_weekly_report',
-                    mentee_feedback: 'control_tower/mentee_feedback/' + workshopKey,
-                    mentor_feedback: 'control_tower/mentor_feedback/' + workshopKey
+                    mentee_feedback: 'form_submissions/' + workshopKey + '/mentee_feedback',
+                    mentee_feedback_legacy: 'control_tower/mentee_feedback/' + workshopKey,
+                    mentor_feedback: 'form_submissions/' + workshopKey + '/mentor_feedback',
+                    mentor_feedback_legacy: 'control_tower/mentor_feedback/' + workshopKey
                 };
                 const keys = Object.keys(paths);
                 const snapshots = await Promise.all(keys.map(key => db.ref(paths[key]).once('value')));
                 const allRecords = [];
-                keys.filter(key => key !== 'mentor_feedback').forEach(key => {
+                keys.filter(key =>
+                    key !== 'mentor_feedback' &&
+                    key !== 'mentor_feedback_legacy' &&
+                    key !== 'mentee_feedback_legacy'
+                ).forEach(key => {
                     const index = keys.indexOf(key);
                     allRecords.push(...collectFacilitatorSubmissions(key, snapshots[index].val(), paths[key]));
                 });
+
+                // Continue displaying historical mentee feedback while old records
+                // remain in control_tower. New submissions are read from form_submissions.
+                allRecords.push(...collectLegacyMenteeFeedback(
+                    snapshots[keys.indexOf('mentee_feedback_legacy')].val(),
+                    paths.mentee_feedback_legacy
+                ));
 
                 // Facilitators should see a Recording Link only after the mentee
                 // explicitly submits it for mentor review (or the backend's
@@ -1474,9 +1508,11 @@
                 // Draft feedback means the mentor has started but has not finalised it;
                 // FINALIZED means the mentor action is complete.
                 const mentorFeedbackByRecording = {};
-                const mentorFeedbackRoot = snapshots[keys.indexOf('mentor_feedback')].val() || {};
-                Object.keys(mentorFeedbackRoot).forEach(feedbackId => {
-                    const feedback = mentorFeedbackRoot[feedbackId] || {};
+                const mentorFeedbackRecords = flattenMentorFeedbackForStatus(
+                    snapshots[keys.indexOf('mentor_feedback')].val(),
+                    snapshots[keys.indexOf('mentor_feedback_legacy')].val()
+                );
+                mentorFeedbackRecords.forEach(feedback => {
                     const sourceRecordingId = String(feedback.recording_submission_id || feedback.recording_id || '').trim();
                     if (!sourceRecordingId) return;
                     const feedbackStatus = String(feedback.status || '').toUpperCase();
