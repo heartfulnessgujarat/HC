@@ -121,6 +121,7 @@
                     <option value="">Loading your eligible recording submissions...</option>
                 </select>
                 <p class="text-[11px] text-gray-600">Choose the recording you watched. Date, module, section and recording link will be fetched automatically.</p>
+                <div id="recording-empty-state" class="hidden rounded-md border border-amber-200 bg-amber-50 p-2.5 text-[11px] leading-relaxed text-amber-900" role="status" aria-live="polite"></div>
                 <div id="selected-recording-details" class="hidden rounded-md border border-indigo-100 bg-white p-2.5 text-[11px] leading-relaxed"></div>
                 <div id="recording-feedback-state" class="hidden text-[11px] font-semibold rounded p-2"></div>
             </div>
@@ -1118,6 +1119,9 @@
             db.ref(`form_submissions/${wsKey}/recording_link`).once("value").then(snap => {
                 const root = snap.val() || {};
                 const eligible = {};
+                let participantRecordingCount = 0;
+                let participantReviewReadyCount = 0;
+
                 Object.keys(root).forEach(ownerKey => {
                     const ownerRecords = root[ownerKey];
                     if (!ownerRecords || typeof ownerRecords !== "object") return;
@@ -1127,17 +1131,37 @@
                         const rid = (r.participant_id || r.ps_id || r.user_id || ownerKey).toString().trim().toLowerCase();
                         const rname = (r.participant_name || r.ps_name || "").toString().trim().toLowerCase();
                         const ownerMatch = (uid && rid === uid) || (!uid && uname && rname === uname);
+                        if (!ownerMatch) return;
+
+                        participantRecordingCount++;
                         const reviewReady = r.submitted_for_review === true ||
                             (r.review_status || "").toString().toUpperCase() === "SUBMITTED";
-                        if (ownerMatch && reviewReady) eligible[submissionId] = {...r, recording_submission_id: submissionId, _recording_owner_key: ownerKey};
+                        if (reviewReady) {
+                            participantReviewReadyCount++;
+                            eligible[submissionId] = {
+                                ...r,
+                                recording_submission_id: submissionId,
+                                _recording_owner_key: ownerKey
+                            };
+                        }
                     });
                 });
+
                 recordingSubmissions = eligible;
-                renderRecordingSubmissionOptions();
+                recordingAvailabilityCounts = {
+                    participantRecordingCount,
+                    participantReviewReadyCount
+                };
+                renderRecordingSubmissionOptions(recordingAvailabilityCounts);
             }).catch(err => {
                 console.error("Recording Link lookup failed:", err);
                 const s = document.getElementById("recording-submission-select");
                 if (s) s.innerHTML = '<option value="">Could not load recordings. Refresh and retry.</option>';
+                const emptyState = document.getElementById("recording-empty-state");
+                if (emptyState) {
+                    emptyState.textContent = "We could not load your Recording Link submissions. Please refresh the page and try again.";
+                    emptyState.classList.remove("hidden");
+                }
             });
         }
 
@@ -1149,24 +1173,30 @@
                 .find(r => r.id !== exceptId && r.recording_submission_id === recordingId) || null;
         }
 
-        function renderRecordingSubmissionOptions() {
+        function renderRecordingSubmissionOptions(counts = recordingAvailabilityCounts) {
             const s = document.getElementById("recording-submission-select");
+            const emptyState = document.getElementById("recording-empty-state");
             if (!s) return;
+
             const keep = selectedRecordingSubmissionId ||
                 (editingRecordId && workshopSubmissions[editingRecordId] && workshopSubmissions[editingRecordId].recording_submission_id) || "";
             s.innerHTML = '<option value="">-- Select a submitted recording --</option>';
             const rows = Object.keys(recordingSubmissions).map(id => ({id, ...recordingSubmissions[id]}))
                 .sort((a,b) => Number(b.created_at_ms || b.created_at || 0) - Number(a.created_at_ms || a.created_at || 0));
+
+            let selectableCount = 0;
             rows.forEach(r => {
                 const prior = feedbackForRecording(r.id, editingRecordId || "");
                 const o = document.createElement("option");
                 o.value = r.id;
                 o.textContent = `${r.recording_date || "Date unavailable"} | ${r.module_name || "Module"} | ${r.section || "Section"}` +
-                    (prior ? (isRecordLocked(prior) ? " — Mentee feedback submitted (not selectable)" : " — Draft exists; continue editing") : "");
+                    (prior ? (isRecordLocked(prior) ? " — Self-evaluation submitted (not selectable)" : " — Draft exists; continue editing") : "");
                 if (prior) o.disabled = true;
                 if (prior && prior.id === editingRecordId) o.disabled = false;
+                if (!o.disabled) selectableCount++;
                 s.appendChild(o);
             });
+
             if (keep && recordingSubmissions[keep]) {
                 s.value = keep;
                 selectedRecordingSubmissionId = keep;
@@ -1174,6 +1204,20 @@
                 s.value = "";
                 selectedRecordingSubmissionId = "";
             }
+
+            if (emptyState) {
+                let message = "";
+                if (Number(counts.participantRecordingCount || 0) === 0) {
+                    message = "No Recording Link submission found yet. Please submit your Recording Link first, watch the recording, and then return here to complete your self-evaluation.";
+                } else if (Number(counts.participantReviewReadyCount || 0) === 0) {
+                    message = "You have submitted a Recording Link, but it has not yet been submitted for mentor review. Please open your Recording Link submission and click “Lock & Submit for Mentors to Review”. It will appear here after that step.";
+                } else if (selectableCount === 0 && !editingRecordId) {
+                    message = "You have already submitted a self-evaluation for every recording currently available for review.";
+                }
+                emptyState.textContent = message;
+                emptyState.classList.toggle("hidden", !message);
+            }
+
             updateSelectedRecordingDetails();
         }
 
