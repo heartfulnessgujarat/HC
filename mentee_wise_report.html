@@ -31,6 +31,12 @@ table{width:100%;border-collapse:collapse;font-size:12px}th,td{text-align:left;p
 .details{white-space:pre-wrap;overflow-wrap:anywhere;max-width:360px}
 #error{color:var(--red);white-space:pre-wrap}
 @media(max-width:720px){.grid{grid-template-columns:1fr}.selector{grid-template-columns:1fr}.wide{grid-column:auto}main{padding:12px}.chartbox{height:260px}}
+.modal{position:fixed;inset:0;background:rgba(15,23,42,.58);z-index:1000;padding:16px;display:flex;align-items:center;justify-content:center}
+.modal[hidden]{display:none!important}.modal-card{background:white;border-radius:12px;width:min(760px,100%);max-height:88vh;overflow:auto;padding:18px;box-shadow:0 18px 60px #0f172a40}
+.modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:12px}
+.modal-head h2{font-size:17px;margin:0}.close-btn{background:#e5e7eb;color:#334155;padding:7px 12px}
+.feedback-content{display:grid;grid-template-columns:1fr 1fr;gap:10px}.feedback-item{border:1px solid var(--line);border-radius:8px;padding:10px;overflow-wrap:anywhere}.feedback-item strong{display:block;font-size:11px;color:#475569;margin-bottom:5px}.feedback-item .value{white-space:pre-wrap}
+@media(max-width:600px){.feedback-content{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -44,6 +50,12 @@ table{width:100%;border-collapse:collapse;font-size:12px}th,td{text-align:left;p
   <div id="loadStatus" class="status">Connecting to the workshop data…</div>
   <div id="error"></div>
 </section>
+<div id="selfFeedbackModal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="selfFeedbackTitle">
+  <div class="modal-card">
+    <div class="modal-head"><h2 id="selfFeedbackTitle">Mentee Self-Evaluation · Feedback</h2><button type="button" id="closeSelfFeedback" class="close-btn">Close</button></div>
+    <div id="selfFeedbackContent" class="feedback-content"></div>
+  </div>
+</div>
 <div id="report" hidden>
   <section class="panel person"><div><h2 id="menteeName"></h2><div class="muted" id="menteeMeta"></div></div><span class="pill">Mentee Report Card</span></section>
   <div class="grid">
@@ -98,8 +110,11 @@ function findFeedbackForRecording(recId,menteeId,menteeName){
   return source===String(recId)&&((pid&&pid===norm(menteeId))||(!pid&&name===norm(menteeName)));
  });
 }
-function recommendation(r){let v=r.final_recommendation||r.recommendation||r.overall_recommendation||r.recommendation_status||r.recommendation_for_mentee||'';return String(v).trim();}
-function curveEntries(r){const found=[];Object.entries(obj(r)).forEach(([k,v])=>{if(/curve.?point/i.test(k)&&v!==''&&v!=null){const m=String(v).match(/(?:curve\s*point\s*)?([1-5])(?:\s|$)/i);if(m)found.push({key:k,value:Number(m[1])});}});return found;}
+function recommendation(r){let v=r.presentation_recommendation||r.final_recommendation||r.recommendation||r.overall_recommendation||r.recommendation_status||r.recommendation_for_mentee||'';return String(v).trim();}
+function curveEntries(r){
+ const fields=[['cp_chat','Responsiveness to chat'],['cp_concept','Concept Clarity'],['cp_walking_talk','Walking the Talk']];
+ return fields.reduce((found,[key,label])=>{const raw=r&&r[key];if(raw!==''&&raw!=null&&Number.isFinite(Number(raw))){const value=Number(raw);if(value>=1&&value<=5)found.push({key:label,value});}return found;},[]);
+}
 function renderSelected(){
  const p=participants[selectedKey];if(!p)return;
  const pid=idFor(p,selectedKey),pname=nameFor(p,selectedKey);
@@ -114,8 +129,23 @@ function renderSelected(){
  ]);
  $('selfEval').innerHTML=rows(self,[
   ['Recording / Module',x=>safe([x.r.module_section||x.r.section,x.r.module_number].filter(Boolean).join(' · ')||x.r.recording_submission_id||'Self-evaluation')],
-  ['Submitted',x=>safe(dateVal(x.r))],['Status',x=>statusHtml(x.r)]
+  ['Submitted',x=>safe(dateVal(x.r))],['Status',x=>statusHtml(x.r)],
+  ['View',x=>'<button type=\"button\" class=\"open-self-feedback\" data-self-id=\"'+safe(x.key)+'\">Open f/b</button>']
  ]);
+ $('selfEval').querySelectorAll('.open-self-feedback').forEach(button=>button.addEventListener('click',()=>{
+  const item=self.find(x=>String(x.key)===button.dataset.selfId);if(!item)return;
+  const r=item.r;const fields=[
+   ['Session date',r.session_date],['Module section',r.module_section],['Module number',r.module_number],
+   ['Video/audio — within frame',r.va_within_frame],['Video/audio — visible and audible',r.va_visible_audible],['Video/audio detailed feedback',r.ofnr_video_audio],
+   ['Technical capability — multitasking',r.tech_multitask],['Technical capability — PPTX',r.tech_pptx],['Technical capability detailed feedback',r.ofnr_tech_capability],
+   ['Responsiveness to chat — curve point',r.cp_chat],['Responsiveness to chat — feedback',r.ofnr_chat],
+   ['Concept clarity — curve point',r.cp_concept],['Concept clarity — feedback',r.ofnr_concept],
+   ['Walking the talk — curve point',r.cp_walking_talk],['Walking the talk — feedback',r.ofnr_walking_talk],
+   ['Time management — focus',r.tm_check_focus],['Time management — agreement',r.tm_check_agreement],['Time management — feedback',r.ofnr_time_management]
+  ];
+  $('selfFeedbackContent').innerHTML=fields.map(([label,value])=>'<div class=\"feedback-item\"><strong>'+safe(label)+'</strong><div class=\"value\">'+safe(value===undefined||value===null||value===''?'—':value)+'</div></div>').join('');
+  $('selfFeedbackModal').hidden=false;
+ }));
  const feedbackByRec=recs.map(rec=>({rec,items:findFeedbackForRecording(rec.key,pid,pname)}));
  let allFeedback=[];feedbackByRec.forEach(group=>group.items.forEach(x=>allFeedback.push({rec:group.rec,fb:x.r,fid:x.fid})));
  $('mentorFeedback').innerHTML=rows(allFeedback,[
@@ -127,12 +157,13 @@ function renderSelected(){
  $('journey').innerHTML=rows(weeks,[
   ['Week',x=>safe(x.r.week||x.r.week_number||x.r.reporting_period||'Weekly report')],
   ['Submitted',x=>safe(dateVal(x.r))],['Status',x=>statusHtml(x.r)],
-  ['Reflection',x=>'<div class="details">'+safe(x.r.reflection||x.r.weekly_reflection||x.r.journey_reflection||x.r.description||x.r.report||'Details are stored in this record.')+'</div>']
+  ['Reflection',x=>'<div class="details">'+safe(x.r.reflections||x.r.reflection||x.r.weekly_reflection||x.r.journey_reflection||x.r.description||x.r.report||'No reflection text recorded.')+'</div>']
  ]);
- const curveLabels=[],curveData=[];allFeedback.forEach(x=>curveEntries(x.fb).forEach(c=>{curveLabels.push((x.fb.mentor_name||x.fb.mentor_id||'Mentor')+' · '+(x.rec.r.module_name||x.rec.key)+' · '+c.key);curveData.push(c.value);}));
+ const graphFeedback=allFeedback.filter(x=>submitted(x.fb));
+ const curveLabels=[],curveData=[];graphFeedback.forEach(x=>curveEntries(x.fb).forEach(c=>{curveLabels.push((x.fb.mentor_name||x.fb.mentor_id||'Mentor')+' · '+(x.rec.r.module_name||x.rec.key)+' · '+c.key);curveData.push(c.value);}));
  if(curveChart)curveChart.destroy();curveChart=new Chart($('curveChart'),{type:'bar',data:{labels:curveLabels.length?curveLabels:['No curve-point values found'],datasets:[{label:'Curve point (1–5)',data:curveData.length?curveData:[0]}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{min:0,max:5,ticks:{stepSize:1}}},plugins:{legend:{display:false}}}});
  const counts={'Recommended':0,'Need Improvement':0,'Not Recommended':0};
- allFeedback.forEach(x=>{const v=norm(recommendation(x.fb));if(v.includes('not recommend'))counts['Not Recommended']++;else if(v.includes('need')||v.includes('improve')||v.includes('practice'))counts['Need Improvement']++;else if(v.includes('recommend'))counts['Recommended']++;});
+ graphFeedback.forEach(x=>{const v=norm(recommendation(x.fb));if(v.includes('not recommend'))counts['Not Recommended']++;else if(v.includes('need')||v.includes('improve')||v.includes('practice'))counts['Need Improvement']++;else if(v.includes('recommend'))counts['Recommended']++;});
  if(recommendChart)recommendChart.destroy();recommendChart=new Chart($('recommendChart'),{type:'bar',data:{labels:Object.keys(counts),datasets:[{label:'Mentor responses',data:Object.values(counts)}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{precision:0}}}}});
  $('loadStatus').textContent=`Report loaded · ${recs.length} submitted recording(s), ${allFeedback.length} mentor feedback record(s), ${weeks.length} weekly report(s).`;
 }
@@ -155,6 +186,9 @@ async function loadData(){
 }
 $('menteeSelect').addEventListener('change',()=>{selectedKey=$('menteeSelect').value;if(selectedKey)renderSelected();else $('report').hidden=true;});
 $('refreshBtn').addEventListener('click',loadData);
+$('closeSelfFeedback').addEventListener('click',()=>$('selfFeedbackModal').hidden=true);
+$('selfFeedbackModal').addEventListener('click',e=>{if(e.target===$('selfFeedbackModal'))$('selfFeedbackModal').hidden=true;});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')$('selfFeedbackModal').hidden=true;});
 loadData();
 })();
 </script>
