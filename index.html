@@ -1467,9 +1467,9 @@
                     const sourceIds = [item.submissionKey, item.submissionId, item.record && item.record.record_id, item.record && item.record.submission_id]
                         .filter(Boolean).map(value => String(value).trim());
                     const matched = sourceIds.map(id => mentorFeedbackByRecording[id]).find(Boolean);
-                    item.mentorFeedbackStatus = !matched ? 'PENDING — Mentor feedback not submitted'
-                        : matched.isFinal ? 'COMPLETED — Mentor feedback submitted'
-                        : 'DRAFT — Mentor must finalise feedback';
+                    item.mentorFeedbackStatus = !matched ? 'PENDING'
+                        : matched.isFinal ? 'COMPLETED'
+                        : 'DRAFT';
                 });
                 visibleRecords.sort(facilitatorSubmissionGroupSort);
                 facilitatorSubmissionRecords = visibleRecords;
