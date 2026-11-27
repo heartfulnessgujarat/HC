@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- HC Mentee Self-Evaluation linked to Recording Link | V2.4 | Complete Question Numbering | 26-Nov-2026 -->
+<!-- HC Mentee Self-Evaluation linked to Recording Link | V2.6 | Submission-State Message Correction | 27-Nov-2026 -->
 <html lang="en">
 
 <head>
@@ -1208,9 +1208,9 @@
             if (emptyState) {
                 let message = "";
                 if (Number(counts.participantRecordingCount || 0) === 0) {
-                    message = "No Recording Link submission found yet. Please submit your Recording Link first, watch the recording, and then return here to complete your self-evaluation.";
+                    message = "You have not submitted the Recording Link to mentors.";
                 } else if (Number(counts.participantReviewReadyCount || 0) === 0) {
-                    message = "You have submitted a Recording Link, but it has not yet been submitted for mentor review. Please open your Recording Link submission and click “Lock & Submit for Mentors to Review”. It will appear here after that step.";
+                    message = "You have not submitted the Recording Link to mentors.";
                 } else if (selectableCount === 0 && !editingRecordId) {
                     message = "You have already submitted a self-evaluation for every recording currently available for review.";
                 }
