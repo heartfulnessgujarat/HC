@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="page-title">Heartful Communication | Mentor Feedback Form · V1.5 · Mentor-Specific Review Lock · 26-Nov-2026</title>
+    <title id="page-title">Heartful Communication | Mentor Feedback Form · V1.7 · URL-Authoritative Mentor Identity · 27-Nov-2026</title>
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -56,7 +56,7 @@
 
 <body class="bg-gray-50 min-h-screen flex flex-col justify-between text-xs sm:text-sm text-gray-800">
 
-    <!-- Fixed Top Banner Image + Participant Profile Card + Back to Main Screen -->
+    <!-- Fixed Top Banner Image + Participant Profile Card + Single Back to Main Screen control -->
     <div id="fixed-top-shell" class="no-print">
         <div class="fixed-inner space-y-1.5">
             <div id="fixed-banner-wrap" class="bg-white rounded-lg shadow-sm overflow-hidden flex w-full hidden">
@@ -572,9 +572,6 @@
                     Submit Mentor Feedback
                 </button>
                 <p class="text-[10px] text-gray-500 text-center">Submit saves your feedback as a draft. You can View, Edit, or Delete it from Submissions. It is sent to the mentee only after you choose “Lock &amp; Submit for Mentee Review” and confirm.</p>
-                <button type="button" onclick="goBackToMainScreen()" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg transition text-xs">
-                    Back to Main Screen
-                </button>
             </div>
         </div>
 
@@ -603,9 +600,6 @@
             </div>
 
             <div class="pt-2">
-                <button type="button" onclick="goBackToMainScreen()" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg transition text-xs">
-                    Back to Main Screen
-                </button>
             </div>
         </div>
     </main>
@@ -661,7 +655,7 @@
 
     <!-- Footer -->
     <footer class="text-center py-2 text-[11px] text-gray-500 no-print">
-        Heartful Communication • Mentor Feedback Portal | HC Portal · Mentor Feedback V1.6 · Strict mentor session identity · 27-Nov-2026
+        Heartful Communication • Mentor Feedback Portal | HC Portal · Mentor Feedback V1.7 · URL-authoritative identity · 27-Nov-2026
     </footer>
 
     <script>
@@ -1013,31 +1007,54 @@
             const unameClean = (unameVal || "").toString().trim().toLowerCase();
             const emailClean = (emailVal || "").toString().trim().toLowerCase();
             const wsUpper = activeWorkshopId.toUpperCase();
+            const entries = Object.entries(allParticipants || {}).filter(([key, p]) => p && typeof p === "object");
 
-            let fallbackMatch = null;
-
-            for (const [key, p] of Object.entries(allParticipants || {})) {
-                if (!p || typeof p !== "object") continue;
-                const pId = (p.ps_id || p.uid || p.id || key || "").toString().trim();
-                const pName = (p.ps_name || p.uname || p.name || "").toString().trim();
-                const pEmail = (p.ps_email || p.email || "").toString().trim();
+            function matchesWorkshop(p) {
                 const pWId = (p.workshop_id || p.wid || "").toString().trim().toUpperCase();
-                const matchesWs = !pWId || pWId === wsUpper || pWId === "ALL" || activeWorkshopId === "DEFAULT";
-
-                if (uidClean && (pId.toLowerCase() === uidClean || key.toString().trim().toLowerCase() === uidClean)) {
-                    if (matchesWs) return p;
-                    if (!fallbackMatch) fallbackMatch = p;
-                }
-                if (emailClean && pEmail.toLowerCase() === emailClean) {
-                    if (matchesWs) return p;
-                    if (!fallbackMatch) fallbackMatch = p;
-                }
-                if (unameClean && pName.toLowerCase() === unameClean) {
-                    if (matchesWs) return p;
-                    if (!fallbackMatch) fallbackMatch = p;
-                }
+                return !pWId || pWId === wsUpper || pWId === "ALL" || activeWorkshopId === "DEFAULT";
             }
-            return fallbackMatch;
+
+            // Identity matching is deliberately sequential, not mixed per record.
+            // If an explicit UID is present in this page URL, it is authoritative:
+            // never let a stale session email/name match an earlier participant.
+            if (uidClean) {
+                const byUid = entries.find(([key, p]) => {
+                    const ids = [p.ps_id, p.uid, p.id, p.participant_id, key]
+                        .filter(value => value !== undefined && value !== null && value !== "")
+                        .map(value => value.toString().trim().toLowerCase());
+                    return ids.includes(uidClean) && matchesWorkshop(p);
+                });
+                if (byUid) return byUid[1];
+                const uidExistsOutsideWorkshop = entries.some(([key, p]) => {
+                    const ids = [p.ps_id, p.uid, p.id, p.participant_id, key]
+                        .filter(value => value !== undefined && value !== null && value !== "")
+                        .map(value => value.toString().trim().toLowerCase());
+                    return ids.includes(uidClean);
+                });
+                if (uidExistsOutsideWorkshop) {
+                    console.warn("Mentor identity UID belongs to a participant outside the active workshop.", uidVal);
+                    return null;
+                }
+                console.warn("Explicit mentor UID was not found. Name/email fallback is blocked to prevent cross-user profile leakage.", uidVal);
+                return null;
+            }
+
+            // Email is the next strongest identifier, followed by exact name.
+            if (emailClean) {
+                const byEmail = entries.find(([, p]) =>
+                    (p.ps_email || p.email || "").toString().trim().toLowerCase() === emailClean
+                );
+                if (byEmail && matchesWorkshop(byEmail[1])) return byEmail[1];
+            }
+
+            if (unameClean) {
+                const byName = entries.find(([, p]) =>
+                    (p.ps_name || p.uname || p.name || "").toString().trim().toLowerCase() === unameClean
+                );
+                if (byName && matchesWorkshop(byName[1])) return byName[1];
+            }
+
+            return null;
         }
 
         function populateMenteeSelector() {
@@ -1071,10 +1088,13 @@
 
         function resolveLoggedInUser() {
             const stored = readStoredSessionContext();
-            const effectiveUid = paramUid || (stored && stored.ps_id) || "";
-            const effectiveUname = paramUname || (stored && stored.ps_name) || "";
+            // A URL identity is supplied by the authenticated portal at resource launch.
+            // Do not supplement an explicit URL UID/name with unrelated cached session data.
+            const hasExplicitUrlIdentity = !!(paramUid || paramUname);
+            const effectiveUid = paramUid || (!hasExplicitUrlIdentity && stored ? stored.ps_id : "") || "";
+            const effectiveUname = paramUname || (!hasExplicitUrlIdentity && stored ? stored.ps_name : "") || "";
             const effectiveRole = paramRole || (stored && stored.role) || "";
-            const effectiveEmail = paramEmail || (stored && stored.ps_email) || "";
+            const effectiveEmail = paramEmail || (!hasExplicitUrlIdentity && stored ? stored.ps_email : "") || "";
 
             const matched = findParticipantRecord(effectiveUid, effectiveUname, effectiveEmail);
 
@@ -1092,13 +1112,17 @@
                     role: (matched.role || matched.user_role || effectiveRole || "Participant").toString().trim(),
                     workshop_id: activeWorkshopId
                 };
-            } else if (stored || effectiveUid || effectiveUname || effectiveEmail) {
+            } else if (effectiveUid || effectiveUname || effectiveEmail || (!hasExplicitUrlIdentity && stored)) {
                 currentUser = {
-                    ...(stored || {}),
-                    ps_id: effectiveUid || (stored && stored.ps_id) || "",
-                    ps_name: effectiveUname || (stored && stored.ps_name) || "",
-                    ps_email: effectiveEmail || (stored && stored.ps_email) || "",
-                    role: effectiveRole || (stored && stored.role) || "Participant",
+                    ...(!hasExplicitUrlIdentity && stored ? stored : {}),
+                    ps_id: effectiveUid,
+                    ps_name: effectiveUname,
+                    ps_email: effectiveEmail,
+                    ps_mob: (!hasExplicitUrlIdentity && stored && stored.ps_mob) || "",
+                    ps_centre: (!hasExplicitUrlIdentity && stored && stored.ps_centre) || "",
+                    ps_state: (!hasExplicitUrlIdentity && stored && stored.ps_state) || "",
+                    ps_country: (!hasExplicitUrlIdentity && stored && stored.ps_country) || "",
+                    role: effectiveRole || "Facilitator",
                     workshop_id: activeWorkshopId
                 };
             }
