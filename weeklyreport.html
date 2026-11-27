@@ -234,7 +234,7 @@
     </main>
 
     <footer class="text-center py-2 text-[10px] text-gray-500">
-        Heartful Communication - Self Journey Weekly Report | HC Portal SJ V1.0 • 25-Nov-2026
+        HC App
     </footer>
 
     <!-- View Modal -->
@@ -334,7 +334,6 @@
         let pendingReviewSubmissionId = null;
         let pendingDeleteSubmissionId = null;
         let submissionsStore = {};
-        let availableWeeks = Array.from({length: 20}, (_, i) => "Week" + (i + 1));
         let currentViewMode = viewParam === "my" ? "my" : "form";
 
         function syncFixedHeaderOffset() {
@@ -519,11 +518,8 @@
                 const wsTitle = ws.workshop_name || `Workshop (${workshopId})`;
                 document.getElementById("page-title").innerText = `${wsTitle} | Self Journey Report`;
 
-                // The full week list is retained as the master list. The dropdown is
-                // then filtered using only this logged-in mentee's reports submitted
-                // for mentor review (not drafts and not other mentees' submissions).
-                availableWeeks = Array.from({length: 20}, (_, i) => "Week" + (i + 1));
-                refreshWeekOptions();
+                const weeks = Array.from({length: 20}, (_, i) => "Week" + (i + 1));
+                populateSelectOptions(document.getElementById("f1-week"), weeks, "-- Select Week --");
             }).catch(err => {
                 console.error("Workshop load error:", err);
             });
@@ -569,20 +565,6 @@
         function isSubmittedForReview(record) {
             return !!(record && (record.submitted_for_review === true ||
                 (record.review_status || "").toString().toUpperCase() === "SUBMITTED"));
-        }
-
-        function refreshWeekOptions() {
-            const select = document.getElementById("f1-week");
-            if (!select) return;
-            const currentlySelected = select.value || (editingId && submissionsStore[editingId] && submissionsStore[editingId].week) || "";
-            const submittedWeeks = new Set(Object.values(submissionsStore)
-                .filter(isSubmittedForReview)
-                .map(record => (record.week || "").toString().trim().toLowerCase())
-                .filter(Boolean));
-            const remainingWeeks = availableWeeks.filter(week => !submittedWeeks.has(week.toLowerCase()));
-            populateSelectOptions(select, remainingWeeks, "-- Select Week --", currentlySelected);
-            // If a week was just submitted/locked, do not leave it selected.
-            if (currentlySelected && submittedWeeks.has(currentlySelected.toLowerCase())) select.value = "";
         }
 
         function submitForMentorReview(submissionId) {
@@ -986,7 +968,6 @@
                 }).reverse();
 
                 badge.textContent = entries.length;
-                refreshWeekOptions();
                 if (entries.length === 0) {
                     tbody.innerHTML = `<tr><td colspan="5" class="py-3 px-2 text-center text-gray-400 italic">No submissions yet.</td></tr>`;
                     return;
