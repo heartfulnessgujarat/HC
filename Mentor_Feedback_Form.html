@@ -661,7 +661,7 @@
 
     <!-- Footer -->
     <footer class="text-center py-2 text-[11px] text-gray-500 no-print">
-        Heartful Communication • Mentor Feedback Portal | HC Portal · Mentor Feedback V1.5 · Mentor-specific recording eligibility · 26-Nov-2026
+        Heartful Communication • Mentor Feedback Portal | HC Portal · Mentor Feedback V1.6 · Strict mentor session identity · 27-Nov-2026
     </footer>
 
     <script>
@@ -920,58 +920,41 @@
         }
 
         function readStoredSessionContext() {
-            const storages = [sessionStorage, localStorage];
-
-            for (const st of storages) {
-                try {
-                    for (let i = 0; i < st.length; i++) {
-                        const k = st.key(i);
-                        if (!k) continue;
-                        const raw = st.getItem(k);
-                        if (!raw) continue;
-                        const trimmed = raw.trim();
-                        if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
-                            try {
-                                const parsed = JSON.parse(trimmed);
-                                if (Array.isArray(parsed)) {
-                                    for (const item of parsed) {
-                                        const found = extractUserFromAnyValue(item);
-                                        if (found) return found;
-                                    }
-                                } else {
-                                    const found = extractUserFromAnyValue(parsed);
-                                    if (found) return found;
-                                }
-                            } catch (_) {}
-                        }
-                    }
-
-                    const directName = st.getItem("uname") || st.getItem("ps_name") || st.getItem("user_name") || st.getItem("name") || "";
-                    const directId = st.getItem("uid") || st.getItem("ps_id") || st.getItem("user_id") || st.getItem("id") || "";
-                    const directRole = st.getItem("role") || st.getItem("user_role") || "";
-                    const directEmail = st.getItem("email") || st.getItem("ps_email") || "";
-                    if (directName || directId) {
-                        return {
-                            ps_name: String(directName).trim(),
-                            ps_id: String(directId).trim(),
-                            role: String(directRole).trim(),
-                            ps_email: String(directEmail).trim()
-                        };
-                    }
-                } catch (_) {}
-            }
-
+            // Only trust the portal's dedicated session record. Scanning arbitrary
+            // localStorage/sessionStorage keys or window.name can pick up a previous
+            // mentor's profile and leak that identity into this form.
             try {
-                if (window.name) {
-                    const wName = window.name.trim();
-                    if (wName.startsWith("{")) {
-                        const found = extractUserFromAnyValue(JSON.parse(wName));
-                        if (found) return found;
-                    }
-                }
-            } catch (_) {}
+                const raw = sessionStorage.getItem(SESSION_STORAGE_KEY);
+                if (!raw) return null;
 
-            return null;
+                const saved = JSON.parse(raw);
+                if (!saved || !saved.user || typeof saved.user !== "object") return null;
+
+                const savedWorkshop = (saved.workshopId || saved.user.workshop_id || "")
+                    .toString().trim().toUpperCase();
+                if (savedWorkshop && savedWorkshop !== activeWorkshopId.toString().trim().toUpperCase()) {
+                    return null;
+                }
+
+                const user = extractUserFromAnyValue(saved.user);
+                if (!user) return null;
+
+                // If this page was launched with an explicit user identity, the
+                // stored session must agree. A mismatch is treated as stale context.
+                if (paramUid && user.ps_id &&
+                    user.ps_id.toString().trim().toLowerCase() !== paramUid.toString().trim().toLowerCase()) {
+                    return null;
+                }
+                if (paramUname && user.ps_name &&
+                    user.ps_name.toString().trim().toLowerCase() !== paramUname.toString().trim().toLowerCase()) {
+                    return null;
+                }
+
+                return user;
+            } catch (error) {
+                console.warn("Dedicated portal session could not be read; using URL identity only.", error);
+                return null;
+            }
         }
 
         function findWorkshopEntry(wsMap, targetId) {
