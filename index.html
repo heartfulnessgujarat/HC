@@ -2001,12 +2001,38 @@
             clearForms();
         }
 
+        function cleanPortalIdentityFromUrl() {
+            try {
+                const url = new URL(window.location.href);
+
+                // Remove identity and post-login return parameters from the URL
+                // when the authenticated user logs out. Keep the portal role
+                // and workshop hash so the correct login screen/workshop remains.
+                [
+                    "uid", "uname", "return", "name", "ps_id", "ps_name",
+                    "user_id", "user_name", "participant_id", "participant_name",
+                    "email", "ps_email"
+                ].forEach(param => url.searchParams.delete(param));
+
+                history.replaceState(null, "", url.pathname + url.search + url.hash);
+            } catch (error) {
+                console.warn("Could not clean previous user identity from portal URL:", error);
+            }
+        }
+
         function logout() {
             stopFacilitatorSubmissionRefresh();
+
+            // Clear the active user and stored session before returning to login.
             currentActiveUser = null;
             selectedParticipantKey = null;
             flVerifiedEmail = "";
             clearPersistedSession();
+
+            // Critical: remove the previous user's identity from the browser URL.
+            // Otherwise the next mentor's resource links can inherit that identity.
+            cleanPortalIdentityFromUrl();
+
             let profileScreen = document.getElementById('update-profile-screen');
             if (profileScreen) profileScreen.classList.add('hidden');
             showLoginScreen();
