@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="page-title">Heartful Communication | Portal · Facilitator update</title>
+    <title id="page-title">Heartful Communication | Portal · Facilitator update V4.3</title>
 
     <!-- Tailwind CSS for modern responsive design -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -504,7 +504,7 @@
                 document.getElementById('page-title').innerText = `Heartful Communication - Workshop (${activeWorkshopId}) | Facilitator / Mentor Portal`;
                 if (headingEl) headingEl.textContent = "Facilitator / Mentor Login";
                 if (selectedLabelEl) selectedLabelEl.textContent = "Name of the Facilitator / Mentor:";
-                if (footerEl) footerEl.textContent = "Heartful Communication - Facilitator / Mentor Login System | HC Portal V4.2 · 27-Nov-2026";
+                if (footerEl) footerEl.textContent = "Heartful Communication - Facilitator / Mentor Login System | HC Portal V4.3 · 27-Nov-2026";
             } else {
                 document.getElementById('page-title').innerText = `Heartful Communication - Workshop (${activeWorkshopId}) | Participant Portal`;
                 if (headingEl) headingEl.textContent = "Participant Login";
@@ -1430,6 +1430,19 @@
                     allRecords.push(...collectFacilitatorSubmissions(key, snapshots[index].val(), paths[key]));
                 });
 
+                // Facilitators should see a Recording Link only after the mentee
+                // explicitly submits it for mentor review (or the backend's
+                // scheduled 48-hour submission sets the same review flag/status).
+                // A saved-but-not-submitted recording remains private to the mentee.
+                const visibleRecords = allRecords.filter(item => {
+                    if (item.formType !== 'recording_link') return true;
+                    const record = item.record || {};
+                    const reviewStatus = String(record.review_status || record.status || '').trim().toUpperCase();
+                    return record.submitted_for_review === true ||
+                        reviewStatus === 'SUBMITTED' || reviewStatus === 'SUBMITTED_FOR_REVIEW' ||
+                        reviewStatus === 'UNDER_REVIEW' || reviewStatus === 'IN_REVIEW';
+                });
+
                 // Match mentor feedback to its source Recording Link submission.
                 // Draft feedback means the mentor has started but has not finalised it;
                 // FINALIZED means the mentor action is complete.
@@ -1450,7 +1463,7 @@
                         };
                     }
                 });
-                allRecords.filter(item => item.formType === 'recording_link').forEach(item => {
+                visibleRecords.filter(item => item.formType === 'recording_link').forEach(item => {
                     const sourceIds = [item.submissionKey, item.submissionId, item.record && item.record.record_id, item.record && item.record.submission_id]
                         .filter(Boolean).map(value => String(value).trim());
                     const matched = sourceIds.map(id => mentorFeedbackByRecording[id]).find(Boolean);
@@ -1458,12 +1471,12 @@
                         : matched.isFinal ? 'COMPLETED — Mentor feedback submitted'
                         : 'DRAFT — Mentor must finalise feedback';
                 });
-                allRecords.sort(facilitatorSubmissionGroupSort);
-                facilitatorSubmissionRecords = allRecords;
-                renderFacilitatorSubmissionList(allRecords);
-                statusEl.textContent = allRecords.length
-                    ? ('Showing ' + allRecords.length + ' record(s). Last refreshed: ' + new Date().toLocaleTimeString('en-IN'))
-                    : ('No records were found in the existing submission paths for workshop ' + workshopKey + '.');
+                visibleRecords.sort(facilitatorSubmissionGroupSort);
+                facilitatorSubmissionRecords = visibleRecords;
+                renderFacilitatorSubmissionList(visibleRecords);
+                statusEl.textContent = visibleRecords.length
+                    ? ('Showing ' + visibleRecords.length + ' record(s). Last refreshed: ' + new Date().toLocaleTimeString('en-IN'))
+                    : ('No submissions are currently available for mentor review or in the other submission forms for workshop ' + workshopKey + '.');
             } catch (error) {
                 console.error('Facilitator submissions read failed:', error);
                 statusEl.textContent = 'Could not load submissions. Firebase read permission or network access may be required. ' + (error && error.message ? error.message : '');
@@ -1493,7 +1506,7 @@
                 person.forms.forEach((items, formType) => {
                     html += '<div class="rounded border border-gray-100"><div class="bg-gray-50 px-2.5 py-1.5 text-[11px] font-bold text-gray-700">' + facilitatorSubmissionEscape(items[0].formLabel) + '<span class="ml-1 text-gray-400 font-normal">(' + items.length + ')</span></div><div class="divide-y divide-gray-100">';
                     items.forEach(item => {
-                        html += '<div class="px-2.5 py-2 flex items-start justify-between gap-2"><div class="min-w-0"><div class="text-[10px] text-gray-500">' + facilitatorSubmissionEscape(item.dateLabel) + '</div>' + (item.subtitle ? '<div class="text-[11px] text-gray-700 mt-0.5">' + facilitatorSubmissionEscape(item.subtitle) + '</div>' : '') + '<div class="text-[10px] mt-0.5 text-indigo-700">Status: ' + facilitatorSubmissionEscape(item.status) + '</div>' + (item.formType === 'recording_link' ? '<div class="text-[10px] mt-1 font-semibold ' + (item.mentorFeedbackStatus && item.mentorFeedbackStatus.indexOf('COMPLETED') === 0 ? 'text-green-700' : 'text-amber-700') + '">Mentor Feedback: ' + facilitatorSubmissionEscape(item.mentorFeedbackStatus || 'PENDING — Mentor feedback not submitted') + '</div>' : '') + '</div><button type="button" data-submission-index="' + facilitatorSubmissionRecords.indexOf(item) + '" class="fac-submission-view-btn shrink-0 rounded bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-semibold px-2.5 py-1.5">View</button></div>';
+                        html += '<div class="px-2.5 py-2 flex items-start justify-between gap-2"><div class="min-w-0"><div class="text-[10px] text-gray-500">' + facilitatorSubmissionEscape(item.dateLabel) + '</div>' + (item.subtitle ? '<div class="text-[11px] text-gray-700 mt-0.5">' + facilitatorSubmissionEscape(item.subtitle) + '</div>' : '') + (item.formType === 'recording_link' ? '<div class="text-[10px] mt-1 font-semibold ' + (item.mentorFeedbackStatus && item.mentorFeedbackStatus.indexOf('COMPLETED') === 0 ? 'text-green-700' : 'text-amber-700') + '">Mentor Feedback: ' + facilitatorSubmissionEscape(item.mentorFeedbackStatus || 'PENDING — Awaiting mentor feedback') + '</div>' : '<div class="text-[10px] mt-0.5 text-indigo-700">Status: ' + facilitatorSubmissionEscape(item.status) + '</div>') + '</div><button type="button" data-submission-index="' + facilitatorSubmissionRecords.indexOf(item) + '" class="fac-submission-view-btn shrink-0 rounded bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-semibold px-2.5 py-1.5">View</button></div>';
                     });
                     html += '</div></div>';
                 });
