@@ -390,7 +390,7 @@
 
     <!-- Footer -->
     <footer id="app-footer" class="text-center py-1.5 text-[10px] text-gray-500">
-        Heartful Communication - Participant / Mentee Login System | HC Portal V4.2 · 27-Nov-2026
+        Heartful Communication - Participant Login System | HC Portal V4.2 · 27-Nov-2026
     </footer>
 
     <!-- Custom Message Box Modal -->
@@ -435,7 +435,7 @@
             return { roleVal, workshopId };
         }
 
-        const { roleVal: portalRoleParam, workshopId: activeWorkshopId } = extractRoleAndWorkshop();
+        let { roleVal: portalRoleParam, workshopId: activeWorkshopId } = extractRoleAndWorkshop();
         const isFacilitatorPortal = (
             portalRoleParam === "facilitator" ||
             portalRoleParam === "facilitators" ||
@@ -585,8 +585,9 @@
                 const saved = JSON.parse(raw);
                 if (!saved || !saved.user) return false;
 
-                const savedWs = (saved.workshopId || "").toString().trim().toUpperCase();
-                if (savedWs && savedWs !== activeWorkshopId.toUpperCase()) return false;
+                // The saved workshop context can be stale after the participant's
+                // workshop_id is updated in Firebase. Refresh it from the live
+                // participants node before validating the workshop below.
 
                 if (qUid && saved.user.ps_id && String(saved.user.ps_id).trim().toLowerCase() !== qUid.toLowerCase()) return false;
                 if (!qUid && qUname && saved.user.ps_name && String(saved.user.ps_name).trim().toLowerCase() !== qUname.toLowerCase()) return false;
@@ -642,6 +643,44 @@
                 allWorkshops = workshopsRes.data || {};
                 allParticipants = participantsRes.data || {};
                 participantsBasePath = participantsRes.path || 'control_tower/participants';
+
+                // When returning from a resource/report, the URL hash may still
+                // contain an old workshop ID (for example, a retired test batch).
+                // Resolve the logged-in user's latest participant record first;
+                // its Firebase workshop_id is authoritative for this session.
+                if (currentActiveUser && currentActiveUser.ps_id) {
+                    const liveParticipantEntry = Object.entries(allParticipants).find(([key, participant]) =>
+                        participant &&
+                        String(participant.ps_id || "").trim().toLowerCase() ===
+                        String(currentActiveUser.ps_id).trim().toLowerCase()
+                    );
+
+                    if (liveParticipantEntry) {
+                        selectedParticipantKey = liveParticipantEntry[0];
+                        currentActiveUser = liveParticipantEntry[1];
+                    }
+                }
+
+                const liveUserWorkshopId = String(currentActiveUser?.workshop_id || "").trim();
+                const liveUserRole = String(currentActiveUser?.role || "").trim().toUpperCase();
+                const isGlobalTrustSafety = liveUserRole === "T&S" ||
+                    liveUserRole === "TRUST & SAFETY";
+
+                if (liveUserWorkshopId && !(isGlobalTrustSafety && liveUserWorkshopId.toUpperCase() === "ALL")) {
+                    activeWorkshopId = liveUserWorkshopId.toUpperCase();
+
+                    // Replace the stale hash without dropping role/return/user query
+                    // parameters, so future navigation uses the current batch ID.
+                    try {
+                        const currentUrl = new URL(window.location.href);
+                        const correctHash = "#" + encodeURIComponent(activeWorkshopId);
+                        if (currentUrl.hash !== correctHash) {
+                            history.replaceState(null, "", currentUrl.pathname + currentUrl.search + correctHash);
+                        }
+                    } catch (urlError) {
+                        console.warn("Could not refresh workshop ID in portal URL:", urlError);
+                    }
+                }
 
                 let targetWorkshop = allWorkshops[activeWorkshopId];
                 if (!targetWorkshop) {
