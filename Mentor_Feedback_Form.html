@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="page-title">Heartful Communication | Mentor Feedback Form · V1.7 · URL-Authoritative Mentor Identity · 27-Nov-2026</title>
+    <title id="page-title">Heartful Communication | Mentor Feedback Form · V1.8 · Recording Submission Empty State · 27-Nov-2026</title>
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -120,6 +120,7 @@
                 <select id="mentor-recording-select" onchange="handleMentorRecordingSelectionChange()" class="w-full px-3 py-2 border border-indigo-300 rounded-md bg-white text-xs">
                     <option value="">Loading submitted recordings...</option>
                 </select>
+                <div id="mentor-recording-empty-state" class="hidden rounded-md border border-amber-200 bg-amber-50 p-2.5 text-[11px] leading-relaxed text-amber-900" role="status" aria-live="polite"></div>
                 <div id="mentor-recording-details" class="hidden bg-white border border-indigo-100 rounded p-2.5 text-xs space-y-1"></div>
                 <div id="mentor-recording-status" class="hidden text-[11px] font-semibold rounded p-2"></div>
                 <p class="text-[10px] text-gray-500">The mentee, recording date, module, section, and recording link are fetched from the selected submission. Mentor identity comes from your facilitator login.</p>
@@ -1263,6 +1264,8 @@
             const select = document.getElementById("mentor-recording-select");
             if (!wsKey || !db || !select) return;
             select.innerHTML = '<option value="">Loading submitted recordings...</option>';
+            const emptyState = document.getElementById("mentor-recording-empty-state");
+            if (emptyState) emptyState.classList.add("hidden");
             db.ref(`form_submissions/${wsKey}/recording_link`).once("value").then(snap => {
                 const root = snap.val() || {};
                 const eligible = {};
@@ -1281,6 +1284,11 @@
             }).catch(err => {
                 console.error("Mentor recording list lookup failed:", err);
                 select.innerHTML = '<option value="">Could not load recordings. Refresh and retry.</option>';
+                const emptyState = document.getElementById("mentor-recording-empty-state");
+                if (emptyState) {
+                    emptyState.textContent = "We could not load the mentees’ Recording Link submissions. Please refresh the page and try again.";
+                    emptyState.classList.remove("hidden");
+                }
             });
         }
 
@@ -1319,6 +1327,13 @@
                 });
             if (keep && recordingSubmissions[keep]) { select.value = keep; selectedRecordingSubmissionId = keep; }
             else { select.value = ""; selectedRecordingSubmissionId = ""; }
+
+            const emptyState = document.getElementById("mentor-recording-empty-state");
+            if (emptyState) {
+                const hasReviewSubmissions = Object.keys(recordingSubmissions || {}).length > 0;
+                emptyState.textContent = "There is no Recording Link submitted yet by the mentee.";
+                emptyState.classList.toggle("hidden", hasReviewSubmissions);
+            }
             handleMentorRecordingSelectionChange();
         }
 
