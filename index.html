@@ -1132,7 +1132,7 @@
             }
         }
 
-        function renderResourceRows(workshop, prefix, useRow1ZoomOverride, activeZoomLink, resourcesContainer) {
+        function renderResourceRows(workshop, prefix, resourcesContainer) {
             let resourceCount = 0;
             Object.keys(workshop).forEach(key => {
                 if (key.startsWith(prefix + 'label')) {
@@ -1144,6 +1144,11 @@
                 }
             });
 
+            const resourceList = document.createElement('div');
+            const pdfViewer = document.createElement('div');
+            pdfViewer.className = "hidden mt-3 rounded-lg border border-gray-200 bg-white p-3";
+            pdfViewer.id = "participant-resource-pdf-viewer";
+
             for (let i = 1; i <= resourceCount; i++) {
                 let label = workshop[`${prefix}label${i}`];
                 let url = workshop[`${prefix}url${i}`];
@@ -1152,21 +1157,89 @@
                     continue;
                 }
 
-                let linkVal = (useRow1ZoomOverride && i === 1)
-                    ? (activeZoomLink ? activeZoomLink.toString().trim() : "")
-                    : (url ? url.toString().trim() : "");
-                let isLinkValid = linkVal.startsWith('http://') || linkVal.startsWith('https://');
+                const linkVal = url ? url.toString().trim() : "";
+                const isLinkValid = linkVal.startsWith('http://') || linkVal.startsWith('https://');
 
-                let row = document.createElement('div');
+                const row = document.createElement('div');
                 row.className = "py-2 border-b border-gray-100 last:border-b-0";
 
                 if (isLinkValid) {
                     const finalLink = appendUserContextToUrl(linkVal);
-                    row.innerHTML = `
-                       <div class="text-gray-900 font-medium text-xs sm:text-sm leading-tight">
-                           <a href="${finalLink}" class="text-indigo-600 hover:underline font-semibold">${label}</a>
-                       </div>
-                    `;
+                    const link = document.createElement('a');
+                    link.href = finalLink;
+                    link.className = "text-indigo-600 hover:underline font-semibold text-xs sm:text-sm leading-tight";
+                    link.textContent = label;
+
+                    // The first participant resource is the Criteria PDF.
+                    // Keep it inside the portal so participants can return with one clear button.
+                    if (i === 1) {
+                        link.addEventListener('click', function (event) {
+                            event.preventDefault();
+
+                            let viewerUrl = finalLink;
+                            try {
+                                const driveMatch = finalLink.match(/drive\.google\.com\/file\/d\/([^/]+)/i);
+                                if (driveMatch && driveMatch[1]) {
+                                    viewerUrl = "https://drive.google.com/file/d/" + driveMatch[1] + "/preview";
+                                }
+                            } catch (e) {
+                                console.warn("Could not prepare embedded PDF preview; using configured resource URL.", e);
+                            }
+
+                            pdfViewer.innerHTML = "";
+                            const backButton = document.createElement('button');
+                            backButton.type = "button";
+                            backButton.className = "mb-3 rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700";
+                            backButton.textContent = "← Back to Participant Resources";
+                            backButton.addEventListener('click', function () {
+                                pdfViewer.classList.add('hidden');
+                                resourceList.classList.remove('hidden');
+                            });
+
+                            const viewerTitle = document.createElement('div');
+                            viewerTitle.className = "mb-2 text-sm font-semibold text-gray-800";
+                            viewerTitle.textContent = label;
+
+                            const frame = document.createElement('iframe');
+                            frame.src = viewerUrl;
+                            frame.title = label;
+                            frame.style.width = "100%";
+                            frame.style.height = "70vh";
+                            frame.style.minHeight = "480px";
+                            frame.style.border = "1px solid #e5e7eb";
+                            frame.style.borderRadius = "6px";
+                            frame.setAttribute('allow', 'autoplay');
+                            frame.setAttribute('loading', 'lazy');
+
+                            const fallback = document.createElement('p');
+                            fallback.className = "mt-2 text-xs text-gray-600";
+                            fallback.textContent = "If the document does not appear here, use the link below to open it separately.";
+                            const openLink = document.createElement('a');
+                            openLink.href = finalLink;
+                            openLink.target = "_blank";
+                            openLink.rel = "noopener noreferrer";
+                            openLink.className = "ml-1 font-semibold text-indigo-600 underline";
+                            openLink.textContent = "Open PDF in a new tab";
+
+                            pdfViewer.appendChild(backButton);
+                            pdfViewer.appendChild(viewerTitle);
+                            pdfViewer.appendChild(frame);
+                            fallback.appendChild(openLink);
+                            pdfViewer.appendChild(fallback);
+
+                            resourceList.classList.add('hidden');
+                            pdfViewer.classList.remove('hidden');
+                            pdfViewer.scrollIntoView({ behavior: "smooth", block: "start" });
+                        });
+                    } else {
+                        link.target = "_blank";
+                        link.rel = "noopener noreferrer";
+                    }
+
+                    const linkWrap = document.createElement('div');
+                    linkWrap.className = "text-gray-900 font-medium text-xs sm:text-sm leading-tight";
+                    linkWrap.appendChild(link);
+                    row.appendChild(linkWrap);
                 } else {
                     row.innerHTML = `
                        <div class="text-gray-400 font-medium text-xs sm:text-sm leading-tight">
@@ -1174,8 +1247,11 @@
                        </div>
                     `;
                 }
-                resourcesContainer.appendChild(row);
+                resourceList.appendChild(row);
             }
+
+            resourcesContainer.appendChild(resourceList);
+            resourcesContainer.appendChild(pdfViewer);
         }
 
         function renderDashboard() {
@@ -1318,18 +1394,15 @@
                     </div>
                 `;
 
-                let workshopZoomYn = workshop.common_zoom_url_yn ? workshop.common_zoom_url_yn.toString().trim().toUpperCase() : "NO";
-                let activeZoomLink = (workshopZoomYn === "YES") ? workshop.common_zoom_url : currentActiveUser.personal_zoom_link;
-
                 let accessRules = typeof evaluateWorkshopAccess === 'function' ? evaluateWorkshopAccess(workshop) : { resourcesUnlocked: true };
                 if (!accessRules.resourcesUnlocked) {
                     resourcesContainer.innerHTML = `<div class="text-amber-600 text-xs sm:text-sm italic p-2 bg-amber-50 rounded">Resources will unlock automatically after the first day's session concludes. Please feel free to check or update your profile details shown above.</div>`;
                     return;
                 }
 
-                // Use the configured Firebase URL for every participant resource, including resource 1.
-                // Do not replace the Criteria PDF link with the participant Zoom link.
-                renderResourceRows(workshop, "p_resource_", false, "", resourcesContainer);
+                // Render participant resources from their configured Firebase URLs.
+                // Zoom-link substitution has been removed from this portal.
+                renderResourceRows(workshop, "p_resource_", resourcesContainer);
             }
         }
 
