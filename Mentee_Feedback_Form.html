@@ -1098,14 +1098,56 @@
             }
         }
 
+        function menteeFeedbackOwnerKey() {
+            return (currentUser.ps_id || currentUser.ps_name || "unknown").toString().trim()
+                .replace(/[.#$\[\]\/]/g, "_").replace(/\s+/g, "_");
+        }
+
+        function menteeFeedbackRecordPath(recordId, record) {
+            const wsKey = activeWorkshopId.toUpperCase();
+            if (record && record._firebase_legacy === true) {
+                return `control_tower/mentee_feedback/${wsKey}/${recordId}`;
+            }
+            const ownerKey = (record && record._firebase_owner_key) ||
+                (record && record.user_key) || menteeFeedbackOwnerKey();
+            return `form_submissions/${wsKey}/mentee_feedback/${ownerKey}/${recordId}`;
+        }
+
+        function mergeMenteeFeedbackRoots(newRoot, legacyRoot) {
+            const merged = {};
+            Object.keys(legacyRoot || {}).forEach(recordId => {
+                const record = legacyRoot[recordId];
+                if (record && typeof record === "object") {
+                    merged[recordId] = { ...record, _firebase_legacy: true, _firebase_owner_key: "" };
+                }
+            });
+            Object.keys(newRoot || {}).forEach(ownerKey => {
+                const ownerRecords = newRoot[ownerKey] || {};
+                Object.keys(ownerRecords).forEach(recordId => {
+                    const record = ownerRecords[recordId];
+                    if (record && typeof record === "object") {
+                        merged[recordId] = { ...record, _firebase_legacy: false, _firebase_owner_key: ownerKey };
+                    }
+                });
+            });
+            workshopSubmissions = merged;
+            checkAndAutoLockExpiredSubmissions();
+            populateMentorMenteeFilter();
+            renderSubmissionsList();
+            renderRecordingSubmissionOptions();
+        }
+
         function listenToWorkshopSubmissions() {
-            const refPath = `control_tower/mentee_feedback/${activeWorkshopId.toUpperCase()}`;
-            db.ref(refPath).on("value", snap => {
-                workshopSubmissions = snap.val() || {};
-                checkAndAutoLockExpiredSubmissions();
-                populateMentorMenteeFilter();
-                renderSubmissionsList();
-                renderRecordingSubmissionOptions();
+            const wsKey = activeWorkshopId.toUpperCase();
+            let newRoot = {}, legacyRoot = {};
+            db.ref(`form_submissions/${wsKey}/mentee_feedback`).on("value", snap => {
+                newRoot = snap.val() || {};
+                mergeMenteeFeedbackRoots(newRoot, legacyRoot);
+            });
+            // Read and continue listening to legacy submissions during migration.
+            db.ref(`control_tower/mentee_feedback/${wsKey}`).on("value", snap => {
+                legacyRoot = snap.val() || {};
+                mergeMenteeFeedbackRoots(newRoot, legacyRoot);
             });
         }
 
@@ -1269,7 +1311,7 @@
                         locked_at: now,
                         locked_reason: "auto_24h_expired"
                     };
-                    db.ref(`control_tower/mentee_feedback/${wsKey}/${recId}`).update(updates).then(() => {
+                    db.ref(menteeFeedbackRecordPath(recId, rec)).update(updates).then(() => {
                         if (!rec.mentor_notified) {
                             triggerLockEmailNotifications(recId, { ...rec, ...updates });
                         }
@@ -1315,7 +1357,7 @@
 
         function triggerLockEmailNotifications(recId, rec) {
             const wsKey = activeWorkshopId.toUpperCase();
-            db.ref(`control_tower/mentee_feedback/${wsKey}/${recId}`).update({
+            db.ref(menteeFeedbackRecordPath(recId, rec)).update({
                 mentor_notified: true,
                 notified_at: Date.now()
             });
@@ -1331,6 +1373,8 @@
                 workshopName: workshopName,
                 menteeName: rec.mentee_name || "Mentee",
                 menteeId: rec.mentee_id || "",
+                ownerKey: rec._firebase_owner_key || rec.user_key || menteeFeedbackOwnerKey(),
+                submissionId: recId,
                 menteeEmail: menteeEmail,
                 mentorEmails: mentorEmails,
                 sessionDate: rec.session_date || "",
@@ -1419,10 +1463,13 @@
 
                 const now = Date.now();
                 const wsKey = activeWorkshopId.toUpperCase();
-                const baseRef = db.ref(`control_tower/mentee_feedback/${wsKey}`);
+                const ownerKey = menteeFeedbackOwnerKey();
+                const baseRef = db.ref(`form_submissions/${wsKey}/mentee_feedback/${ownerKey}`);
 
                 const recordPayload = {
                     workshop_id: wsKey,
+                    form_id: "mentee_feedback",
+                    user_key: ownerKey,
                     mentee_id: currentUser.ps_id,
                     mentee_name: currentUser.ps_name,
                     mentee_email: currentUser.ps_email || getMenteeEmailById(currentUser.ps_id, currentUser.ps_name) || "",
@@ -1467,7 +1514,7 @@
                         return showCustomAlert("This evaluation has already been locked and can no longer be edited.");
                     }
 
-                    baseRef.child(editingRecordId).update(recordPayload).then(() => {
+                    db.ref(menteeFeedbackRecordPath(editingRecordId, existing)).update(recordPayload).then(() => {
                         btn.disabled = false;
                         cancelEditMode();
                         resetFormFields();
@@ -1624,7 +1671,7 @@
                         submitted_for_review_at: now,
                         locked_reason: "manual_lock"
                     };
-                    const recordRef = db.ref(`control_tower/mentee_feedback/${wsKey}/${recId}`);
+                    const recordRef = db.ref(menteeFeedbackRecordPath(recId, rec));
                     recordRef.update(updates)
                         .then(() => {
                             workshopSubmissions[recId] = { ...rec, ...updates };
@@ -1659,7 +1706,7 @@
                 "Are you sure you want to permanently delete this draft evaluation? This action cannot be undone.",
                 () => {
                     const wsKey = activeWorkshopId.toUpperCase();
-                    db.ref(`control_tower/mentee_feedback/${wsKey}/${recId}`).remove().then(() => {
+                    db.ref(menteeFeedbackRecordPath(recId, rec)).remove().then(() => {
                         renderRecordingSubmissionOptions();
                         showCustomAlert("Draft evaluation deleted. Its recording is available again.");
                     }).catch(err => showCustomAlert("Failed to delete evaluation: " + err.message));
