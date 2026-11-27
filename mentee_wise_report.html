@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Heartful Communication | Mentee Report Card</title>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root{--indigo:#5146e5;--ink:#243047;--muted:#64748b;--line:#dce3ef;--bg:#f5f7fb;--green:#15803d;--amber:#b45309;--red:#b91c1c}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font:14px Arial,sans-serif;color:var(--ink)}
+header{background:linear-gradient(120deg,#8134e8,#5146e5);color:white;padding:22px 18px}
+header .wrap,main{max-width:1100px;margin:auto}h1{font-size:22px;margin:0 0 6px}header p{margin:0;opacity:.9}
+main{padding:18px}
+.panel{background:white;border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px;box-shadow:0 2px 5px #1725540a}
+.selector{display:grid;grid-template-columns:minmax(220px,1fr) auto;gap:10px;align-items:end}
+label{display:block;font-weight:700;font-size:12px;margin-bottom:7px;color:#374151}
+select,button{font:inherit;border-radius:7px;padding:10px;border:1px solid #cbd5e1;background:white}
+button{background:var(--indigo);color:white;border:0;font-weight:700;cursor:pointer}
+button:disabled{opacity:.55;cursor:default}
+.muted{color:var(--muted);font-size:12px}.status{margin-top:10px;color:var(--muted);font-size:12px}
+.person{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
+.person h2{margin:0 0 4px;font-size:19px}.pill{display:inline-block;border-radius:20px;padding:4px 9px;font-size:11px;font-weight:700;background:#eef2ff;color:#4338ca}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+h3{font-size:15px;margin:0 0 12px}
+table{width:100%;border-collapse:collapse;font-size:12px}th,td{text-align:left;padding:9px 8px;border-bottom:1px solid #e8edf5;vertical-align:top}th{background:#f4f6fb;color:#475569;font-weight:700}
+.state{font-weight:700}.done{color:var(--green)}.pending{color:var(--amber)}.draft{color:#64748b}
+.empty{padding:18px;text-align:center;color:var(--muted);background:#f8fafc;border-radius:8px;font-size:12px}
+.scroll{overflow-x:auto}.wide{grid-column:1/-1}.chartbox{height:290px;position:relative}
+.details{white-space:pre-wrap;overflow-wrap:anywhere;max-width:360px}
+#error{color:var(--red);white-space:pre-wrap}
+@media(max-width:720px){.grid{grid-template-columns:1fr}.selector{grid-template-columns:1fr}.wide{grid-column:auto}main{padding:12px}.chartbox{height:260px}}
+</style>
+</head>
+<body>
+<header><div class="wrap"><h1>Mentee Report Card</h1><p>Consolidated submissions and mentor feedback · Read-only report</p></div></header>
+<main>
+<section class="panel">
+  <div class="selector">
+    <div><label for="menteeSelect">SELECT MENTEE</label><select id="menteeSelect"><option value="">Loading mentees…</option></select></div>
+    <button id="refreshBtn" type="button">Refresh Report</button>
+  </div>
+  <div id="loadStatus" class="status">Connecting to the workshop data…</div>
+  <div id="error"></div>
+</section>
+<div id="report" hidden>
+  <section class="panel person"><div><h2 id="menteeName"></h2><div class="muted" id="menteeMeta"></div></div><span class="pill">Mentee Report Card</span></section>
+  <div class="grid">
+    <section class="panel"><h3>1. Recording Link Submissions</h3><div id="recordings"></div></section>
+    <section class="panel"><h3>2. Mentee Self-Evaluation</h3><div id="selfEval"></div></section>
+    <section class="panel wide"><h3>3. Recording-wise Mentor Feedback — All Mentors</h3><div id="mentorFeedback"></div></section>
+    <section class="panel"><h3>4. Weekly Journey Reports</h3><div id="journey"></div></section>
+    <section class="panel"><h3>5. Learning Curve Graph</h3><div class="chartbox"><canvas id="curveChart"></canvas></div><p class="muted">Curve-point values are summarized from submitted mentor feedback. The graph includes only numeric/recognized curve-point responses found in the records.</p></section>
+    <section class="panel"><h3>6. Final Mentor Recommendations</h3><div class="chartbox"><canvas id="recommendChart"></canvas></div><p class="muted">Counts are based on the final recommendation recorded by all mentors for each recording.</p></section>
+  </div>
+</div>
+</main>
+<script>
+(function(){
+'use strict';
+const firebaseConfig={
+ apiKey:"AIzaSyAt_HbqtG_kMn41NC1wPy5KDFNsDp5HTb8",
+ authDomain:"hc-app-72298.firebaseapp.com",
+ databaseURL:"https://hc-app-72298-default-rtdb.asia-southeast1.firebasedatabase.app",
+ projectId:"hc-app-72298",storageBucket:"hc-app-72298.firebasestorage.app",
+ messagingSenderId:"1013251414152",appId:"1:1013251414152:web:3e598848e31a81bb43273d"
+};
+if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);
+const db=firebase.database();
+const $=id=>document.getElementById(id);
+let workshopId='',participants={},recordingRoot={},selfRoot={},weeklyRoot={},mentorRoot={};
+let curveChart=null,recommendChart=null,selectedKey='';
+function safe(v){return String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function obj(v){return v&&typeof v==='object'?v:{};}
+function norm(v){return String(v||'').trim().toLowerCase();}
+function getSession(){
+ try{const s=JSON.parse(sessionStorage.getItem('hc_portal_active_session')||'{}');return s||{};}catch(e){return {};}
+}
+function resolveWorkshop(){
+ const q=new URLSearchParams(location.search),s=getSession();
+ return String(q.get('workshop_id')||q.get('workshop')||s.workshopId||(s.user&&s.user.workshop_id)||'').trim().toUpperCase();
+}
+function idFor(p,key){return String(p.ps_id||p.participant_id||p.user_id||p.uid||key||'').trim();}
+function nameFor(p,key){return String(p.ps_name||p.participant_name||p.name||idFor(p,key)||'Unnamed mentee').trim();}
+function recordParticipantId(r,owner){return String(r.participant_id||r.mentee_id||r.ps_id||r.user_key||owner||'').trim();}
+function recordName(r){return String(r.participant_name||r.mentee_name||r.ps_name||r.name||'').trim();}
+function dateVal(r){let x=r.created_at_ms||r.created_at||r.updated_at_ms||r.updated_at||r.submitted_at||r.timestamp||r.date||'';if(typeof x==='number'||/^\d{10,13}$/.test(String(x))){let n=Number(x);if(n<1e12)n*=1000;const d=new Date(n);return isNaN(d)?String(x):d.toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short'});}return String(x||'Not recorded');}
+function submitted(r){let st=String(r.review_status||r.status||'').toUpperCase();return r.submitted_for_review===true||['SUBMITTED','FINALIZED','LOCKED','COMPLETED'].includes(st);}
+function statusHtml(r){if(submitted(r))return '<span class="state done">Submitted</span>';let st=String(r.status||'').toUpperCase();if(st.includes('DRAFT')||st==='SAVED')return '<span class="state draft">Draft / Saved</span>';return '<span class="state pending">Not submitted / Pending</span>';}
+function matchMentee(r,owner,key){const p=participants[key]||{},rid=norm(recordParticipantId(r,owner)),pid=norm(idFor(p,key)),pkey=norm(key),ownerKey=norm(owner);if(rid&&(rid===pid||rid===pkey||rid===ownerKey))return true;const rn=norm(recordName(r)),pn=norm(nameFor(p,key));return !!rn&&rn===pn;}
+function flatten(root,legacy){const out=[];Object.entries(obj(root)).forEach(([owner,val])=>{if(!val||typeof val!=='object')return;if(legacy){out.push({key:owner,owner:recordParticipantId(val,owner),r:val});}else{Object.entries(val).forEach(([rid,r])=>{if(r&&typeof r==='object')out.push({key:rid,owner,r});});}});return out;}
+function rows(items,columns){if(!items.length)return '<div class="empty">No records found for this mentee.</div>';return '<div class="scroll"><table><thead><tr>'+columns.map(c=>'<th>'+safe(c[0])+'</th>').join('')+'</tr></thead><tbody>'+items.map(it=>'<tr>'+columns.map(c=>'<td>'+c[1](it)+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>';}
+function findFeedbackForRecording(recId,menteeId,menteeName){
+ return Object.entries(obj(mentorRoot)).map(([fid,r])=>({fid,r:obj(r)})).filter(x=>{
+  const r=x.r,source=String(r.recording_submission_id||r.recording_id||'').trim();
+  const pid=norm(recordParticipantId(r,'')),name=norm(recordName(r));
+  return source===String(recId)&&((pid&&pid===norm(menteeId))||(!pid&&name===norm(menteeName)));
+ });
+}
+function recommendation(r){let v=r.final_recommendation||r.recommendation||r.overall_recommendation||r.recommendation_status||r.recommendation_for_mentee||'';return String(v).trim();}
+function curveEntries(r){const found=[];Object.entries(obj(r)).forEach(([k,v])=>{if(/curve.?point/i.test(k)&&v!==''&&v!=null){const m=String(v).match(/(?:curve\s*point\s*)?([1-5])(?:\s|$)/i);if(m)found.push({key:k,value:Number(m[1])});}});return found;}
+function renderSelected(){
+ const p=participants[selectedKey];if(!p)return;
+ const pid=idFor(p,selectedKey),pname=nameFor(p,selectedKey);
+ $('menteeName').textContent=pname;$('menteeMeta').textContent='Participant ID: '+pid+' · Firebase participant key: '+selectedKey;
+ $('report').hidden=false;
+ const recs=flatten(recordingRoot,false).filter(x=>matchMentee(x.r,x.owner,selectedKey)).filter(x=>submitted(x.r));
+ const self=flatten(selfRoot,true).filter(x=>matchMentee(x.r,x.owner,selectedKey));
+ const weeks=flatten(weeklyRoot,false).filter(x=>matchMentee(x.r,x.owner,selectedKey));
+ $('recordings').innerHTML=rows(recs.sort((a,b)=>String(b.r.created_at||b.r.created_at_ms||'').localeCompare(String(a.r.created_at||a.r.created_at_ms||''))),[
+  ['Recording / Module',x=>safe([x.r.section,x.r.module_name||x.r.module_number].filter(Boolean).join(' · ')||'Recording')],
+  ['Submitted',x=>safe(dateVal(x.r))],['Status',x=>statusHtml(x.r)],['Recording link',x=>x.r.recording_link||x.r.link?'<a target="_blank" rel="noopener" href="'+safe(x.r.recording_link||x.r.link)+'">Open</a>':'—']
+ ]);
+ $('selfEval').innerHTML=rows(self,[
+  ['Recording / Module',x=>safe([x.r.module_section||x.r.section,x.r.module_number].filter(Boolean).join(' · ')||x.r.recording_submission_id||'Self-evaluation')],
+  ['Submitted',x=>safe(dateVal(x.r))],['Status',x=>statusHtml(x.r)]
+ ]);
+ const feedbackByRec=recs.map(rec=>({rec,items:findFeedbackForRecording(rec.key,pid,pname)}));
+ let allFeedback=[];feedbackByRec.forEach(group=>group.items.forEach(x=>allFeedback.push({rec:group.rec,fb:x.r,fid:x.fid})));
+ $('mentorFeedback').innerHTML=rows(allFeedback,[
+  ['Recording',x=>safe([x.rec.r.section,x.rec.r.module_name||x.rec.r.module_number].filter(Boolean).join(' · ')||x.rec.key)],
+  ['Mentor',x=>safe(x.fb.mentor_name||x.fb.reviewer_name||x.fb.facilitator_name||x.fb.mentor_id||'Mentor')],
+  ['Feedback date',x=>safe(dateVal(x.fb))],['Status',x=>statusHtml(x.fb)],
+  ['Recommendation',x=>safe(recommendation(x.fb)||'Not recorded')]
+ ]);
+ $('journey').innerHTML=rows(weeks,[
+  ['Week',x=>safe(x.r.week||x.r.week_number||x.r.reporting_period||'Weekly report')],
+  ['Submitted',x=>safe(dateVal(x.r))],['Status',x=>statusHtml(x.r)],
+  ['Reflection',x=>'<div class="details">'+safe(x.r.reflection||x.r.weekly_reflection||x.r.journey_reflection||x.r.description||x.r.report||'Details are stored in this record.')+'</div>']
+ ]);
+ const curveLabels=[],curveData=[];allFeedback.forEach(x=>curveEntries(x.fb).forEach(c=>{curveLabels.push((x.fb.mentor_name||x.fb.mentor_id||'Mentor')+' · '+(x.rec.r.module_name||x.rec.key)+' · '+c.key);curveData.push(c.value);}));
+ if(curveChart)curveChart.destroy();curveChart=new Chart($('curveChart'),{type:'bar',data:{labels:curveLabels.length?curveLabels:['No curve-point values found'],datasets:[{label:'Curve point (1–5)',data:curveData.length?curveData:[0]}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{min:0,max:5,ticks:{stepSize:1}}},plugins:{legend:{display:false}}}});
+ const counts={'Recommended':0,'Need Improvement':0,'Not Recommended':0};
+ allFeedback.forEach(x=>{const v=norm(recommendation(x.fb));if(v.includes('not recommend'))counts['Not Recommended']++;else if(v.includes('need')||v.includes('improve')||v.includes('practice'))counts['Need Improvement']++;else if(v.includes('recommend'))counts['Recommended']++;});
+ if(recommendChart)recommendChart.destroy();recommendChart=new Chart($('recommendChart'),{type:'bar',data:{labels:Object.keys(counts),datasets:[{label:'Mentor responses',data:Object.values(counts)}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{precision:0}}}}});
+ $('loadStatus').textContent=`Report loaded · ${recs.length} submitted recording(s), ${allFeedback.length} mentor feedback record(s), ${weeks.length} weekly report(s).`;
+}
+async function loadData(){
+ $('error').textContent='';$('report').hidden=true;$('loadStatus').textContent='Loading workshop records…';
+ workshopId=resolveWorkshop();if(!workshopId){$('loadStatus').textContent='Workshop ID not found. Open this report from the logged-in portal, or add ?workshop_id=YOUR_WORKSHOP_ID to the URL.';return;}
+ try{
+  const paths=['control_tower/participants','form_submissions/'+workshopId+'/recording_link','control_tower/mentee_feedback/'+workshopId,'form_submissions/'+workshopId+'/self_journey_weekly_report','control_tower/mentor_feedback/'+workshopId];
+  const snaps=await Promise.all(paths.map(path=>db.ref(path).once('value')));
+  participants=obj(snaps[0].val());recordingRoot=obj(snaps[1].val());selfRoot=obj(snaps[2].val());weeklyRoot=obj(snaps[3].val());mentorRoot=obj(snaps[4].val());
+  const opts=Object.entries(participants).filter(([k,p])=>p&&typeof p==='object').map(([k,p])=>({k,p})).filter(({k,p})=>{
+   const role=norm(p.role||p.user_role||'');
+   const participantWorkshop=String(p.workshop_id||'').trim().toUpperCase();
+   return participantWorkshop===workshopId && !/mentor|facilitator|admin|coordinator|trust.?safety/.test(role);
+  }).sort((a,b)=>nameFor(a.p,a.k).localeCompare(nameFor(b.p,b.k),undefined,{sensitivity:'base'}));
+  $('menteeSelect').innerHTML='<option value="">Select a mentee…</option>'+opts.map(({k,p})=>'<option value="'+safe(k)+'">'+safe(nameFor(p,k)+' — '+idFor(p,k))+'</option>').join('');
+  $('loadStatus').textContent=`Workshop ${workshopId} · ${opts.length} mentee(s) available. Select a mentee to view their report.`;
+  if(!opts.length)$('loadStatus').textContent+=' Only participant records assigned to this workshop are listed. If the list is empty, check participants.workshop_id and role values.';
+ }catch(e){console.error(e);$('error').textContent='Unable to load report data: '+(e.message||e);$('loadStatus').textContent='Data loading failed. Check Firebase access and workshop ID.';}
+}
+$('menteeSelect').addEventListener('change',()=>{selectedKey=$('menteeSelect').value;if(selectedKey)renderSelected();else $('report').hidden=true;});
+$('refreshBtn').addEventListener('click',loadData);
+loadData();
+})();
+</script>
+</body>
+</html>
