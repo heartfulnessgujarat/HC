@@ -102,7 +102,7 @@
                 <span id="login-workshop-name" class="text-[10px] uppercase tracking-widest bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full font-semibold">--</span>
             </div>
             <h2 id="login-screen-heading" class="text-base sm:text-lg font-bold text-gray-800 mb-1 text-center">Participant Login</h2>
-            <div id="app-version-badge">HC Portal · V4 · 25-Nov-2026 | Facilitator updte</div>
+            <div id="app-version-badge">HC Portal · V4.2 · 27-Nov-2026 | Facilitator</div>
 
             <div class="mb-2 relative">
                 <label class="block text-gray-700 text-[11px] font-bold mb-0.5">Type your name in English (at least 3 letters):</label>
@@ -390,7 +390,7 @@
 
     <!-- Footer -->
     <footer id="app-footer" class="text-center py-1.5 text-[10px] text-gray-500">
-        Heartful Communication - Participant Login System | HC Portal V4.1 · 25-Nov-2026
+        Heartful Communication - Participant Login System | HC Portal V4.2 · 27-Nov-2026
     </footer>
 
     <!-- Custom Message Box Modal -->
@@ -504,12 +504,12 @@
                 document.getElementById('page-title').innerText = `Heartful Communication - Workshop (${activeWorkshopId}) | Facilitator / Mentor Portal`;
                 if (headingEl) headingEl.textContent = "Facilitator / Mentor Login";
                 if (selectedLabelEl) selectedLabelEl.textContent = "Name of the Facilitator / Mentor:";
-                if (footerEl) footerEl.textContent = "Heartful Communication - Facilitator / Mentor Login System | HC Portal V4.1 · 25-Nov-2026";
+                if (footerEl) footerEl.textContent = "Heartful Communication - Facilitator / Mentor Login System | HC Portal V4.2 · 27-Nov-2026";
             } else {
                 document.getElementById('page-title').innerText = `Heartful Communication - Workshop (${activeWorkshopId}) | Participant Portal`;
                 if (headingEl) headingEl.textContent = "Participant Login";
                 if (selectedLabelEl) selectedLabelEl.textContent = "Name of the Participant:";
-                if (footerEl) footerEl.textContent = "Heartful Communication - Participant Login System | HC Portal V4.1 · 25-Nov-2026";
+                if (footerEl) footerEl.textContent = "Heartful Communication - Participant Login System | HC Portal V4.2 · 27-Nov-2026";
             }
         }
         applyPortalRoleLabels();
@@ -1058,29 +1058,36 @@
         function appendUserContextToUrl(rawUrl) {
             try {
                 const lowerUrl = (rawUrl || "").toLowerCase();
-                if (
-                    !lowerUrl.includes("various_registration.html") &&
-                    !lowerUrl.includes("recordinglink.html") &&
-                    !lowerUrl.includes("mentee_feedback_form.html")
-                ) {
+                const isParticipantForm =
+                    lowerUrl.includes("various_registration.html") ||
+                    lowerUrl.includes("recordinglink.html") ||
+                    lowerUrl.includes("mentee_feedback_form.html");
+                const isMentorFeedbackForm =
+                    lowerUrl.includes("mentor_feedback_form.html") ||
+                    lowerUrl.includes("mentor-feedback-form.html");
+
+                if (!isParticipantForm && !isMentorFeedbackForm) {
                     return rawUrl;
                 }
+
+                // The authenticated portal session is authoritative. Do not retain
+                // stale uid/uname/role/wid values embedded in a saved resource URL.
+                if (!currentActiveUser || !currentActiveUser.ps_id) {
+                    console.warn("User context was not appended: no authenticated portal user.");
+                    return rawUrl;
+                }
+
                 const u = new URL(rawUrl, window.location.href);
-                if (currentActiveUser?.ps_name && !u.searchParams.get("uname")) {
-                    u.searchParams.set("uname", currentActiveUser.ps_name.toString().trim());
-                }
-                if (currentActiveUser?.ps_id && !u.searchParams.get("uid")) {
-                    u.searchParams.set("uid", currentActiveUser.ps_id.toString().trim());
-                }
-                if (currentActiveUser?.role && !u.searchParams.get("role")) {
-                    u.searchParams.set("role", currentActiveUser.role.toString().trim());
-                }
-                const wId = (currentActiveUser?.workshop_id || activeWorkshopId || "").toString().trim();
-                if (wId && !u.searchParams.get("wid")) {
-                    u.searchParams.set("wid", wId);
-                }
+                u.searchParams.set("uname", (currentActiveUser.ps_name || "").toString().trim());
+                u.searchParams.set("uid", currentActiveUser.ps_id.toString().trim());
+                u.searchParams.set("role", (currentActiveUser.role || "").toString().trim());
+
+                const wId = (currentActiveUser.workshop_id || activeWorkshopId || "").toString().trim();
+                if (wId) u.searchParams.set("wid", wId);
+
                 return u.toString();
             } catch (e) {
+                console.error("Unable to append authenticated user context to resource URL:", e);
                 return rawUrl;
             }
         }
