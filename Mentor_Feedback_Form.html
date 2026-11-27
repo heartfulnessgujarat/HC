@@ -661,7 +661,7 @@
 
     <script>
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwZwp6CgVUqLM9LUWob9FvgiioA3S5sACYHlkOD7RiopRucNaHzP8IsAcKMEARKbunH3A/exec";
-        const MENTOR_FEEDBACK_NODE = "control_tower/mentor_feedback";
+        const MENTOR_FEEDBACK_NODE = "form_submissions";
         const SESSION_STORAGE_KEY = "hc_portal_active_session";
 
         const firebaseConfig = {
@@ -1147,17 +1147,48 @@
         }
 
         function mentorFeedbackPath() {
-            return `${MENTOR_FEEDBACK_NODE}/${activeWorkshopId.toString().trim().toUpperCase()}`;
+            return `${MENTOR_FEEDBACK_NODE}/${activeWorkshopId.toString().trim().toUpperCase()}/mentor_feedback`;
+        }
+
+        function mentorFeedbackOwnerKey() {
+            return (currentUser.ps_id || currentUser.ps_name || "unknown").toString().trim()
+                .replace(/[.#$\[\]\/]/g, "_").replace(/\s+/g, "_");
+        }
+
+        function mentorFeedbackRecordPath(recordId, record) {
+            if (record && record._firebase_legacy === true) {
+                return `control_tower/mentor_feedback/${activeWorkshopId.toString().trim().toUpperCase()}/${recordId}`;
+            }
+            const ownerKey = (record && record._firebase_owner_key) || (record && record.user_key) || mentorFeedbackOwnerKey();
+            return `${mentorFeedbackPath()}/${ownerKey}/${recordId}`;
+        }
+
+        function mergeMentorFeedbackRoots(newRoot, legacyRoot) {
+            const merged = {};
+            Object.keys(legacyRoot || {}).forEach(recordId => {
+                const record = legacyRoot[recordId];
+                if (record && typeof record === "object") merged[recordId] = { ...record, _firebase_legacy: true, _firebase_owner_key: "" };
+            });
+            Object.keys(newRoot || {}).forEach(ownerKey => {
+                const ownerRecords = newRoot[ownerKey] || {};
+                Object.keys(ownerRecords).forEach(recordId => {
+                    const record = ownerRecords[recordId];
+                    if (record && typeof record === "object") merged[recordId] = { ...record, _firebase_legacy: false, _firebase_owner_key: ownerKey };
+                });
+            });
+            workshopSubmissions = merged;
+            populateMentorMenteeFilter();
+            renderSubmissionsList();
+            renderMentorRecordingOptions();
         }
 
         function listenToWorkshopSubmissions() {
             if (submissionsListenerStarted || !db || !isMentorViewer) return;
             submissionsListenerStarted = true;
+            let newRoot = {}, legacyRoot = {};
             db.ref(mentorFeedbackPath()).on("value", snap => {
-                workshopSubmissions = snap.val() || {};
-                populateMentorMenteeFilter();
-                renderSubmissionsList();
-                renderMentorRecordingOptions();
+                newRoot = snap.val() || {};
+                mergeMentorFeedbackRoots(newRoot, legacyRoot);
             }, err => {
                 console.error("Mentor feedback submissions listener error:", err);
                 const submissionsContainer = document.getElementById("submissions-list-container");
@@ -1168,6 +1199,10 @@
                     errorMessage.textContent = "Could not load mentor feedback submissions. Please refresh the page.";
                     submissionsContainer.appendChild(errorMessage);
                 }
+            });
+            db.ref(`control_tower/mentor_feedback/${activeWorkshopId.toString().trim().toUpperCase()}`).on("value", snap => {
+                legacyRoot = snap.val() || {};
+                mergeMentorFeedbackRoots(newRoot, legacyRoot);
             });
         }
 
@@ -1414,14 +1449,20 @@
             const wsKey = activeWorkshopId.toString().trim().toUpperCase();
             const now = Date.now();
             const workshopObj = findWorkshopEntry(allWorkshops, activeWorkshopId) || {};
-            const recordId = editingRecordId || db.ref(mentorFeedbackPath()).push().key;
+            const ownerKey = (editingRecordId && workshopSubmissions[editingRecordId] && workshopSubmissions[editingRecordId]._firebase_owner_key) || mentorFeedbackOwnerKey();
+            const ownerBaseRef = db.ref(`${mentorFeedbackPath()}/${ownerKey}`);
+            const recordId = editingRecordId || ownerBaseRef.push().key;
             const existing = editingRecordId ? (workshopSubmissions[editingRecordId] || {}) : {};
+            const existingForRecord = Object.fromEntries(
+                Object.entries(existing).filter(([key]) => !key.startsWith("_firebase_"))
+            );
             const record = {
-                ...existing,
+                ...existingForRecord,
                 ...formData,
                 workshop_id: wsKey,
                 workshop_name: workshopObj.workshop_name || activeWorkshopId,
                 form_id: "mentor_feedback",
+                user_key: ownerKey,
                 mentor_id: currentUser.ps_id || "",
                 mentor_name: currentUser.ps_name || "Facilitator",
                 mentor_email: currentUser.ps_email || "",
@@ -1433,7 +1474,7 @@
                 updated_at: now,
                 draft_saved_at: now
             };
-            const recordRef = db.ref(`${mentorFeedbackPath()}/${recordId}`);
+            const recordRef = db.ref(mentorFeedbackRecordPath(recordId, existing));
             const writePromise = editingRecordId ? recordRef.update(record) : recordRef.set(record);
 
             writePromise.then(() => {
@@ -1527,7 +1568,7 @@
             const rec = workshopSubmissions[recId];
             if (!rec || !db) return showCustomAlert("Could not locate this saved draft. Refresh Submissions and try again.");
             if (isRecordLocked(rec)) return showCustomAlert("This feedback is already locked.");
-            const recordRef = db.ref(`${mentorFeedbackPath()}/${recId}`);
+            const recordRef = db.ref(mentorFeedbackRecordPath(recId, rec));
             const now = Date.now();
             const lockUpdates = {
                 status: "FINALIZED",
@@ -1542,7 +1583,8 @@
                 const payload = {
                     action: "sendMentorFeedbackToMentee",
                     workshopKey: activeWorkshopId.toString().trim().toUpperCase(),
-                    recordId: recId
+                    recordId: recId,
+                    ownerKey: rec._firebase_owner_key || rec.user_key || mentorFeedbackOwnerKey()
                 };
                 return fetch(WEB_APP_URL, {
                     method: "POST",
@@ -1577,7 +1619,7 @@
             openConfirmModal(
                 "Delete Draft Mentor Feedback?",
                 "Are you sure you want to permanently delete this draft? This action cannot be undone.",
-                () => db.ref(`${mentorFeedbackPath()}/${recId}`).remove().then(() => {
+                () => db.ref(mentorFeedbackRecordPath(recId, rec)).remove().then(() => {
                     if (editingRecordId === recId) cancelEditMode();
                     showCustomAlert("Draft mentor feedback deleted.");
                 }).catch(err => showCustomAlert("Failed to delete draft: " + err.message))
