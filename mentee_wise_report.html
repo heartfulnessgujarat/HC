@@ -81,7 +81,7 @@ const firebaseConfig={
 if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);
 const db=firebase.database();
 const $=id=>document.getElementById(id);
-let workshopId='',participants={},recordingRoot={},selfRoot={},weeklyRoot={},mentorRoot={};
+let workshopId='',participants={},recordingRoot={},selfRoot={},selfLegacyRoot={},weeklyRoot={},mentorRoot=[];
 let curveChart=null,recommendChart=null,selectedKey='';
 function safe(v){return String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function obj(v){return v&&typeof v==='object'?v:{};}
@@ -104,12 +104,13 @@ function matchMentee(r,owner,key){const p=participants[key]||{},rid=norm(recordP
 function flatten(root,legacy){const out=[];Object.entries(obj(root)).forEach(([owner,val])=>{if(!val||typeof val!=='object')return;if(legacy){out.push({key:owner,owner:recordParticipantId(val,owner),r:val});}else{Object.entries(val).forEach(([rid,r])=>{if(r&&typeof r==='object')out.push({key:rid,owner,r});});}});return out;}
 function rows(items,columns){if(!items.length)return '<div class="empty">No records found for this mentee.</div>';return '<div class="scroll"><table><thead><tr>'+columns.map(c=>'<th>'+safe(c[0])+'</th>').join('')+'</tr></thead><tbody>'+items.map(it=>'<tr>'+columns.map(c=>'<td>'+c[1](it)+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>';}
 function findFeedbackForRecording(recId,menteeId,menteeName){
- return Object.entries(obj(mentorRoot)).map(([fid,r])=>({fid,r:obj(r)})).filter(x=>{
+ return (mentorRoot||[]).filter(x=>{
   const r=x.r,source=String(r.recording_submission_id||r.recording_id||'').trim();
-  const pid=norm(recordParticipantId(r,'')),name=norm(recordName(r));
+  const pid=norm(recordParticipantId(r,x.owner)),name=norm(recordName(r));
   return source===String(recId)&&((pid&&pid===norm(menteeId))||(!pid&&name===norm(menteeName)));
  });
 }
+function flattenMentor(root,legacy){const out=[];Object.entries(obj(root)).forEach(([owner,val])=>{if(!val||typeof val!=='object')return;if(legacy){out.push({fid:owner,owner:recordParticipantId(val,owner),r:val});}else{Object.entries(val).forEach(([fid,r])=>{if(r&&typeof r==='object')out.push({fid,owner,r});});}});return out;}
 function recommendation(r){let v=r.presentation_recommendation||r.final_recommendation||r.recommendation||r.overall_recommendation||r.recommendation_status||r.recommendation_for_mentee||'';return String(v).trim();}
 function curveEntries(r){
  const fields=[['cp_chat','Responsiveness to chat'],['cp_concept','Concept Clarity'],['cp_walking_talk','Walking the Talk']];
@@ -121,7 +122,7 @@ function renderSelected(){
  $('menteeName').textContent=pname;$('menteeMeta').textContent='Participant ID: '+pid+' · Firebase participant key: '+selectedKey;
  $('report').hidden=false;
  const recs=flatten(recordingRoot,false).filter(x=>matchMentee(x.r,x.owner,selectedKey)).filter(x=>submitted(x.r));
- const self=flatten(selfRoot,true).filter(x=>matchMentee(x.r,x.owner,selectedKey));
+ const self=flatten(selfRoot,false).concat(flatten(selfLegacyRoot,true)).filter(x=>matchMentee(x.r,x.owner,selectedKey));
  const weeks=flatten(weeklyRoot,false).filter(x=>matchMentee(x.r,x.owner,selectedKey));
  $('recordings').innerHTML=rows(recs.sort((a,b)=>String(b.r.created_at||b.r.created_at_ms||'').localeCompare(String(a.r.created_at||a.r.created_at_ms||''))),[
   ['Recording / Module',x=>safe([x.r.section,x.r.module_name||x.r.module_number].filter(Boolean).join(' · ')||'Recording')],
@@ -190,9 +191,9 @@ async function loadData(){
  $('error').textContent='';$('report').hidden=true;$('loadStatus').textContent='Loading workshop records…';
  workshopId=resolveWorkshop();if(!workshopId){$('loadStatus').textContent='Workshop ID not found. Open this report from the logged-in portal, or add ?workshop_id=YOUR_WORKSHOP_ID to the URL.';return;}
  try{
-  const paths=['control_tower/participants','form_submissions/'+workshopId+'/recording_link','control_tower/mentee_feedback/'+workshopId,'form_submissions/'+workshopId+'/self_journey_weekly_report','control_tower/mentor_feedback/'+workshopId];
+  const paths=['control_tower/participants','form_submissions/'+workshopId+'/recording_link','form_submissions/'+workshopId+'/mentee_feedback','control_tower/mentee_feedback/'+workshopId,'form_submissions/'+workshopId+'/self_journey_weekly_report','form_submissions/'+workshopId+'/mentor_feedback','control_tower/mentor_feedback/'+workshopId];
   const snaps=await Promise.all(paths.map(path=>db.ref(path).once('value')));
-  participants=obj(snaps[0].val());recordingRoot=obj(snaps[1].val());selfRoot=obj(snaps[2].val());weeklyRoot=obj(snaps[3].val());mentorRoot=obj(snaps[4].val());
+  participants=obj(snaps[0].val());recordingRoot=obj(snaps[1].val());selfRoot=obj(snaps[2].val());selfLegacyRoot=obj(snaps[3].val());weeklyRoot=obj(snaps[4].val());mentorRoot=flattenMentor(snaps[5].val(),false).concat(flattenMentor(snaps[6].val(),true));
   const opts=Object.entries(participants).filter(([k,p])=>p&&typeof p==='object').map(([k,p])=>({k,p})).filter(({k,p})=>{
    const role=norm(p.role||p.user_role||'');
    const participantWorkshop=String(p.workshop_id||'').trim().toUpperCase();
