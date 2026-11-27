@@ -134,7 +134,7 @@ function renderSelected(){
  ]);
  $('selfEval').querySelectorAll('.open-self-feedback').forEach(button=>button.addEventListener('click',()=>{
   const item=self.find(x=>String(x.key)===button.dataset.selfId);if(!item)return;
-  const r=item.r;const fields=[
+  const r=item.r;$('selfFeedbackTitle').textContent='Mentee Self-Evaluation · Feedback';const fields=[
    ['Session date',r.session_date],['Module section',r.module_section],['Module number',r.module_number],
    ['Video/audio — within frame',r.va_within_frame],['Video/audio — visible and audible',r.va_visible_audible],['Video/audio detailed feedback',r.ofnr_video_audio],
    ['Technical capability — multitasking',r.tech_multitask],['Technical capability — PPTX',r.tech_pptx],['Technical capability detailed feedback',r.ofnr_tech_capability],
@@ -152,8 +152,27 @@ function renderSelected(){
   ['Recording',x=>safe([x.rec.r.section,x.rec.r.module_name||x.rec.r.module_number].filter(Boolean).join(' · ')||x.rec.key)],
   ['Mentor',x=>safe(x.fb.mentor_name||x.fb.reviewer_name||x.fb.facilitator_name||x.fb.mentor_id||'Mentor')],
   ['Feedback date',x=>safe(dateVal(x.fb))],['Status',x=>statusHtml(x.fb)],
-  ['Recommendation',x=>safe(recommendation(x.fb)||'Not recorded')]
+  ['View',x=>'<button type="button" class="open-mentor-feedback" data-mentor-feedback-id="'+safe(x.fid)+'">Open f/b</button>']
  ]);
+ $('mentorFeedback').querySelectorAll('.open-mentor-feedback').forEach(button=>button.addEventListener('click',()=>{
+  const item=allFeedback.find(x=>String(x.fid)===button.dataset.mentorFeedbackId);if(!item)return;
+  const r=item.fb;
+  $('selfFeedbackTitle').textContent='Mentor Feedback · '+(r.mentor_name||r.reviewer_name||r.facilitator_name||r.mentor_id||'Mentor');
+  const fields=[
+   ['Recording / Module',[item.rec.r.section,item.rec.r.module_name||item.rec.r.module_number].filter(Boolean).join(' · ')],
+   ['Mentor',r.mentor_name||r.reviewer_name||r.facilitator_name||r.mentor_id],
+   ['Feedback date',dateVal(r)],['Status',r.review_status||r.status],
+   ['Video/audio — within frame',r.va_within_frame],['Video/audio — visible and audible',r.va_visible_audible],['Video/audio detailed feedback',r.ofnr_video_audio],
+   ['Technical capability — multitasking',r.tech_multitask],['Technical capability — PPTX',r.tech_pptx],['Technical capability detailed feedback',r.ofnr_tech_capability],
+   ['Responsiveness to chat — curve point',r.cp_chat],['Responsiveness to chat — feedback',r.ofnr_chat],
+   ['Concept clarity — curve point',r.cp_concept],['Concept clarity — feedback',r.ofnr_concept],
+   ['Walking the talk — curve point',r.cp_walking_talk],['Walking the talk — feedback',r.ofnr_walking_talk],
+   ['Time management — focus',r.tm_check_focus],['Time management — agreement',r.tm_check_agreement],['Time management — feedback',r.ofnr_time_management],
+   ['Final recommendation',recommendation(r)]
+  ];
+  $('selfFeedbackContent').innerHTML=fields.map(([label,value])=>'<div class="feedback-item"><strong>'+safe(label)+'</strong><div class="value">'+safe(value===undefined||value===null||value===''?'—':value)+'</div></div>').join('');
+  $('selfFeedbackModal').hidden=false;
+ }));
  $('journey').innerHTML=rows(weeks,[
   ['Week',x=>safe(x.r.week||x.r.week_number||x.r.reporting_period||'Weekly report')],
   ['Submitted',x=>safe(dateVal(x.r))],['Status',x=>statusHtml(x.r)],
