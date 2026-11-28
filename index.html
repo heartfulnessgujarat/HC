@@ -1342,8 +1342,10 @@
                             pdfViewer.scrollIntoView({ behavior: "smooth", block: "start" });
                         });
                     } else {
-                        link.target = "_blank";
-                        link.rel = "noopener noreferrer";
+                        // Open ordinary resource links in the current portal tab.
+                        // The PDF branch above continues to use the in-page viewer.
+                        link.target = "_self";
+                        link.removeAttribute("rel");
                     }
 
                     const linkWrap = document.createElement('div');
