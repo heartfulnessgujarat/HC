@@ -160,7 +160,7 @@
                 </span>
             </div>
 
-            <form id="recording-form" onsubmit="handleRecordingSubmit(event)" class="space-y-2.5">
+            <form id="recording-form" autocomplete="off" onsubmit="handleRecordingSubmit(event)" class="space-y-2.5">
                 <div>
                     <label for="f1-section" class="block text-gray-700 text-[11px] font-bold mb-1">
                         Select Section of the Module for which you presented <span class="text-red-500">*</span>
@@ -194,7 +194,8 @@
                     <label for="f1-recording-link" class="block text-gray-700 text-[11px] font-bold mb-1">
                         Please provide Google Drive Link of your Recording <span class="text-red-500">*</span>
                     </label>
-                    <input type="url" id="f1-recording-link" required placeholder="https://..."
+                    <input type="url" id="f1-recording-link" name="hc-recording-link-entry" required placeholder="https://..."
+                        autocomplete="new-password" autocorrect="off" autocapitalize="off" spellcheck="false"
                         class="w-full px-2.5 py-1.5 text-xs border rounded-md field-input">
                     <p class="text-[10px] text-amber-800 bg-amber-50 border border-amber-200 rounded px-2 py-1 mt-1">
                         Reminder: Please ensure link sharing is set so anyone with the link can view/download.
@@ -223,7 +224,7 @@
                 <span id="my-count-badge" class="text-[11px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-semibold">0</span>
             </div>
             <p class="text-[10px] text-gray-500 mb-2.5">
-                Showing only your own submissions. You can submit multiple times and view, edit, or delete your entries.
+                Showing only your own submissions. Each Section + Module combination may be submitted once. You can view, edit, or delete entries that are not yet submitted for review.
             </p>
 
             <div class="overflow-x-auto table-wrap">
@@ -356,6 +357,7 @@
         let pendingReviewSubmissionId = null;
         let pendingDeleteSubmissionId = null;
         let submissionsStore = {};
+        let submissionsLoaded = false;
         let currentViewMode = viewParam === "my" ? "my" : "form";
 
         function syncFixedHeaderOffset() {
@@ -600,6 +602,8 @@
                 (record.review_status || "").toString().toUpperCase() === "SUBMITTED"));
         }
 
+        // Duplicate rule: for this participant and this workshop, Section + Module
+        // is the only duplicate key. Recording date and URL are deliberately ignored.
         function hasDuplicateSectionModule(section, moduleName, excludeId = null) {
             const secKey = normalizeDuplicateValue(section);
             const modKey = normalizeDuplicateValue(moduleName);
@@ -883,6 +887,11 @@
         function handleRecordingSubmit(event) {
             event.preventDefault();
             if (!db) return showAlert("Database connection not ready.");
+            // Do not evaluate the duplicate rule until Firebase has loaded this
+            // participant's existing submissions; otherwise an early click could bypass it.
+            if (!submissionsLoaded) {
+                return showAlert("Your existing submissions are still loading. Please wait a moment and try again.");
+            }
 
             const participantName = (currentProfile.ps_name || forwardedUserName || "").toString().trim();
             const sectionVal = document.getElementById("f1-section").value.trim();
@@ -1036,6 +1045,7 @@
             const tbody = document.getElementById("my-submissions-tbody");
             const badge = document.getElementById("my-count-badge");
             submissionsStore = {};
+            submissionsLoaded = false;
 
             if (!db) return;
 
@@ -1054,6 +1064,7 @@
                     return { id, ...data[id] };
                 }).reverse();
 
+                submissionsLoaded = true;
                 badge.textContent = entries.length;
                 if (entries.length === 0) {
                     tbody.innerHTML = `<tr><td colspan="6" class="py-3 px-2 text-center text-gray-400 italic">No submissions yet.</td></tr>`;
@@ -1087,8 +1098,9 @@
                     tbody.appendChild(tr);
                 });
             }).catch(err => {
+                submissionsLoaded = false;
                 console.error("Submissions load error:", err);
-                tbody.innerHTML = `<tr><td colspan="6" class="py-3 px-2 text-center text-red-500">Could not load submissions.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" class="py-3 px-2 text-center text-red-500">Could not load submissions. Please refresh before submitting.</td></tr>`;
             });
         }
 
