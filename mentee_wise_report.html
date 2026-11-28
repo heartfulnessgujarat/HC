@@ -12,6 +12,18 @@
 *{box-sizing:border-box}body{margin:0;background:var(--bg);font:14px Arial,sans-serif;color:var(--ink)}
 header{background:linear-gradient(120deg,#8134e8,#5146e5);color:white;padding:22px 18px}
 header .wrap,main{max-width:1100px;margin:auto}h1{font-size:22px;margin:0 0 6px}header p{margin:0;opacity:.9}
+.report-toolbar{display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.report-toolbar button{background:#5146e5;color:#fff;border-color:#5146e5;font-weight:700;cursor:pointer}
+.report-toolbar button:hover{background:#4338ca}
+body.full-view header .wrap,body.full-view main{max-width:none;width:100%}
+body.full-view main{padding:22px 28px}
+body.full-view .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+body.full-view .grid .wide{grid-column:1/-1}
+body.full-view .grid .graph-panel{grid-column:1/-1}
+body.full-view .chartbox{height:540px;overflow-x:auto;overflow-y:hidden}
+body.full-view .chartbox canvas{max-width:none}
+body.full-view .panel{padding:20px}
+@media(max-width:850px){body.full-view .grid{grid-template-columns:1fr}body.full-view main{padding:12px}body.full-view .chartbox{height:430px}}
 main{padding:18px}
 .panel{background:white;border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px;box-shadow:0 2px 5px #1725540a}
 .selector{display:grid;grid-template-columns:minmax(220px,1fr) auto;gap:10px;align-items:end}
@@ -57,14 +69,17 @@ table{width:100%;border-collapse:collapse;font-size:12px}th,td{text-align:left;p
   </div>
 </div>
 <div id="report" hidden>
+  <div class="report-toolbar">
+    <button type="button" id="reportViewButton">View Full Screen</button>
+  </div>
   <section class="panel person"><div><h2 id="menteeName"></h2><div class="muted" id="menteeMeta"></div></div><span class="pill">Mentee Report Card</span></section>
   <div class="grid">
     <section class="panel"><h3>1. Recording Link Submissions</h3><div id="recordings"></div></section>
     <section class="panel"><h3>2. Mentee Self-Evaluation</h3><div id="selfEval"></div></section>
     <section class="panel wide"><h3>3. Recording-wise Mentor Feedback — All Mentors</h3><div id="mentorFeedback"></div></section>
     <section class="panel"><h3>4. Weekly Journey Reports</h3><div id="journey"></div></section>
-    <section class="panel"><h3>5. Learning Curve Graph</h3><div class="chartbox"><canvas id="curveChart"></canvas></div><p class="muted">Curve-point values are summarized from submitted mentor feedback. The graph includes only numeric/recognized curve-point responses found in the records.</p></section>
-    <section class="panel"><h3>6. Final Mentor Recommendations</h3><div class="chartbox"><canvas id="recommendChart"></canvas></div><p class="muted">Counts are based on the final recommendation recorded by all mentors for each recording.</p></section>
+    <section class="panel graph-panel"><h3>5. Learning Curve Graph</h3><div class="chartbox"><canvas id="curveChart"></canvas></div><p class="muted">The graph shown is based on feedback received from all mentors; mentee feedback is not included.</p></section>
+    <section class="panel graph-panel"><h3>6. Final Mentor Recommendations</h3><div class="chartbox"><canvas id="recommendChart"></canvas></div><p class="muted">Counts are based on the final recommendation recorded by all mentors for each recording.</p></section>
   </div>
 </div>
 </main>
@@ -83,6 +98,10 @@ const db=firebase.database();
 const $=id=>document.getElementById(id);
 let workshopId='',participants={},recordingRoot={},selfRoot={},selfLegacyRoot={},weeklyRoot={},mentorRoot=[];
 let curveChart=null,recommendChart=null,selectedKey='';
+const reportQuery=new URLSearchParams(location.search);
+const fullView=reportQuery.get('view')==='full';
+const dashboardReturnUrl=reportQuery.get('return_url')||'';
+if(fullView){document.body.classList.add('full-view');document.title='Full-Screen Mentee Report Card';}
 function safe(v){return String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function obj(v){return v&&typeof v==='object'?v:{};}
 function norm(v){return String(v||'').trim().toLowerCase();}
@@ -181,7 +200,9 @@ function renderSelected(){
  ]);
  const graphFeedback=allFeedback.filter(x=>submitted(x.fb));
  const curveLabels=[],curveData=[];graphFeedback.forEach(x=>curveEntries(x.fb).forEach(c=>{curveLabels.push((x.fb.mentor_name||x.fb.mentor_id||'Mentor')+' · '+(x.rec.r.module_name||x.rec.key)+' · '+c.key);curveData.push(c.value);}));
- if(curveChart)curveChart.destroy();curveChart=new Chart($('curveChart'),{type:'bar',data:{labels:curveLabels.length?curveLabels:['No curve-point values found'],datasets:[{label:'Curve point (1–5)',data:curveData.length?curveData:[0]}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{min:0,max:5,ticks:{stepSize:1}}},plugins:{legend:{display:false}}}});
+ const curveCanvas=$('curveChart');
+ if(fullView){curveCanvas.style.width=Math.max(window.innerWidth-110,curveLabels.length*82,900)+'px';curveCanvas.style.maxWidth='none';}
+ if(curveChart)curveChart.destroy();curveChart=new Chart(curveCanvas,{type:'bar',data:{labels:curveLabels.length?curveLabels:['No curve-point values found'],datasets:[{label:'Curve point (1–5)',data:curveData.length?curveData:[0]}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{min:0,max:5,ticks:{stepSize:1}},x:{ticks:{autoSkip:!fullView,maxRotation:fullView?70:50,minRotation:fullView?45:0}}},plugins:{legend:{display:false}}}});
  const counts={'Recommended':0,'Need Improvement':0,'Not Recommended':0};
  graphFeedback.forEach(x=>{const v=norm(recommendation(x.fb));if(v.includes('not recommend'))counts['Not Recommended']++;else if(v.includes('need')||v.includes('improve')||v.includes('practice'))counts['Need Improvement']++;else if(v.includes('recommend'))counts['Recommended']++;});
  if(recommendChart)recommendChart.destroy();recommendChart=new Chart($('recommendChart'),{type:'bar',data:{labels:Object.keys(counts),datasets:[{label:'Mentor responses',data:Object.values(counts)}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{precision:0}}}}});
@@ -202,10 +223,31 @@ async function loadData(){
   $('menteeSelect').innerHTML='<option value="">Select a mentee…</option>'+opts.map(({k,p})=>'<option value="'+safe(k)+'">'+safe(nameFor(p,k)+' — '+idFor(p,k))+'</option>').join('');
   $('loadStatus').textContent=`Workshop ${workshopId} · ${opts.length} mentee(s) available. Select a mentee to view their report.`;
   if(!opts.length)$('loadStatus').textContent+=' Only participant records assigned to this workshop are listed. If the list is empty, check participants.workshop_id and role values.';
+  const requestedMenteeKey=reportQuery.get('mentee_key')||'';
+  if(requestedMenteeKey && participants[requestedMenteeKey]){
+   const optionExists=Array.from($('menteeSelect').options).some(o=>o.value===requestedMenteeKey);
+   if(optionExists){$('menteeSelect').value=requestedMenteeKey;selectedKey=requestedMenteeKey;renderSelected();}
+  }
  }catch(e){console.error(e);$('error').textContent='Unable to load report data: '+(e.message||e);$('loadStatus').textContent='Data loading failed. Check Firebase access and workshop ID.';}
 }
 $('menteeSelect').addEventListener('change',()=>{selectedKey=$('menteeSelect').value;if(selectedKey)renderSelected();else $('report').hidden=true;});
 $('refreshBtn').addEventListener('click',loadData);
+$('reportViewButton').addEventListener('click',()=>{
+ if(fullView){
+  if(dashboardReturnUrl){location.href=dashboardReturnUrl;return;}
+  const fallback=new URL('index.html',location.href);fallback.searchParams.set('role','facilitator');fallback.hash=workshopId;location.href=fallback.href;return;
+ }
+ if(!selectedKey){$('error').textContent='Please select a mentee before opening the full-screen report.';return;}
+ const target=new URL('mentee_wise_report.html',location.href);
+ target.searchParams.set('workshop_id',workshopId);
+ target.searchParams.set('mentee_key',selectedKey);
+ target.searchParams.set('view','full');
+ let returnUrl=dashboardReturnUrl;
+ if(!returnUrl){try{returnUrl=window.parent.location.href;}catch(e){returnUrl='';}}
+ if(returnUrl)target.searchParams.set('return_url',returnUrl);
+ window.open(target.href,'_blank');
+});
+if(fullView){$('reportViewButton').textContent='Back to Mentor Dashboard';}
 $('closeSelfFeedback').addEventListener('click',()=>$('selfFeedbackModal').hidden=true);
 $('selfFeedbackModal').addEventListener('click',e=>{if(e.target===$('selfFeedbackModal'))$('selfFeedbackModal').hidden=true;});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')$('selfFeedbackModal').hidden=true;});
