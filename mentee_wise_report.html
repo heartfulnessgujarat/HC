@@ -238,6 +238,20 @@ async function loadData(){
 }
 $('menteeSelect').addEventListener('change',()=>{selectedKey=$('menteeSelect').value;if(selectedKey)renderSelected();else $('report').hidden=true;});
 $('refreshBtn').addEventListener('click',loadData);
+// Apply the yellow CTA styling directly as well as through CSS. This keeps
+// the button visually consistent if embedded-page styles or cached CSS differ.
+function applyReportActionButtonStyle(){
+ const btn=$('reportViewButton');
+ if(!btn)return;
+ btn.style.setProperty('background-color','#ffdf00','important');
+ btn.style.setProperty('color','#202020','important');
+ btn.style.setProperty('border','1px solid #e0b800','important');
+ btn.style.setProperty('font-weight','800','important');
+ btn.style.setProperty('box-shadow','0 4px 14px #17255435','important');
+ btn.style.setProperty('border-radius','8px','important');
+}
+applyReportActionButtonStyle();
+
 $('reportViewButton').addEventListener('click',()=>{
  if(fullView){
   // The dashboard's login/session is stored in sessionStorage, which is tab-specific.
@@ -265,6 +279,7 @@ $('reportViewButton').addEventListener('click',()=>{
 });
 if(fullView){
  $('reportViewButton').textContent='Back to Mentor Dashboard';
+ applyReportActionButtonStyle();
  const selector=$('refreshBtn').parentElement;
  // Place Back immediately beside Refresh Report in the report controls panel.
  selector.appendChild($('reportViewButton'));
