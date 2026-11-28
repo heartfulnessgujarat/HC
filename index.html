@@ -617,6 +617,7 @@
         let participantsBasePath = 'control_tower/participants';
 
         let flVerifiedEmail = "";
+        let flEmailFormatConfirmed = false;
         const SESSION_STORAGE_KEY = "hc_portal_active_session";
 
         function persistActiveSession() {
@@ -934,16 +935,27 @@
             const emailVal = (document.getElementById('fl-email-input').value || "").trim();
             const btn = document.getElementById('fl-btn-send-code');
             if (!btn) return;
-            if (emailVal) {
+
+            // The email must pass the same format validation used by Profile Edit,
+            // and the user must confirm it by clicking Done before sending a code.
+            const isConfirmed = flEmailFormatConfirmed && validateEmailFormat(emailVal);
+            btn.disabled = !isConfirmed;
+            btn.classList.toggle('opacity-50', !isConfirmed);
+            btn.classList.toggle('cursor-not-allowed', !isConfirmed);
+
+            if (isConfirmed) {
                 btn.textContent = `My email id is okay. Click here to send verification code to ${emailVal}`;
+            } else if (!document.getElementById('fl-email-input').disabled) {
+                btn.textContent = "Please click Done after entering a valid email address";
             } else {
-                btn.textContent = "Please click Edit above to enter your email id first";
+                btn.textContent = "Please click Edit, check your email, and click Done";
             }
         }
 
         function openFirstTimeLoginScreen() {
             resetInactivityTimer();
             flVerifiedEmail = "";
+            flEmailFormatConfirmed = false;
 
             setFixedHeaderVisibility(false);
             document.getElementById('login-screen').classList.add('hidden');
@@ -980,6 +992,11 @@
         }
 
         function onFirstLoginEmailInput() {
+            // Any edit invalidates the previous Done/format confirmation.
+            flEmailFormatConfirmed = false;
+            flVerifiedEmail = "";
+            document.getElementById('fl-code-section').classList.add('hidden');
+            document.getElementById('fl-password-section').classList.add('hidden');
             updateFirstLoginSendButtonText();
         }
 
@@ -996,9 +1013,11 @@
                 editBtn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
                 editBtn.classList.add('bg-green-600', 'hover:bg-green-700');
 
+                flEmailFormatConfirmed = false;
                 flVerifiedEmail = "";
                 document.getElementById('fl-code-section').classList.add('hidden');
                 document.getElementById('fl-password-section').classList.add('hidden');
+                updateFirstLoginSendButtonText();
             } else {
                 const val = emailInput.value.trim();
                 if (!validateEmailFormat(val)) {
@@ -1012,6 +1031,7 @@
                 editBtn.textContent = "Edit";
                 editBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
                 editBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
+                flEmailFormatConfirmed = true;
                 updateFirstLoginSendButtonText();
             }
         }
@@ -1020,8 +1040,8 @@
             const emailInput = document.getElementById('fl-email-input');
             const emailVal = (emailInput.value || "").trim();
 
-            if (!emailInput.disabled) {
-                showCustomAlert("Please click 'Done' next to your email address first.");
+            if (!emailInput.disabled || !flEmailFormatConfirmed) {
+                showCustomAlert("Please click Edit, enter/check your email address, and click Done to confirm its format first.");
                 emailInput.focus();
                 return;
             }
