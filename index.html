@@ -2302,7 +2302,9 @@
             document.getElementById('dashboard-screen').classList.remove('hidden');
         }
 
-        // State / Province is free text. State master list is not loaded.\n\n        function saveProfileChanges() {
+        // State / Province is free text. State master list is not loaded.
+
+        function saveProfileChanges() {
             if (!currentActiveUser) return;
             let emailInput = document.getElementById('update-profile-email');
             if (emailInput && !emailInput.disabled) {
