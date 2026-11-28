@@ -248,7 +248,7 @@
         <!-- SCREEN 3: CHANGE PASSWORD SCREEN -->
         <div id="change-password-screen" class="bg-white rounded-lg shadow-md p-3 sm:p-4 mt-1 hidden text-xs">
             <h2 class="text-base font-bold text-gray-800 mb-2.5 text-center">Change Password</h2>
-            <div class="mb-2 relative">
+            <div id="cp-name-search-container" class="mb-2 relative">
                 <label class="block text-gray-700 text-[11px] font-bold mb-0.5">Type your name in English (at least 3 letters):</label>
                 <input type="text" id="cp-search-name" autocomplete="off" spellcheck="false" placeholder="Type here.." class="w-full px-2.5 py-1 border rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500" oninput="filterChangePasswordParticipants()">
                 <div id="cp-name-not-found-msg" class="text-red-500 text-[11px] mt-1 hidden"></div>
@@ -303,7 +303,7 @@
         <!-- SCREEN 4: RESET PASSWORD SCREEN -->
         <div id="reset-password-screen" class="bg-white rounded-lg shadow-md p-3 sm:p-4 mt-1 hidden text-xs">
             <h2 class="text-base font-bold text-gray-800 mb-2.5 text-center">Reset Password</h2>
-            <div class="mb-2 relative">
+            <div id="rp-name-search-container" class="mb-2 relative">
                 <label class="block text-gray-700 text-[11px] font-bold mb-0.5">Type your name in English (at least 3 letters):</label>
                 <input type="text" id="rp-search-name" autocomplete="off" spellcheck="false" placeholder="Type here.." class="w-full px-2.5 py-1 border rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500" oninput="filterResetPasswordParticipants()">
                 <div id="rp-name-not-found-msg" class="text-red-500 text-[11px] mt-1 hidden"></div>
@@ -357,10 +357,7 @@
                 <div>
                     <label class="block text-gray-700 text-[11px] font-bold mb-0.5">State / Province</label>
                     <div class="flex items-center space-x-1.5">
-                        <select id="update-profile-state" disabled onchange="onStateSelected()" class="w-full bg-gray-100 border rounded-md px-2.5 py-1 text-gray-600 cursor-not-allowed">
-                            <option value="">Select State</option>
-                        </select>
-                        <input type="text" id="update-profile-state-text" autocomplete="new-password" autocapitalize="off" spellcheck="false" disabled placeholder="Enter State / Province" class="w-full bg-gray-100 border rounded-md px-2.5 py-1 text-gray-600 cursor-not-allowed hidden" />
+                        <input type="text" id="update-profile-state-text" autocomplete="new-password" autocapitalize="off" spellcheck="false" disabled placeholder="Enter State / Province" class="w-full bg-gray-100 border rounded-md px-2.5 py-1 text-gray-600 cursor-not-allowed">
                         <button type="button" id="btn-state" onclick="enableField('state')" class="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold py-1.5 px-3 rounded-md transition flex-shrink-0">Edit</button>
                     </div>
                 </div>
@@ -2158,6 +2155,27 @@
             return maskedName + "@" + parts[1];
         }
 
+        function preparePasswordScreenIdentity(mode) {
+            const key = selectedParticipantKey;
+            const participant = key ? allParticipants[key] : null;
+            const prefix = mode === "change" ? "cp" : "rp";
+            const searchContainer = document.getElementById(prefix + "-name-search-container");
+            const searchInput = document.getElementById(prefix + "-search-name");
+            const displayInput = document.getElementById(prefix + "-selected-display");
+
+            if (participant && key) {
+                if (mode === "change") cpSelectedKey = key;
+                else rpSelectedKey = key;
+                const displayName = (participant.ps_name || "") +
+                    (participant.ps_centre ? ` (${participant.ps_centre})` : "");
+                if (searchInput) searchInput.value = displayName;
+                if (displayInput) displayInput.value = displayName;
+                if (searchContainer) searchContainer.classList.add("hidden");
+            } else if (searchContainer) {
+                searchContainer.classList.remove("hidden");
+            }
+        }
+
         function showChangePasswordScreen() {
             setFixedHeaderVisibility(false);
             document.getElementById('login-screen').classList.add('hidden');
@@ -2165,7 +2183,8 @@
             document.getElementById('change-password-screen').classList.remove('hidden');
             document.getElementById('reset-password-screen').classList.add('hidden');
             if (window.location.hash) history.replaceState(null, null, window.location.search + window.location.hash);
-            clearForms();
+            clearForms(true);
+            preparePasswordScreenIdentity("change");
         }
 
         function showResetPasswordScreen() {
@@ -2175,7 +2194,8 @@
             document.getElementById('change-password-screen').classList.add('hidden');
             document.getElementById('reset-password-screen').classList.remove('hidden');
             if (window.location.hash) history.replaceState(null, null, window.location.search + window.location.hash);
-            clearForms();
+            clearForms(true);
+            preparePasswordScreenIdentity("reset");
         }
 
         function showLoginScreen() {
@@ -2227,7 +2247,7 @@
             showLoginScreen();
         }
 
-        function clearForms() {
+        function clearForms(preserveParticipantSelection = false) {
             ['search-name', 'login-password', 'selected-participant-display', 'cp-search-name', 'cp-selected-display', 'cp-current-password', 'cp-new-password', 'cp-confirm-password', 'rp-search-name', 'rp-selected-display'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.value = '';
@@ -2236,7 +2256,7 @@
             if (selCont) selCont.classList.add('hidden');
             const retPwSec = document.getElementById('returning-user-password-section');
             if (retPwSec) retPwSec.classList.add('hidden');
-            selectedParticipantKey = null;
+            if (!preserveParticipantSelection) selectedParticipantKey = null;
             cpSelectedKey = null;
             rpSelectedKey = null;
         }
@@ -2257,29 +2277,14 @@
             const countryInput = document.getElementById('update-profile-country');
             if (countryInput) countryInput.value = userCountry;
 
-            let isIndia = (userCountry.toUpperCase() === "INDIA" || userCountry.toUpperCase() === "IN");
-            let stateDropdown = document.getElementById('update-profile-state');
+            // State / Province is free text for participants in every country.
             let stateTextInput = document.getElementById('update-profile-state-text');
-
-            if (isIndia) {
-                if (stateDropdown) {
-                    stateDropdown.classList.remove('hidden');
-                    stateDropdown.disabled = true;
-                    stateDropdown.classList.add('bg-gray-100', 'cursor-not-allowed');
-                    stateDropdown.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
-                    stateDropdown.value = currentActiveUser.ps_state || "";
-                }
-                if (stateTextInput) stateTextInput.classList.add('hidden');
-                fetchZoneStateMaster();
-            } else {
-                if (stateDropdown) stateDropdown.classList.add('hidden');
-                if (stateTextInput) {
-                    stateTextInput.classList.remove('hidden');
-                    stateTextInput.disabled = true;
-                    stateTextInput.classList.add('bg-gray-100', 'cursor-not-allowed');
-                    stateTextInput.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
-                    stateTextInput.value = currentActiveUser.ps_state || "";
-                }
+            if (stateTextInput) {
+                stateTextInput.classList.remove('hidden');
+                stateTextInput.disabled = true;
+                stateTextInput.classList.add('bg-gray-100', 'cursor-not-allowed');
+                stateTextInput.classList.remove('bg-white', 'ring-2', 'ring-indigo-500');
+                stateTextInput.value = currentActiveUser.ps_state || "";
             }
 
             document.getElementById('update-profile-name').value = currentActiveUser.ps_name || "";
@@ -2297,51 +2302,7 @@
             document.getElementById('dashboard-screen').classList.remove('hidden');
         }
 
-        let zoneStateMapping = {};
-
-        function fetchZoneStateMaster() {
-            db.ref('control_tower/Master_List_Zone_State').once('value').then(snapshot => {
-                if (snapshot.val()) {
-                    zoneStateMapping = snapshot.val();
-                    populateStateDropdown();
-                }
-            }).catch(error => console.error("Error fetching zone-state master:", error));
-        }
-
-        function populateStateDropdown() {
-            let stateSelect = document.getElementById('update-profile-state');
-            if (!stateSelect) return;
-            let currentValue = stateSelect.value || (currentActiveUser ? currentActiveUser.ps_state : "");
-            stateSelect.innerHTML = '<option value="">Select State</option>';
-            Object.keys(zoneStateMapping).forEach(state => {
-                let option = document.createElement('option');
-                option.value = state;
-                option.textContent = state;
-                if (state === currentValue) option.selected = true;
-                stateSelect.appendChild(option);
-            });
-            onStateSelected();
-        }
-
-        function onStateSelected() {
-            let stateSelect = document.getElementById('update-profile-state');
-            let zoneSelect = document.getElementById('update-profile-zone');
-            if (!stateSelect || !zoneSelect) return;
-            let selectedState = stateSelect.value;
-            let currentZoneValue = zoneSelect.value || (currentActiveUser ? currentActiveUser.ps_zone : "");
-            zoneSelect.innerHTML = '<option value="">Select Zone</option>';
-            if (selectedState && zoneStateMapping[selectedState]) {
-                zoneStateMapping[selectedState].forEach(zone => {
-                    let option = document.createElement('option');
-                    option.value = zone;
-                    option.textContent = zone;
-                    if (zone === currentZoneValue) option.selected = true;
-                    zoneSelect.appendChild(option);
-                });
-            }
-        }
-
-        function saveProfileChanges() {
+        // State / Province is free text. State master list is not loaded.\n\n        function saveProfileChanges() {
             if (!currentActiveUser) return;
             let emailInput = document.getElementById('update-profile-email');
             if (emailInput && !emailInput.disabled) {
@@ -2356,10 +2317,7 @@
             let newEmail = emailInput.value.trim();
             let newCentre = document.getElementById('update-profile-centre').value.trim();
             let newCountry = document.getElementById('update-profile-country').value.trim();
-            let isIndia = (newCountry.toUpperCase() === "INDIA" || newCountry.toUpperCase() === "IN");
-            let newState = isIndia
-                ? (document.getElementById('update-profile-state')?.value.trim() || "")
-                : (document.getElementById('update-profile-state-text')?.value.trim() || "");
+            let newState = document.getElementById('update-profile-state-text').value.trim();
 
             let payload = {};
             let updatedFieldsList = [];
@@ -2630,41 +2588,7 @@
         // No Master_List_Country values are fetched or displayed.
 
         function onCountrySelected() {
-            let countrySelect = document.getElementById('update-profile-country');
-            let stateDropdown = document.getElementById('update-profile-state');
-            let stateTextInput = document.getElementById('update-profile-state-text');
-            if (!countrySelect) return;
-
-            let selectedCountry = (countrySelect.value || "").trim();
-            let isIndia = (selectedCountry.toUpperCase() === "INDIA" || selectedCountry.toUpperCase() === "IN");
-
-            if (isIndia) {
-                if (stateDropdown) {
-                    stateDropdown.classList.remove('hidden');
-                    stateDropdown.disabled = false;
-                    stateDropdown.classList.remove('bg-gray-100', 'cursor-not-allowed');
-                    stateDropdown.classList.add('bg-white', 'ring-2', 'ring-indigo-500');
-                }
-                if (stateTextInput) {
-                    stateTextInput.classList.add('hidden');
-                    stateTextInput.disabled = true;
-                }
-                fetchZoneStateMaster();
-            } else {
-                if (stateDropdown) {
-                    stateDropdown.classList.add('hidden');
-                    stateDropdown.disabled = true;
-                }
-                if (stateTextInput) {
-                    stateTextInput.classList.remove('hidden');
-                    stateTextInput.disabled = false;
-                    stateTextInput.classList.remove('bg-gray-100', 'cursor-not-allowed');
-                    stateTextInput.classList.add('bg-white', 'ring-2', 'ring-indigo-500');
-                    if (currentActiveUser && currentActiveUser.ps_state && !stateTextInput.value) {
-                        stateTextInput.value = currentActiveUser.ps_state;
-                    }
-                }
-            }
+            // Country and State / Province are free-text fields.
         }
     </script>
 </body>
