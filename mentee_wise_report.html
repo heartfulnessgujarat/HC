@@ -235,6 +235,16 @@ $('menteeSelect').addEventListener('change',()=>{selectedKey=$('menteeSelect').v
 $('refreshBtn').addEventListener('click',loadData);
 $('reportViewButton').addEventListener('click',()=>{
  if(fullView){
+  // The dashboard's login/session is stored in sessionStorage, which is tab-specific.
+  // Return to the already-authenticated dashboard tab instead of loading index.html
+  // in this new tab (which would appear logged out).
+  try{
+   if(window.opener && !window.opener.closed){
+    window.opener.focus();
+    window.close();
+    return;
+   }
+  }catch(e){/* use URL fallback below if opener access is unavailable */}
   if(dashboardReturnUrl){location.href=dashboardReturnUrl;return;}
   const fallback=new URL('index.html',location.href);fallback.searchParams.set('role','facilitator');fallback.hash=workshopId;location.href=fallback.href;return;
  }
