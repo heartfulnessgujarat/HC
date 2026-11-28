@@ -13,8 +13,13 @@
 header{background:linear-gradient(120deg,#8134e8,#5146e5);color:white;padding:22px 18px}
 header .wrap,main{max-width:1100px;margin:auto}h1{font-size:22px;margin:0 0 6px}header p{margin:0;opacity:.9}
 .report-toolbar{position:fixed;top:10px;right:12px;z-index:99999;display:flex;align-items:center;justify-content:flex-end;gap:10px;margin:0;padding:0;flex-wrap:wrap;pointer-events:none}
-.report-toolbar button{pointer-events:auto;background:#5146e5;color:#fff;border:1px solid #5146e5;border-radius:8px;padding:10px 15px;font-weight:700;cursor:pointer;box-shadow:0 4px 14px #17255435}
-.report-toolbar button:hover{background:#4338ca}
+.report-toolbar button{pointer-events:auto;background:#ffdf00;color:#202020;border:1px solid #e0b800;border-radius:8px;padding:10px 15px;font-weight:800;cursor:pointer;box-shadow:0 4px 14px #17255435}
+.report-toolbar button:hover{background:#ffd000}
+#reportViewButton{background:#ffdf00!important;color:#202020!important;border:1px solid #e0b800!important;font-weight:800!important}
+#reportViewButton:hover{background:#ffd000!important}
+body.full-view .selector{grid-template-columns:minmax(220px,1fr) auto auto;align-items:center}
+body.full-view #reportViewButton{white-space:nowrap;align-self:center}
+@media(max-width:720px){body.full-view .selector{grid-template-columns:1fr}body.full-view #reportViewButton{width:100%}}
 body.full-view header .wrap,body.full-view main{max-width:none;width:100%}
 body.full-view main{padding:22px 28px}
 body.full-view .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
@@ -258,7 +263,12 @@ $('reportViewButton').addEventListener('click',()=>{
  if(returnUrl)target.searchParams.set('return_url',returnUrl);
  window.open(target.href,'_blank');
 });
-if(fullView){$('reportViewButton').textContent='Back to Mentor Dashboard';}
+if(fullView){
+ $('reportViewButton').textContent='Back to Mentor Dashboard';
+ const selector=$('refreshBtn').parentElement;
+ // Place Back immediately beside Refresh Report in the report controls panel.
+ selector.appendChild($('reportViewButton'));
+}
 $('closeSelfFeedback').addEventListener('click',()=>$('selfFeedbackModal').hidden=true);
 $('selfFeedbackModal').addEventListener('click',e=>{if(e.target===$('selfFeedbackModal'))$('selfFeedbackModal').hidden=true;});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')$('selfFeedbackModal').hidden=true;});
