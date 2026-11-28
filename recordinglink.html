@@ -194,8 +194,9 @@
                     <label for="f1-recording-link" class="block text-gray-700 text-[11px] font-bold mb-1">
                         Please provide Google Drive Link of your Recording <span class="text-red-500">*</span>
                     </label>
-                    <input type="url" id="f1-recording-link" name="hc-recording-link-entry" required placeholder="https://..."
-                        autocomplete="new-password" autocorrect="off" autocapitalize="off" spellcheck="false"
+                    <input type="text" id="f1-recording-link" name="hc-recording-link-entry" required placeholder="https://..."
+                        autocomplete="off" inputmode="url" autocorrect="off" autocapitalize="off" spellcheck="false"
+                        readonly
                         class="w-full px-2.5 py-1.5 text-xs border rounded-md field-input">
                     <p class="text-[10px] text-amber-800 bg-amber-50 border border-amber-200 rounded px-2 py-1 mt-1">
                         Reminder: Please ensure link sharing is set so anyone with the link can view/download.
@@ -1138,6 +1139,23 @@
 
         window.addEventListener("resize", syncFixedHeaderOffset);
         window.addEventListener("DOMContentLoaded", () => {
+            // Chrome may ignore autocomplete="off" for a URL field and show
+            // previously typed links. Use a text input with URL keyboard hints,
+            // a per-page field name, and readonly-until-focus to avoid reusing
+            // the browser's saved form-history entry for this field.
+            const recordingLinkInput = document.getElementById("f1-recording-link");
+            if (recordingLinkInput) {
+                recordingLinkInput.type = "text";
+                recordingLinkInput.autocomplete = "off";
+                recordingLinkInput.name = "hc_recording_url_" +
+                    Date.now().toString(36) + "_" +
+                    Math.random().toString(36).slice(2, 10);
+                recordingLinkInput.readOnly = true;
+                recordingLinkInput.addEventListener("focus", () => {
+                    recordingLinkInput.readOnly = false;
+                }, { once: true });
+            }
+
             setRecordingDateMax();
             setViewMode(currentViewMode);
             loadDataFromFirebase();
