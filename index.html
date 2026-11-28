@@ -558,6 +558,55 @@
         const db = firebase.database();
         let allParticipants = {};
         let allWorkshops = {};
+        let workshopLookup = {};
+
+        function normalizeWorkshopKey(value) {
+            return String(value == null ? "" : value).trim().toUpperCase();
+        }
+
+        // Resolve workshops by Firebase node key, editable workshop_id, or
+        // permanent workshop_uid (when configured).
+        function rebuildWorkshopLookup() {
+            workshopLookup = {};
+            Object.entries(allWorkshops || {}).forEach(([nodeKey, workshop]) => {
+                if (!workshop || typeof workshop !== "object") return;
+                [nodeKey, workshop.workshop_id, workshop.workshop_uid].forEach(alias => {
+                    const normalized = normalizeWorkshopKey(alias);
+                    if (normalized) workshopLookup[normalized] = workshop;
+                });
+            });
+        }
+
+        function resolveWorkshopRecord(workshopId) {
+            const normalized = normalizeWorkshopKey(workshopId);
+            if (!normalized) return null;
+            return workshopLookup[normalized] || allWorkshops[workshopId] ||
+                Object.entries(allWorkshops || {}).find(([key, value]) =>
+                    normalizeWorkshopKey(key) === normalized ||
+                    normalizeWorkshopKey(value && value.workshop_id) === normalized ||
+                    normalizeWorkshopKey(value && value.workshop_uid) === normalized
+                )?.[1] || null;
+        }
+
+        function canonicalWorkshopId(workshopId) {
+            const record = resolveWorkshopRecord(workshopId);
+            return normalizeWorkshopKey((record && record.workshop_id) || workshopId);
+        }
+
+        function participantBelongsToActiveWorkshop(participant) {
+            if (!participant) return false;
+            const role = normalizeWorkshopKey(participant.role);
+            const participantId = normalizeWorkshopKey(participant.workshop_id);
+            if (participantId === "ALL" || role === "T&S" || role === "TRUST & SAFETY") return true;
+
+            const activeRecord = resolveWorkshopRecord(activeWorkshopId);
+            const participantRecord = resolveWorkshopRecord(participantId);
+            if (activeRecord && participantRecord &&
+                activeRecord.workshop_uid && participantRecord.workshop_uid) {
+                return String(activeRecord.workshop_uid) === String(participantRecord.workshop_uid);
+            }
+            return canonicalWorkshopId(participantId) === canonicalWorkshopId(activeWorkshopId);
+        }
         let currentActiveUser = null;
         let facilitatorSubmissionRefreshTimer = null;
         let facilitatorSubmissionsTabActive = false;
@@ -656,10 +705,21 @@
 
         function loadFirebaseData() {
             Promise.all([
-                fetchNodeWithFallback('control_tower/workshops', 'workshops'),
+                db.ref('workshops').once('value'),
+                db.ref('control_tower/workshops').once('value'),
                 fetchNodeWithFallback('control_tower/participants', 'participants')
-            ]).then(([workshopsRes, participantsRes]) => {
-                allWorkshops = workshopsRes.data || {};
+            ]).then(([rootWorkshopsSnap, controlWorkshopsSnap, participantsRes]) => {
+                const rootWorkshops = rootWorkshopsSnap.val() || {};
+                const controlWorkshops = controlWorkshopsSnap.val() || {};
+                allWorkshops = { ...rootWorkshops };
+
+                // Merge both supported workshop locations: control-tower values
+                // override matching fields, while root resources remain intact.
+                Object.entries(controlWorkshops).forEach(([key, value]) => {
+                    allWorkshops[key] = { ...(allWorkshops[key] || {}), ...(value || {}) };
+                });
+                rebuildWorkshopLookup();
+
                 allParticipants = participantsRes.data || {};
                 participantsBasePath = participantsRes.path || 'control_tower/participants';
 
@@ -686,7 +746,7 @@
                     liveUserRole === "TRUST & SAFETY";
 
                 if (liveUserWorkshopId && !(isGlobalTrustSafety && liveUserWorkshopId.toUpperCase() === "ALL")) {
-                    activeWorkshopId = liveUserWorkshopId.toUpperCase();
+                    activeWorkshopId = canonicalWorkshopId(liveUserWorkshopId);
 
                     // Replace the stale hash without dropping role/return/user query
                     // parameters, so future navigation uses the current batch ID.
@@ -701,11 +761,8 @@
                     }
                 }
 
-                let targetWorkshop = allWorkshops[activeWorkshopId];
-                if (!targetWorkshop) {
-                    const matchKey = Object.keys(allWorkshops).find(k => k.toLowerCase() === activeWorkshopId.toLowerCase());
-                    if (matchKey) targetWorkshop = allWorkshops[matchKey];
-                }
+                let targetWorkshop = resolveWorkshopRecord(activeWorkshopId);
+                if (targetWorkshop) activeWorkshopId = canonicalWorkshopId(activeWorkshopId);
 
                 if (!validateWorkshopExists(targetWorkshop)) return;
 
@@ -774,7 +831,7 @@
                 const pRole = (p.role || "").toString().trim().toUpperCase();
                 const isGlobalAdmin = pWorkshopId === "ALL" || pRole === "T&S" || pRole === "TRUST & SAFETY";
 
-                if (!isGlobalAdmin && pWorkshopId !== activeWorkshopId.toUpperCase()) continue;
+                if (!isGlobalAdmin && !participantBelongsToActiveWorkshop(p)) continue;
                 if (!matchesPortalRole(p)) continue;
 
                 // All users identify themselves by name. Password entry is shown
@@ -1153,6 +1210,13 @@
         }
 
         function renderResourceRows(workshop, prefix, resourcesContainer) {
+            if (!resourcesContainer || typeof resourcesContainer.appendChild !== "function") {
+                console.error("Resource rendering stopped: target container is not a DOM element.", {
+                    prefix: prefix,
+                    container: resourcesContainer
+                });
+                return;
+            }
             let resourceCount = 0;
             Object.keys(workshop).forEach(key => {
                 if (key.startsWith(prefix + 'label')) {
@@ -1319,9 +1383,9 @@
                         workshop_type: "Global / Cross-Batch",
                         workshop_region: "All Regions"
                     }
-                    : (allWorkshops[wId] || allWorkshops[activeWorkshopId] || {});
+                    : (resolveWorkshopRecord(wId) || resolveWorkshopRecord(activeWorkshopId) || {});
             } else {
-                workshop = allWorkshops[wId] || allWorkshops[activeWorkshopId] || {};
+                workshop = resolveWorkshopRecord(wId) || resolveWorkshopRecord(activeWorkshopId) || {};
             }
 
             if (workshop && (workshop.logo_status === "ON" && workshop.logo_url)) {
@@ -1396,7 +1460,7 @@
                         </div>
                     </div>
                 `;
-                renderResourceRows(workshop, "f_resource_", false, "", document.getElementById('facilitator-resources-pane'));
+                renderResourceRows(workshop, "f_resource_", document.getElementById('facilitator-resources-pane'));
             } else if (role === "T&S" || role === "TRUST & SAFETY") {
                 document.getElementById('workshop-title-display').innerText = "";
                 subtitleDisplay.innerHTML = `
@@ -2013,7 +2077,7 @@
                 let pWorkshopId = p.workshop_id ? p.workshop_id.toString().trim().toUpperCase() : "";
                 let pRole = p.role ? p.role.toString().trim().toUpperCase() : "";
                 let isGlobalAdmin = (pWorkshopId === "ALL" || pRole === "T&S" || pRole === "TRUST & SAFETY");
-                if (!isGlobalAdmin && pWorkshopId !== activeWorkshopId.toUpperCase()) continue;
+                if (!isGlobalAdmin && !participantBelongsToActiveWorkshop(p)) continue;
                 if (!matchesPortalRole(p)) continue;
 
                 if ((p.ps_name || "").toLowerCase().includes(query)) matches.push({ key: key, data: p });
@@ -2104,7 +2168,7 @@
                 let pWorkshopId = p.workshop_id ? p.workshop_id.toString().trim().toUpperCase() : "";
                 let pRole = p.role ? p.role.toString().trim().toUpperCase() : "";
                 let isGlobalAdmin = (pWorkshopId === "ALL" || pRole === "T&S" || pRole === "TRUST & SAFETY");
-                if (!isGlobalAdmin && pWorkshopId !== activeWorkshopId.toUpperCase()) continue;
+                if (!isGlobalAdmin && !participantBelongsToActiveWorkshop(p)) continue;
                 if (!matchesPortalRole(p)) continue;
 
                 if ((p.ps_name || "").toLowerCase().includes(query)) matches.push({ key: key, data: p });
