@@ -350,7 +350,7 @@
                 <div>
                     <label class="block text-gray-700 text-[11px] font-bold mb-0.5">Centre</label>
                     <div class="flex items-center space-x-1.5">
-                        <input type="text" id="update-profile-centre" autocomplete="off" disabled class="w-full bg-gray-100 border rounded-md px-2.5 py-1 text-gray-600 cursor-not-allowed">
+                        <input type="text" id="update-profile-centre" autocomplete="new-password" autocapitalize="off" spellcheck="false" disabled class="w-full bg-gray-100 border rounded-md px-2.5 py-1 text-gray-600 cursor-not-allowed">
                         <button type="button" id="btn-centre" onclick="enableField('centre')" class="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold py-1.5 px-3 rounded-md transition flex-shrink-0">Edit</button>
                     </div>
                 </div>
@@ -360,16 +360,15 @@
                         <select id="update-profile-state" disabled onchange="onStateSelected()" class="w-full bg-gray-100 border rounded-md px-2.5 py-1 text-gray-600 cursor-not-allowed">
                             <option value="">Select State</option>
                         </select>
-                        <input type="text" id="update-profile-state-text" disabled placeholder="Enter State / Province" class="w-full bg-gray-100 border rounded-md px-2.5 py-1 text-gray-600 cursor-not-allowed hidden" />
+                        <input type="text" id="update-profile-state-text" autocomplete="new-password" autocapitalize="off" spellcheck="false" disabled placeholder="Enter State / Province" class="w-full bg-gray-100 border rounded-md px-2.5 py-1 text-gray-600 cursor-not-allowed hidden" />
                         <button type="button" id="btn-state" onclick="enableField('state')" class="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold py-1.5 px-3 rounded-md transition flex-shrink-0">Edit</button>
                     </div>
                 </div>
                 <div>
                     <label class="block text-gray-700 text-[11px] font-bold mb-0.5">Country</label>
                     <div class="flex items-center space-x-1.5">
-                        <select id="update-profile-country" disabled onchange="onCountrySelected()" class="w-full bg-gray-100 border rounded-md px-2.5 py-1 text-gray-600 cursor-not-allowed">
-                            <option value="">Select Country</option>
-                        </select>
+                        <input type="text" id="update-profile-country" autocomplete="new-password" autocapitalize="off" spellcheck="false" disabled oninput="onCountrySelected()" placeholder="Enter Country"
+                            class="w-full bg-gray-100 border rounded-md px-2.5 py-1 text-gray-600 cursor-not-allowed">
                         <button type="button" id="btn-country" onclick="enableField('country')" class="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold py-1.5 px-3 rounded-md transition flex-shrink-0">Edit</button>
                     </div>
                 </div>
@@ -2254,7 +2253,9 @@
         function openUpdateProfileModal() {
             if (!currentActiveUser) return;
             let userCountry = (currentActiveUser.ps_country || currentActiveUser.country || "India").toString().trim();
-            fetchCountryMaster(userCountry);
+            // Country is free text; no country master list is loaded.
+            const countryInput = document.getElementById('update-profile-country');
+            if (countryInput) countryInput.value = userCountry;
 
             let isIndia = (userCountry.toUpperCase() === "INDIA" || userCountry.toUpperCase() === "IN");
             let stateDropdown = document.getElementById('update-profile-state');
@@ -2625,29 +2626,8 @@
             document.body.insertAdjacentHTML('beforeend', errorHtml);
         }
 
-        function fetchCountryMaster(currentCountry) {
-            let countrySelect = document.getElementById('update-profile-country');
-            if (!countrySelect) return;
-            db.ref('control_tower/Master_List_Country').once('value').then(snapshot => {
-                if (snapshot.val()) {
-                    let countryList = snapshot.val();
-                    let valToSelect = currentCountry || (currentActiveUser ? (currentActiveUser.ps_country || currentActiveUser.country) : "");
-                    countrySelect.innerHTML = '<option value="">Select Country</option>';
-                    let items = Array.isArray(countryList) ? countryList : Object.values(countryList);
-                    items.forEach(c => {
-                        let countryName = typeof c === 'string' ? c : (c.country_name || c.name || "");
-                        if (countryName) {
-                            let option = document.createElement('option');
-                            option.value = countryName;
-                            option.textContent = countryName;
-                            if (countryName.toLowerCase() === (valToSelect || "").toLowerCase()) option.selected = true;
-                            countrySelect.appendChild(option);
-                        }
-                    });
-                    onCountrySelected();
-                }
-            }).catch(error => console.error("Error fetching country master:", error));
-        }
+        // Country is entered as free text.
+        // No Master_List_Country values are fetched or displayed.
 
         function onCountrySelected() {
             let countrySelect = document.getElementById('update-profile-country');
