@@ -224,7 +224,7 @@
                 <span id="my-count-badge" class="text-[11px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-semibold">0</span>
             </div>
             <p class="text-[10px] text-gray-500 mb-2.5">
-                Showing only your own submissions. Each Section + Module combination may be submitted once. You can view, edit, or delete entries that are not yet submitted for review.
+                Showing only your own submissions. Each Section + Module combination and each recording link may be submitted once. You can view, edit, or delete entries that are not yet submitted for review.
             </p>
 
             <div class="overflow-x-auto table-wrap">
@@ -602,8 +602,8 @@
                 (record.review_status || "").toString().toUpperCase() === "SUBMITTED"));
         }
 
-        // Duplicate rule: for this participant and this workshop, Section + Module
-        // is the only duplicate key. Recording date and URL are deliberately ignored.
+        // Duplicate rule 1: one Section + Module combination per participant
+        // within the current workshop. Recording date and link do not affect this key.
         function hasDuplicateSectionModule(section, moduleName, excludeId = null) {
             const secKey = normalizeDuplicateValue(section);
             const modKey = normalizeDuplicateValue(moduleName);
@@ -612,6 +612,35 @@
                 const rec = submissionsStore[id] || {};
                 return normalizeDuplicateValue(rec.section) === secKey &&
                     normalizeDuplicateValue(rec.module_name) === modKey;
+            });
+        }
+
+        // Duplicate rule 2: the same normalized URL cannot be submitted twice
+        // by this participant in this workshop. Trim surrounding spaces and
+        // normalize URL host/default-port spelling; retain path/query semantics.
+        function normalizeRecordingLink(value) {
+            const raw = (value || "").toString().trim();
+            if (!raw) return "";
+            try {
+                const url = new URL(raw);
+                url.hostname = url.hostname.toLowerCase();
+                if ((url.protocol === "https:" && url.port === "443") ||
+                    (url.protocol === "http:" && url.port === "80")) {
+                    url.port = "";
+                }
+                return url.href;
+            } catch (_) {
+                return raw;
+            }
+        }
+
+        function hasDuplicateRecordingLink(recordingLink, excludeId = null) {
+            const linkKey = normalizeRecordingLink(recordingLink);
+            if (!linkKey) return false;
+            return Object.keys(submissionsStore).some(id => {
+                if (id === excludeId) return false;
+                const rec = submissionsStore[id] || {};
+                return normalizeRecordingLink(rec.recording_link) === linkKey;
             });
         }
 
@@ -911,7 +940,10 @@
                 return showAlert("This entry has already been submitted for mentor review and cannot be edited.");
             }
             if (hasDuplicateSectionModule(sectionVal, moduleVal, editingId)) {
-                return showAlert("Duplicate entry detected. You have already submitted a recording for this Section and Module. Please choose a different Section or Module.");
+                return showAlert(`You have already entered a recording link for ${sectionVal} and ${moduleVal}. Please select a different Section and Module combination.`);
+            }
+            if (hasDuplicateRecordingLink(recordingLink, editingId)) {
+                return showAlert("You have already entered this recording link. Please provide a different link.");
             }
 
             const ownerKey = sanitizeKey(currentProfile.ps_id || forwardedUserId || participantName);
