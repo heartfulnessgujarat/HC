@@ -15,8 +15,8 @@ header .wrap,main{max-width:1100px;margin:auto}h1{font-size:22px;margin:0 0 6px}
 .report-toolbar{position:fixed;top:10px;right:12px;z-index:99999;display:flex;align-items:center;justify-content:flex-end;gap:10px;margin:0;padding:0;flex-wrap:wrap;pointer-events:none}
 .report-toolbar button{pointer-events:auto;background:#ffdf00;color:#202020;border:1px solid #e0b800;border-radius:8px;padding:10px 15px;font-weight:800;cursor:pointer;box-shadow:0 4px 14px #17255435}
 .report-toolbar button:hover{background:#ffd000}
-#reportViewButton{background:#ffdf00!important;color:#202020!important;border:1px solid #e0b800!important;font-weight:800!important}
-#reportViewButton:hover{background:#ffd000!important}
+#reportViewButton,#reportViewButton:link,#reportViewButton:visited,#reportViewButton:active{background:#ffdf00!important;background-color:#ffdf00!important;background-image:none!important;color:#202020!important;border:1px solid #e0b800!important;font-weight:800!important;box-shadow:0 4px 14px #17255435!important}
+#reportViewButton:hover{background:#ffd000!important;background-color:#ffd000!important;background-image:none!important;color:#202020!important}
 body.full-view .selector{grid-template-columns:minmax(220px,1fr) auto auto;align-items:center}
 body.full-view #reportViewButton{white-space:nowrap;align-self:center}
 @media(max-width:720px){body.full-view .selector{grid-template-columns:1fr}body.full-view #reportViewButton{width:100%}}
@@ -75,7 +75,7 @@ table{width:100%;border-collapse:collapse;font-size:12px}th,td{text-align:left;p
 </div>
 <div id="report" hidden>
   <div class="report-toolbar">
-    <button type="button" id="reportViewButton">View Full Screen</button>
+    <button type="button" id="reportViewButton" style="background:#ffdf00!important;background-color:#ffdf00!important;background-image:none!important;color:#202020!important;border:1px solid #e0b800!important;box-shadow:0 4px 14px #17255435!important">View Full Screen</button>
   </div>
   <section class="panel person"><div><h2 id="menteeName"></h2><div class="muted" id="menteeMeta"></div></div><span class="pill">Mentee Report Card</span></section>
   <div class="grid">
@@ -243,7 +243,9 @@ $('refreshBtn').addEventListener('click',loadData);
 function applyReportActionButtonStyle(){
  const btn=$('reportViewButton');
  if(!btn)return;
+ btn.style.setProperty('background','#ffdf00','important');
  btn.style.setProperty('background-color','#ffdf00','important');
+ btn.style.setProperty('background-image','none','important');
  btn.style.setProperty('color','#202020','important');
  btn.style.setProperty('border','1px solid #e0b800','important');
  btn.style.setProperty('font-weight','800','important');
