@@ -105,8 +105,8 @@
             <div id="app-version-badge">HC App</div>
 
             <div class="mb-2 relative">
-                <label class="block text-gray-700 text-[11px] font-bold mb-0.5">First-time users: enter your name. Returning users: enter your registered email (at least 3 characters):</label>
-                <input type="text" id="search-name" autocomplete="off" placeholder="Name or registered email.." class="w-full px-2.5 py-1 text-xs border rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500" oninput="filterParticipants()">
+                <label class="block text-gray-700 text-[11px] font-bold mb-0.5">Enter your name in English (at least 3 characters):</label>
+                <input type="text" id="search-name" autocomplete="off" placeholder="Type your name.." class="w-full px-2.5 py-1 text-xs border rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500" oninput="filterParticipants()">
                 <div id="name-not-found-msg" class="text-red-500 text-[11px] mt-1 hidden"></div>
                 <div id="search-results" class="absolute left-0 right-0 bg-white border mt-1 rounded-md shadow-lg max-h-32 overflow-y-auto hidden z-20 text-xs"></div>
             </div>
@@ -300,7 +300,7 @@
             </button>
         </div>
 
-        <!-- SCREEN 4: RESET PASSWORD SCREEN -->
+        <!-- SCREEN 4: RESET PASSWORD SCREEN (EMAIL OTP REQUIRED) -->
         <div id="reset-password-screen" class="bg-white rounded-lg shadow-md p-3 sm:p-4 mt-1 hidden text-xs">
             <h2 class="text-base font-bold text-gray-800 mb-2.5 text-center">Reset Password</h2>
             <div id="rp-name-search-container" class="mb-2 relative">
@@ -309,19 +309,42 @@
                 <div id="rp-name-not-found-msg" class="text-red-500 text-[11px] mt-1 hidden"></div>
                 <div id="rp-search-results" class="absolute left-0 right-0 bg-white border mt-1 rounded-md shadow-lg max-h-32 overflow-y-auto hidden z-20"></div>
             </div>
-            <div class="mb-3">
+            <div class="mb-2">
                 <label class="block text-gray-700 text-[11px] font-bold mb-0.5">Selected Name:</label>
                 <input type="text" id="rp-selected-display" readonly autocomplete="off" class="w-full px-2.5 py-1 bg-gray-100 border rounded-md text-gray-600" placeholder="Selected name">
             </div>
-            <button type="button" onclick="submitResetPassword()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1.5 px-3 rounded-md transition mb-2">
-                Reset Password (Email Verification Required)
+            <p id="rp-email-destination" class="text-[11px] text-gray-600 bg-blue-50 border border-blue-100 rounded p-2 mb-2 hidden"></p>
+            <button type="button" id="rp-btn-send-code" onclick="sendResetPasswordCode()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1.5 px-3 rounded-md transition mb-2" disabled>
+                Send verification code to registered email
             </button>
-            <button type="button" onclick="showLoginScreen()" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-1.5 px-3 rounded-md transition">
+            <p id="rp-status-msg" class="text-[11px] text-blue-600 font-medium text-center mb-2 hidden"></p>
+            <div id="rp-code-section" class="mb-3 p-2.5 bg-gray-50 border border-gray-200 rounded-md hidden">
+                <label class="block text-gray-700 text-[11px] font-bold mb-1">Email Verification Code:</label>
+                <div class="flex items-center space-x-1.5">
+                    <input type="text" id="rp-code-input" maxlength="10" autocomplete="off" placeholder="Enter code" class="w-full bg-white border border-gray-300 rounded-md px-2.5 py-1.5 text-center tracking-widest font-bold text-xs">
+                    <button type="button" id="rp-btn-verify-code" onclick="verifyResetPasswordCode()" class="bg-green-600 hover:bg-green-700 text-white text-[11px] font-bold py-1.5 px-3 rounded-md transition flex-shrink-0">Verify</button>
+                </div>
+            </div>
+            <div id="rp-new-password-section" class="space-y-2.5 pt-2 border-t border-gray-200 hidden">
+                <div class="text-[11px] text-green-700 font-semibold bg-green-50 border border-green-200 rounded px-2 py-1">✓ Email verified. Set your new password.</div>
+                <div>
+                    <label class="block text-gray-700 text-[11px] font-bold mb-0.5">New Password (4–10 characters):</label>
+                    <input type="password" id="rp-new-password" maxlength="10" autocomplete="new-password" placeholder="Enter new password" class="w-full px-2.5 py-1.5 border rounded-md text-xs">
+                </div>
+                <div>
+                    <label class="block text-gray-700 text-[11px] font-bold mb-0.5">Confirm New Password:</label>
+                    <input type="password" id="rp-confirm-password" maxlength="10" autocomplete="new-password" placeholder="Confirm new password" class="w-full px-2.5 py-1.5 border rounded-md text-xs">
+                </div>
+                <button type="button" id="rp-btn-save-password" onclick="saveResetPassword()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1.5 px-3 rounded-md transition mb-2">
+                    Save New Password
+                </button>
+            </div>
+            <button type="button" onclick="showLoginScreen()" class="w-full mt-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-1.5 px-3 rounded-md transition">
                 Back to Login
             </button>
         </div>
 
-        <!-- SCREEN 5: UPDATE PROFILE SCREEN -->
+                <!-- SCREEN 5: UPDATE PROFILE SCREEN -->
         <div id="update-profile-screen" class="bg-white rounded-lg shadow-md p-3 sm:p-4 mt-1 hidden text-xs">
             <h2 class="text-base font-bold text-gray-800 mb-2.5 text-center">Update Profile Details</h2>
             <div class="space-y-2">
@@ -746,36 +769,28 @@
 
             let matches = [];
             for (let key in allParticipants) {
-                let p = allParticipants[key];
-                let pWorkshopId = p.workshop_id ? p.workshop_id.toString().trim().toUpperCase() : "";
-                let pRole = p.role ? p.role.toString().trim().toUpperCase() : "";
-                let isGlobalAdmin = (pWorkshopId === "ALL" || pRole === "T&S" || pRole === "TRUST & SAFETY");
+                const p = allParticipants[key];
+                const pWorkshopId = (p.workshop_id || "").toString().trim().toUpperCase();
+                const pRole = (p.role || "").toString().trim().toUpperCase();
+                const isGlobalAdmin = pWorkshopId === "ALL" || pRole === "T&S" || pRole === "TRUST & SAFETY";
 
                 if (!isGlobalAdmin && pWorkshopId !== activeWorkshopId.toUpperCase()) continue;
                 if (!matchesPortalRole(p)) continue;
 
-                // First-time users (pw_changed FALSE) search by name and proceed
-                // to the existing email verification + password setup.
-                // Returning users (pw_changed TRUE) must identify themselves
-                // using their registered email address, not another person's name.
-                const hasChangedPassword = isPasswordAlreadyChanged(p);
-                const identityValue = hasChangedPassword
-                    ? (p.ps_email || "").toString().trim().toLowerCase()
-                    : (p.ps_name || "").toString().trim().toLowerCase();
-
-                if (identityValue && identityValue.includes(query)) {
-                    matches.push({ key: key, data: p, returning: hasChangedPassword });
+                // All users identify themselves by name. Password entry is shown
+                // only after selecting a returning user's account.
+                if ((p.ps_name || "").toString().toLowerCase().includes(query)) {
+                    matches.push({ key: key, data: p });
                 }
             }
 
             if (matches.length > 0) {
                 resultsBox.classList.remove('hidden');
-                if (msgDiv) msgDiv.classList.add('hidden');
                 matches.forEach(m => {
-                    let div = document.createElement('div');
+                    const div = document.createElement('div');
                     div.className = "px-4 py-2 hover:bg-indigo-50 cursor-pointer text-sm border-b bg-white";
-                    let nameStr = m.data.ps_name || "";
-                    let centreStr = m.data.ps_centre ? ` (${m.data.ps_centre})` : "";
+                    const nameStr = m.data.ps_name || "";
+                    const centreStr = m.data.ps_centre ? ` (${m.data.ps_centre})` : "";
                     div.innerText = nameStr + centreStr;
                     div.onclick = () => selectParticipant(m.key, m.data);
                     resultsBox.appendChild(div);
@@ -783,7 +798,7 @@
             } else {
                 resultsBox.classList.add('hidden');
                 if (query.length >= 3 && msgDiv) {
-                    msgDiv.textContent = `No matching account found for "${rawQuery}". First-time users should search by name; returning users should use their registered email.`;
+                    msgDiv.textContent = `No matching account found for "${rawQuery}". Please check the name you entered.`;
                     msgDiv.classList.remove('hidden');
                 }
             }
@@ -2110,6 +2125,7 @@
                         document.getElementById('rp-search-name').value = fullDisplayVal;
                         let displayElem = document.getElementById('rp-selected-display');
                         if (displayElem) displayElem.value = fullDisplayVal;
+                        resetPasswordSelectionChanged();
                         resultsBox.classList.add('hidden');
                         if (msgDiv) msgDiv.classList.add('hidden');
                     };
@@ -2124,77 +2140,184 @@
             }
         }
 
-        function submitResetPassword() {
-            if (!rpSelectedKey || !allParticipants[rpSelectedKey]) {
-                const typedName = document.getElementById('rp-search-name').value.trim().toLowerCase();
-                for (let key in allParticipants) {
-                    let pName = allParticipants[key].ps_name ? allParticipants[key].ps_name.toLowerCase() : "";
-                    if (pName && typedName.includes(pName) && matchesPortalRole(allParticipants[key])) {
-                        rpSelectedKey = key;
-                        break;
-                    }
-                }
-            }
+        function resetPasswordSelectionChanged() {
+            rpVerifiedEmail = "";
+            const participant = rpSelectedKey ? allParticipants[rpSelectedKey] : null;
+            const email = (participant?.ps_email || "").toString().trim();
+            const destinationEl = document.getElementById('rp-email-destination');
+            const sendBtn = document.getElementById('rp-btn-send-code');
+            const statusEl = document.getElementById('rp-status-msg');
 
-            if (!rpSelectedKey || !allParticipants[rpSelectedKey]) {
-                showCustomAlert("Please search and select a valid name.");
+            document.getElementById('rp-code-section').classList.add('hidden');
+            document.getElementById('rp-new-password-section').classList.add('hidden');
+            document.getElementById('rp-code-input').value = "";
+            document.getElementById('rp-new-password').value = "";
+            document.getElementById('rp-confirm-password').value = "";
+            statusEl.classList.add('hidden');
+            statusEl.textContent = "";
+
+            if (!participant || !email || !validateEmailFormat(email)) {
+                destinationEl.textContent = "No valid registered email is available for this account. Please contact the HC Admin Team to update the email address.";
+                destinationEl.classList.remove('hidden');
+                sendBtn.disabled = true;
                 return;
             }
 
-            // Do not leave a reset account able to enter with a shared default
-            // password. The existing first-login email verification must run.
-            const initialPassword = "Daaji@2809";
+            const maskedEmail = maskEmailAddress(email);
+            destinationEl.textContent = `A verification code will be sent to the registered email: ${maskedEmail}`;
+            destinationEl.classList.remove('hidden');
+            sendBtn.disabled = false;
+        }
+
+        function maskEmailAddress(email) {
+            const parts = email.split("@");
+            if (parts.length !== 2) return "your registered email";
+            const local = parts[0];
+            const visible = local.length <= 2 ? local.charAt(0) : local.substring(0, 2);
+            return `${visible}${"*".repeat(Math.max(3, local.length - visible.length))}@${parts[1]}`;
+        }
+
+        function sendResetPasswordCode() {
+            const participant = rpSelectedKey ? allParticipants[rpSelectedKey] : null;
+            const email = (participant?.ps_email || "").toString().trim();
+            if (!participant || !rpSelectedKey) {
+                showCustomAlert("Please select your account first.");
+                return;
+            }
+            if (!validateEmailFormat(email)) {
+                showCustomAlert("A valid registered email is not available. Please contact the HC Admin Team.");
+                return;
+            }
+
+            const sendBtn = document.getElementById('rp-btn-send-code');
+            const statusEl = document.getElementById('rp-status-msg');
+            sendBtn.disabled = true;
+            statusEl.textContent = "Sending verification code to your registered email...";
+            statusEl.classList.remove('hidden', 'text-red-600', 'text-green-600');
+            statusEl.classList.add('text-blue-600');
+
+            fetch(WEB_APP_URL, {
+                method: "POST",
+                body: JSON.stringify({
+                    action: "sendEmailVerificationCode",
+                    email: email,
+                    workshopId: activeWorkshopId,
+                    ps_name: participant.ps_name || "Participant"
+                })
+            })
+            .then(response => response.json())
+            .then(result => {
+                sendBtn.disabled = false;
+                if (result.status === "Success") {
+                    statusEl.textContent = "Verification code sent. Please check your registered email inbox and spam folder.";
+                    statusEl.classList.remove('text-blue-600', 'text-red-600');
+                    statusEl.classList.add('text-green-600');
+                    document.getElementById('rp-code-section').classList.remove('hidden');
+                    document.getElementById('rp-code-input').focus();
+                } else {
+                    statusEl.textContent = "Unable to send code: " + (result.message || "Please try again.");
+                    statusEl.classList.remove('text-blue-600', 'text-green-600');
+                    statusEl.classList.add('text-red-600');
+                }
+            })
+            .catch(() => {
+                sendBtn.disabled = false;
+                statusEl.textContent = "Network error while sending verification code.";
+                statusEl.classList.remove('text-blue-600', 'text-green-600');
+                statusEl.classList.add('text-red-600');
+            });
+        }
+
+        function verifyResetPasswordCode() {
+            const participant = rpSelectedKey ? allParticipants[rpSelectedKey] : null;
+            const email = (participant?.ps_email || "").toString().trim();
+            const code = (document.getElementById('rp-code-input').value || "").trim();
+            if (!code) {
+                showCustomAlert("Please enter the verification code sent to your registered email.");
+                return;
+            }
+
+            const verifyBtn = document.getElementById('rp-btn-verify-code');
+            const statusEl = document.getElementById('rp-status-msg');
+            verifyBtn.disabled = true;
+            statusEl.textContent = "Verifying code...";
+            statusEl.classList.remove('hidden', 'text-red-600', 'text-green-600');
+            statusEl.classList.add('text-blue-600');
+
+            fetch(WEB_APP_URL, {
+                method: "POST",
+                body: JSON.stringify({ action: "verifyEmailCode", email: email, code: code })
+            })
+            .then(response => response.json())
+            .then(result => {
+                verifyBtn.disabled = false;
+                if (result.status === "Success") {
+                    rpVerifiedEmail = email;
+                    statusEl.classList.add('hidden');
+                    document.getElementById('rp-code-section').classList.add('hidden');
+                    document.getElementById('rp-new-password-section').classList.remove('hidden');
+                    document.getElementById('rp-new-password').focus();
+                } else {
+                    statusEl.textContent = "Verification failed: " + (result.message || "Invalid or expired code.");
+                    statusEl.classList.remove('text-blue-600', 'text-green-600');
+                    statusEl.classList.add('text-red-600');
+                }
+            })
+            .catch(() => {
+                verifyBtn.disabled = false;
+                statusEl.textContent = "Network error during verification.";
+                statusEl.classList.remove('text-blue-600', 'text-green-600');
+                statusEl.classList.add('text-red-600');
+            });
+        }
+
+        function saveResetPassword() {
+            if (!rpSelectedKey || !allParticipants[rpSelectedKey]) {
+                showCustomAlert("Please select your account first.");
+                return;
+            }
+            if (!rpVerifiedEmail) {
+                showCustomAlert("Please verify your registered email before resetting your password.");
+                return;
+            }
+
+            const newPass = (document.getElementById('rp-new-password').value || "").trim();
+            const confirmPass = (document.getElementById('rp-confirm-password').value || "").trim();
+            if (!newPass || !confirmPass) {
+                showCustomAlert("Please enter and confirm your new password.");
+                return;
+            }
+            if (newPass.length < 4 || newPass.length > 10) {
+                showCustomAlert("Password must contain between 4 and 10 characters.");
+                return;
+            }
+            if (newPass !== confirmPass) {
+                showCustomAlert("New password and confirmation do not match.");
+                return;
+            }
+
+            const saveBtn = document.getElementById('rp-btn-save-password');
+            saveBtn.disabled = true;
             const payload = {
-                password: initialPassword,
-                pw_changed: "FALSE",
+                password: newPass,
+                pw_changed: "TRUE",
                 fieldupdated: "password, pw_changed",
                 lastsyntimestamp: new Date().toLocaleString()
             };
 
             db.ref(`${participantsBasePath}/${rpSelectedKey}`).update(payload).then(() => {
-                allParticipants[rpSelectedKey].password = initialPassword;
-                allParticipants[rpSelectedKey].pw_changed = "FALSE";
-                showCustomAlert("Password reset initiated. On the next login, the participant must verify their registered email and set a new password before accessing the account.");
+                saveBtn.disabled = false;
+                allParticipants[rpSelectedKey].password = newPass;
+                allParticipants[rpSelectedKey].pw_changed = "TRUE";
+                showCustomAlert("Password reset successfully. You can now return to login and sign in with your name and new password.");
                 showLoginScreen();
-            }).catch(err => showCustomAlert("Failed to reset password: " + err));
+            }).catch(err => {
+                saveBtn.disabled = false;
+                showCustomAlert("Failed to reset password: " + err.message);
+            });
         }
 
-                function maskMobile(mob) {
-            if (!mob) return "***";
-            let s = mob.toString().trim();
-            if (s.length <= 4) return "****";
-            return s.substring(0, 2) + "****" + s.substring(s.length - 2);
-        }
-
-        function maskEmail(email) {
-            if (!email || !email.includes("@")) return "***@***.com";
-            let parts = email.toString().trim().split("@");
-            let maskedName = parts[0].length > 2 ? parts[0].substring(0, 2) + "***" : "***";
-            return maskedName + "@" + parts[1];
-        }
-
-        function preparePasswordScreenIdentity(mode) {
-            const key = selectedParticipantKey;
-            const participant = key ? allParticipants[key] : null;
-            const prefix = mode === "change" ? "cp" : "rp";
-            const searchContainer = document.getElementById(prefix + "-name-search-container");
-            const searchInput = document.getElementById(prefix + "-search-name");
-            const displayInput = document.getElementById(prefix + "-selected-display");
-
-            if (participant && key) {
-                if (mode === "change") cpSelectedKey = key;
-                else rpSelectedKey = key;
-                const displayName = (participant.ps_name || "") +
-                    (participant.ps_centre ? ` (${participant.ps_centre})` : "");
-                if (searchInput) searchInput.value = displayName;
-                if (displayInput) displayInput.value = displayName;
-                if (searchContainer) searchContainer.classList.add("hidden");
-            } else if (searchContainer) {
-                searchContainer.classList.remove("hidden");
-            }
-        }
-
-        function showChangePasswordScreen() {
+                function showChangePasswordScreen() {
             setFixedHeaderVisibility(false);
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('first-login-screen').classList.add('hidden');
@@ -2214,6 +2337,42 @@
             if (window.location.hash) history.replaceState(null, null, window.location.search + window.location.hash);
             clearForms(true);
             preparePasswordScreenIdentity("reset");
+        }
+
+        function preparePasswordScreenIdentity(mode) {
+            const key = selectedParticipantKey;
+            const participant = key ? allParticipants[key] : null;
+            const prefix = mode === "change" ? "cp" : "rp";
+            const searchContainer = document.getElementById(prefix + "-name-search-container");
+            const searchInput = document.getElementById(prefix + "-search-name");
+            const displayInput = document.getElementById(prefix + "-selected-display");
+
+            if (participant && key) {
+                if (mode === "change") cpSelectedKey = key;
+                else rpSelectedKey = key;
+                const displayName = (participant.ps_name || "") +
+                    (participant.ps_centre ? ` (${participant.ps_centre})` : "");
+                if (searchInput) searchInput.value = displayName;
+                if (displayInput) displayInput.value = displayName;
+                if (searchContainer) searchContainer.classList.add("hidden");
+                if (mode === "reset") resetPasswordSelectionChanged();
+            } else if (searchContainer) {
+                searchContainer.classList.remove("hidden");
+            }
+        }
+
+        function maskMobile(mob) {
+            if (!mob) return "***";
+            let s = mob.toString().trim();
+            if (s.length <= 4) return "****";
+            return s.substring(0, 2) + "****" + s.substring(s.length - 2);
+        }
+
+        function maskEmail(email) {
+            if (!email || !email.includes("@")) return "***@***.com";
+            let parts = email.toString().trim().split("@");
+            let maskedName = parts[0].length > 2 ? parts[0].substring(0, 2) + "***" : "***";
+            return maskedName + "@" + parts[1];
         }
 
         function showLoginScreen() {
