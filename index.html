@@ -105,8 +105,8 @@
             <div id="app-version-badge">HC App</div>
 
             <div class="mb-2 relative">
-                <label class="block text-gray-700 text-[11px] font-bold mb-0.5">Type your name in English (at least 3 letters):</label>
-                <input type="text" id="search-name" autocomplete="off" placeholder="Type here.." class="w-full px-2.5 py-1 text-xs border rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500" oninput="filterParticipants()">
+                <label class="block text-gray-700 text-[11px] font-bold mb-0.5">First-time users: enter your name. Returning users: enter your registered email (at least 3 characters):</label>
+                <input type="text" id="search-name" autocomplete="off" placeholder="Name or registered email.." class="w-full px-2.5 py-1 text-xs border rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500" oninput="filterParticipants()">
                 <div id="name-not-found-msg" class="text-red-500 text-[11px] mt-1 hidden"></div>
                 <div id="search-results" class="absolute left-0 right-0 bg-white border mt-1 rounded-md shadow-lg max-h-32 overflow-y-auto hidden z-20 text-xs"></div>
             </div>
@@ -314,7 +314,7 @@
                 <input type="text" id="rp-selected-display" readonly autocomplete="off" class="w-full px-2.5 py-1 bg-gray-100 border rounded-md text-gray-600" placeholder="Selected name">
             </div>
             <button type="button" onclick="submitResetPassword()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1.5 px-3 rounded-md transition mb-2">
-                Reset Password to Default (1234)
+                Reset Password (Email Verification Required)
             </button>
             <button type="button" onclick="showLoginScreen()" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-1.5 px-3 rounded-md transition">
                 Back to Login
@@ -754,8 +754,18 @@
                 if (!isGlobalAdmin && pWorkshopId !== activeWorkshopId.toUpperCase()) continue;
                 if (!matchesPortalRole(p)) continue;
 
-                let pName = (p.ps_name || "").toLowerCase();
-                if (pName.includes(query)) matches.push({ key: key, data: p });
+                // First-time users (pw_changed FALSE) search by name and proceed
+                // to the existing email verification + password setup.
+                // Returning users (pw_changed TRUE) must identify themselves
+                // using their registered email address, not another person's name.
+                const hasChangedPassword = isPasswordAlreadyChanged(p);
+                const identityValue = hasChangedPassword
+                    ? (p.ps_email || "").toString().trim().toLowerCase()
+                    : (p.ps_name || "").toString().trim().toLowerCase();
+
+                if (identityValue && identityValue.includes(query)) {
+                    matches.push({ key: key, data: p, returning: hasChangedPassword });
+                }
             }
 
             if (matches.length > 0) {
@@ -773,14 +783,13 @@
             } else {
                 resultsBox.classList.add('hidden');
                 if (query.length >= 3 && msgDiv) {
-                    const roleWord = isFacilitatorPortal ? "facilitator/mentor" : "participant";
-                    msgDiv.textContent = `We couldn't find a ${roleWord} record for "${rawQuery}" in this batch... Kindly check you are using the right link or connect with the HC Admin Team.`;
+                    msgDiv.textContent = `No matching account found for "${rawQuery}". First-time users should search by name; returning users should use their registered email.`;
                     msgDiv.classList.remove('hidden');
                 }
             }
         }
 
-        function isPasswordAlreadyChanged(userObj) {
+                function isPasswordAlreadyChanged(userObj) {
             if (!userObj) return false;
             if (userObj.pw_changed === true) return true;
             const flag = (userObj.pw_changed ?? "").toString().trim().toUpperCase();
@@ -2120,32 +2129,37 @@
                 const typedName = document.getElementById('rp-search-name').value.trim().toLowerCase();
                 for (let key in allParticipants) {
                     let pName = allParticipants[key].ps_name ? allParticipants[key].ps_name.toLowerCase() : "";
-                    if (pName && typedName.includes(pName) && matchesPortalRole(allParticipants[key])) { rpSelectedKey = key; break; }
+                    if (pName && typedName.includes(pName) && matchesPortalRole(allParticipants[key])) {
+                        rpSelectedKey = key;
+                        break;
+                    }
                 }
             }
+
             if (!rpSelectedKey || !allParticipants[rpSelectedKey]) {
                 showCustomAlert("Please search and select a valid name.");
                 return;
             }
-            // Reset only this participant's password to the current default.
-            // Mark it as already changed so the legacy email-verification
-            // first-login flow is not triggered by this password reset.
-            const defaultPassword = "1234";
-            let payload = {
-                password: defaultPassword,
-                pw_changed: "TRUE",
+
+            // Do not leave a reset account able to enter with a shared default
+            // password. The existing first-login email verification must run.
+            const initialPassword = "Daaji@2809";
+            const payload = {
+                password: initialPassword,
+                pw_changed: "FALSE",
                 fieldupdated: "password, pw_changed",
                 lastsyntimestamp: new Date().toLocaleString()
             };
+
             db.ref(`${participantsBasePath}/${rpSelectedKey}`).update(payload).then(() => {
-                showCustomAlert("Password reset successfully to the default password 1234. Please use it to log in.");
-                allParticipants[rpSelectedKey].password = defaultPassword;
-                allParticipants[rpSelectedKey].pw_changed = "TRUE";
+                allParticipants[rpSelectedKey].password = initialPassword;
+                allParticipants[rpSelectedKey].pw_changed = "FALSE";
+                showCustomAlert("Password reset initiated. On the next login, the participant must verify their registered email and set a new password before accessing the account.");
                 showLoginScreen();
             }).catch(err => showCustomAlert("Failed to reset password: " + err));
         }
 
-        function maskMobile(mob) {
+                function maskMobile(mob) {
             if (!mob) return "***";
             let s = mob.toString().trim();
             if (s.length <= 4) return "****";
