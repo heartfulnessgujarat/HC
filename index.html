@@ -1540,7 +1540,7 @@
                 const frame = document.getElementById('facilitator-mentee-report-frame');
                 const workshopKey = (currentActiveUser && (currentActiveUser.workshop_id || activeWorkshopId) || activeWorkshopId || '').toString().trim().toUpperCase();
                 if (frame && workshopKey) {
-                    const desiredSrc = 'mentee_wise_report.html?workshop_id=' + encodeURIComponent(workshopKey);
+                    const desiredSrc = 'mentee_wise_report.html?workshop_id=' + encodeURIComponent(workshopKey) + '&return_url=' + encodeURIComponent(window.location.href);
                     if (frame.getAttribute('src') !== desiredSrc) frame.setAttribute('src', desiredSrc);
                 }
             }
