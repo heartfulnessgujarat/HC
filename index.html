@@ -952,6 +952,9 @@
             }
         }
 
+        // Shared first-time account setup for every portal role
+        // (Mentor, Participant/Mentee, and other permitted roles).
+        // Email-format confirmation is enforced here before OTP can be sent.
         function openFirstTimeLoginScreen() {
             resetInactivityTimer();
             flVerifiedEmail = "";
@@ -1003,6 +1006,9 @@
         function toggleFirstLoginEmailEdit() {
             const emailInput = document.getElementById('fl-email-input');
             const editBtn = document.getElementById('fl-btn-edit-email');
+
+            // This shared control is deliberately role-neutral: participants
+            // and mentors must both click Done and pass format validation.
 
             if (emailInput.disabled) {
                 emailInput.disabled = false;
